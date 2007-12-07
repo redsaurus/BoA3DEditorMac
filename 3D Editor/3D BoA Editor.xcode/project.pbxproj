@@ -1,0 +1,615 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 39;
+	objects = {
+		0249A66BFF388E3F11CA2CEA = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = "libstdc++.a";
+			path = "/usr/lib/libstdc++.a";
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+//020
+//021
+//022
+//023
+//024
+//190
+//191
+//192
+//193
+//194
+		195DF8CFFE9D517E11CA2CBB = {
+			children = (
+				6A86A2800688BD08009593BC,
+			);
+			isa = PBXGroup;
+			name = Products;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+//190
+//191
+//192
+//193
+//194
+//200
+//201
+//202
+//203
+//204
+		20286C28FDCF999611CA2CEA = {
+			buildSettings = {
+			};
+			buildStyles = (
+				4A9504C5FFE6A39111CA0CBA,
+				C75612BF077982EA001F5E3C,
+				4A9504C6FFE6A39111CA0CBA,
+			);
+			hasScannedForEncodings = 1;
+			isa = PBXProject;
+			mainGroup = 20286C29FDCF999611CA2CEA;
+			projectDirPath = "";
+			targets = (
+				6A86A27F0688BD08009593BC,
+			);
+		};
+		20286C29FDCF999611CA2CEA = {
+			children = (
+				C74258B507AF849F00B47EBF,
+				20286C2AFDCF999611CA2CEA,
+				20286C2CFDCF999611CA2CEA,
+				20286C32FDCF999611CA2CEA,
+				C74258B607AF84F100B47EBF,
+				195DF8CFFE9D517E11CA2CBB,
+			);
+			isa = PBXGroup;
+			name = "Isaacs - BoA Editor v1.1";
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		20286C2AFDCF999611CA2CEA = {
+			children = (
+				6A66C40006771A6E0030138E,
+				6A66C40206771A6F0030138E,
+				6A66C40306771A6F0030138E,
+				6A66C40406771A6F0030138E,
+				6A66C40506771A6F0030138E,
+				6A66C40606771A6F0030138E,
+				6A66C40706771A6F0030138E,
+				6A66C40906771A6F0030138E,
+				6A66C40A06771A6F0030138E,
+				6A66C40B06771A6F0030138E,
+				6A66C40C06771A6F0030138E,
+				6A66C40E06771A6F0030138E,
+			);
+			isa = PBXGroup;
+			name = Sources;
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		20286C2CFDCF999611CA2CEA = {
+			children = (
+				C7E5FD2907AF567300D7E90C,
+				C7E5FD2507AF566300D7E90C,
+			);
+			isa = PBXGroup;
+			name = Resources;
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		20286C32FDCF999611CA2CEA = {
+			children = (
+				20286C33FDCF999611CA2CEA,
+				0249A66BFF388E3F11CA2CEA,
+			);
+			isa = PBXGroup;
+			name = "External Frameworks and Libraries";
+			path = "";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		20286C33FDCF999611CA2CEA = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = Carbon.framework;
+			path = /System/Library/Frameworks/Carbon.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+//200
+//201
+//202
+//203
+//204
+//4A0
+//4A1
+//4A2
+//4A3
+//4A4
+		4A9504C5FFE6A39111CA0CBA = {
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				OPTIMIZATION_CFLAGS = "-O0";
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			isa = PBXBuildStyle;
+			name = Development;
+		};
+		4A9504C6FFE6A39111CA0CBA = {
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				ZERO_LINK = NO;
+			};
+			isa = PBXBuildStyle;
+			name = Deployment;
+		};
+//4A0
+//4A1
+//4A2
+//4A3
+//4A4
+//6A0
+//6A1
+//6A2
+//6A3
+//6A4
+		6A66C40006771A6E0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = "Bl A Editor.cpp";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40206771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = "Bl A Fileio.cpp";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40306771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = dlogtool.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40406771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = EdFcns.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40506771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = EdGlobal.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40606771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = EdParser.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40706771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = EdUtils.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40806771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = global.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40906771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = Graphics.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40A06771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = keydlgs.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40B06771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = Library.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40C06771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = sound.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40D06771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = tokntype.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A66C40E06771A6F0030138E = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = townout.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		6A86A27A0688BD08009593BC = {
+			buildActionMask = 2147483647;
+			files = (
+				6A86A2940688BE3E009593BC,
+				6A86A2980688BE57009593BC,
+				C7DE88D60775BF6000258194,
+			);
+			isa = PBXHeadersBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6A86A27C0688BD08009593BC = {
+			buildActionMask = 2147483647;
+			files = (
+				6A86A28E0688BE12009593BC,
+				6A86A2890688BDFF009593BC,
+				6A86A2870688BDF6009593BC,
+				6A86A2860688BDF2009593BC,
+				6A86A2880688BDFA009593BC,
+				6A86A28B0688BE05009593BC,
+				6A86A28C0688BE08009593BC,
+				6A86A28D0688BE0A009593BC,
+				6A86A28F0688BE18009593BC,
+				6A86A2900688BE1B009593BC,
+				6A86A2910688BE1E009593BC,
+				6A86A2920688BE20009593BC,
+			);
+			isa = PBXSourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6A86A27D0688BD08009593BC = {
+			buildActionMask = 2147483647;
+			files = (
+				6A86A2930688BE38009593BC,
+				6A86A2970688BE56009593BC,
+			);
+			isa = PBXFrameworksBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6A86A27E0688BD08009593BC = {
+			buildActionMask = 2147483647;
+			files = (
+				C7E5FD2607AF566300D7E90C,
+				C7E5FD2A07AF567300D7E90C,
+			);
+			isa = PBXRezBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6A86A27F0688BD08009593BC = {
+			buildPhases = (
+				6A86A27A0688BD08009593BC,
+				6A86A27C0688BD08009593BC,
+				6A86A27D0688BD08009593BC,
+				6A86A27E0688BD08009593BC,
+				C742589D07AF7F2500B47EBF,
+			);
+			buildSettings = {
+				DEBUGGING_SYMBOLS = NO;
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRECOMPILE_PREFIX_HEADER = YES;
+				PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
+				WRAPPER_EXTENSION = app;
+			};
+			dependencies = (
+			);
+			isa = PBXApplicationTarget;
+			name = "Isaacs - BoA Editor";
+			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+			productName = "Isaacs - BoA Editor";
+			productReference = 6A86A2800688BD08009593BC;
+			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>3D Blades of Avernum Editor</string>
+	<key>CFBundleGetInfoString</key>
+	<string>v1.02b5</string>
+	<key>CFBundleIconFile</key>
+	<string>BoAEdAPPL.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.spidweb.BoA3DEditor</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>3D BoA Editor</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>v1.02b5</string>
+	<key>CFBundleSignature</key>
+	<string>blED</string>
+	<key>CFBundleVersion</key>
+	<string>v1.02b5</string>
+</dict>
+</plist>
+";
+		};
+		6A86A2800688BD08009593BC = {
+			explicitFileType = wrapper.application;
+			includeInIndex = 0;
+			isa = PBXFileReference;
+			path = "3D Blades of Avernum Editor.app";
+			refType = 3;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6A86A2860688BDF2009593BC = {
+			fileRef = 6A66C40006771A6E0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2870688BDF6009593BC = {
+			fileRef = 6A66C40206771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2880688BDFA009593BC = {
+			fileRef = 6A66C40306771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2890688BDFF009593BC = {
+			fileRef = 6A66C40406771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A28B0688BE05009593BC = {
+			fileRef = 6A66C40506771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A28C0688BE08009593BC = {
+			fileRef = 6A66C40606771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A28D0688BE0A009593BC = {
+			fileRef = 6A66C40706771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A28E0688BE12009593BC = {
+			fileRef = 6A66C40906771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A28F0688BE18009593BC = {
+			fileRef = 6A66C40A06771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2900688BE1B009593BC = {
+			fileRef = 6A66C40B06771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2910688BE1E009593BC = {
+			fileRef = 6A66C40C06771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2920688BE20009593BC = {
+			fileRef = 6A66C40E06771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2930688BE38009593BC = {
+			fileRef = 20286C33FDCF999611CA2CEA;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2940688BE3E009593BC = {
+			fileRef = 6A66C40806771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2970688BE56009593BC = {
+			fileRef = 0249A66BFF388E3F11CA2CEA;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		6A86A2980688BE57009593BC = {
+			fileRef = 6A66C40D06771A6F0030138E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+//6A0
+//6A1
+//6A2
+//6A3
+//6A4
+//C70
+//C71
+//C72
+//C73
+//C74
+		C742589D07AF7F2500B47EBF = {
+			buildActionMask = 2147483647;
+			files = (
+				C76F042607B0F35400A7A55E,
+			);
+			isa = PBXResourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C74258B507AF849F00B47EBF = {
+			children = (
+				C7DE88D50775BF6000258194,
+				6A66C40806771A6F0030138E,
+				6A66C40D06771A6F0030138E,
+			);
+			isa = PBXGroup;
+			name = Headers;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C74258B607AF84F100B47EBF = {
+			children = (
+				C76F042507B0F35300A7A55E,
+			);
+			isa = PBXGroup;
+			name = "Bundle Resources";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C75612BF077982EA001F5E3C = {
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_WARN_SHADOW = YES;
+				OPTIMIZATION_CFLAGS = "-O0";
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			isa = PBXBuildStyle;
+			name = "Shadow variable check";
+		};
+		C76F042507B0F35300A7A55E = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.icns;
+			path = BoAEdAPPL.icns;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C76F042607B0F35400A7A55E = {
+			fileRef = C76F042507B0F35300A7A55E;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		C7DE88D50775BF6000258194 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = "3D BoA Editor_Prefix.pch";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C7DE88D60775BF6000258194 = {
+			fileRef = C7DE88D50775BF6000258194;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		C7E5FD2507AF566300D7E90C = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.rez;
+			path = "3D Editor Graphics.r";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C7E5FD2607AF566300D7E90C = {
+			fileRef = C7E5FD2507AF566300D7E90C;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		C7E5FD2907AF567300D7E90C = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.rez;
+			path = "Bl A Editor.r";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		C7E5FD2A07AF567300D7E90C = {
+			fileRef = C7E5FD2907AF567300D7E90C;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+	};
+	rootObject = 20286C28FDCF999611CA2CEA;
+}
