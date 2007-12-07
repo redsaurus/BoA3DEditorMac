@@ -1193,13 +1193,6 @@ static pascal OSErr handle_open_doc(const AppleEvent *theAppleEvent,AppleEvent *
 //AppleEvent *theAppleEvent,*reply;
 //long handlerRefcon;
 {
-	/*FSSpec myFSS;
-	AEDescList docList;
-	OSErr myErr, ignoreErr;
-	long index, itemsInList;
-	Size actualSize;
-	AEKeyword keywd;
-	DescType returnedType;*/
 	AEDescList docList;
     FSRef theFSRef;
 	FSSpec theFSSpec;
