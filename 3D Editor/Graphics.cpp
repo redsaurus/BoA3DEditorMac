@@ -302,9 +302,9 @@ void draw_main_screen()
 
 void set_up_terrain_buttons()
 {
-	printf("setting up terrain buttons for mode %i\n",current_drawing_mode);
+	//printf("setting up terrain buttons for mode %i\n",current_drawing_mode);
 	if((current_drawing_mode==3 && setUpCreaturePalette) || (current_drawing_mode==4 && setUpItemPalette)){
-		printf("short circuited\n");
+		//printf("short circuited\n");
 		return;
 	}
 	short i;
