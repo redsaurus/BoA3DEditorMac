@@ -28,6 +28,9 @@
 //    First number = 5: Picture. I don't think this works anymore.
 //    One exception: If you just want a chunk of text, you can have the text entry contain
 //    that text. If that text begins with ~, =, or *, formats text differently.
+//		+ signifies text with an outline but no background
+//		~ signifies large bold text
+//		* is small bold text
 
 // Of course, you can just ignore all this mess and write regular dialog boxes.
 
@@ -156,7 +159,6 @@ static char button_def_key[140] = {0,0,20,21,'k', 24,0,0,0,0,
 							// specials ... 20 - <-  21 - ->  22 up  23 down  24 esc
 							// 25-30  ctrl 1-6  31 - return"\"
 
-
 void beep() 
 {
 	SysBeep(20);
@@ -179,7 +181,6 @@ void cd_init_dialogs()
 		label_taken[i] = FALSE;
 		}
 }
-
 
 short cd_create_dialog_parent_num(short dlog_num,short parent)
 {
@@ -479,7 +480,7 @@ short cd_kill_dialog(short dlog_num,short parent_message)
 //		cd_press_button(): replaced to cd_process_mousetrack()
 short cd_process_click(WindowPtr window,Point the_point, short mods,short *item)
 {
-	short i,which_dlg,dlg_num,item_id;
+	short i,which_dlg,dlg_num=-1,item_id;
 	short dlog_key;
 
 	if ((which_dlg = cd_find_dlog(window,&dlg_num,&dlog_key)) < 0)
@@ -543,7 +544,7 @@ short cd_process_mousetrack( short dlg_num, short item_num, Rect theRect )
 //		Add parameter eDLGBtnResCompatible to cd_press_button() 
 short cd_process_keystroke(WindowPtr window,char char_hit,short *item)
 {
-	short i,which_dlg,dlg_num,dlg_key,item_id;
+	short i,which_dlg,dlg_num=-1,dlg_key,item_id;
 
 	if ((which_dlg = cd_find_dlog(window,&dlg_num,&dlg_key)) < 0)
 		return -1;
@@ -670,7 +671,7 @@ void cd_get_item_text(short dlog_num, short item_num, char *str)
 
 void csit(short dlog_num, short item_num, char *str)
 {
-cd_set_item_text( dlog_num,  item_num, str);
+	cd_set_item_text( dlog_num,  item_num, str);
 }
 
 void cd_retrieve_text_edit_str(short dlog_num, short item_num, char *str)
@@ -726,7 +727,9 @@ void cd_set_text_edit_str(short dlog_num, short item_num, char *str)
 	strcpy((char *) store_ptr,str);
 	c2p(store_ptr);
 	GetDialogItem( (DialogPtr) dlgs[dlg_index], item_num, &the_type, &the_handle, &the_rect );
-	SetDialogItemText ( the_handle, store_ptr);	
+	//printf("item #%i, type=%i, text=%s\n",item_num,dlg_item_type[item_num],str);
+	SetDialogItemText ( the_handle, store_ptr);
+	SelectDialogItemText ((DialogPtr) dlgs[dlg_index], item_num, (int)strlen(str),(int)strlen(str));
 }
 // NOTE!!! Expects a c string
 void cd_set_text_edit_num(short dlog_num, short item_num, short num)
@@ -745,6 +748,7 @@ void cd_set_text_edit_num(short dlog_num, short item_num, short num)
 	c2p(store_ptr);
 	GetDialogItem((DialogPtr) dlgs[dlg_index], item_num, &the_type, &the_handle, &the_rect );
 	SetDialogItemText ( the_handle, store_ptr);	
+	SelectDialogItemText ((DialogPtr) dlgs[dlg_index], item_num,32767,32767);
 }
 
 void cd_set_item_text(short dlog_num, short item_num, char *str)
@@ -806,7 +810,8 @@ void cd_flip_led(short dlog_num,short item_num,short item_hit)
 		return;
 	if (cd_get_led(dlog_num,item_num) > 0)
 		cd_set_led(dlog_num,item_num,0);
-		else cd_set_led(dlog_num,item_num,1);
+	else
+		cd_set_led(dlog_num,item_num,1);
 }
 
 void cd_set_led_range(short dlog_num,short first_led,short last_led,short which_to_set)
@@ -969,17 +974,21 @@ void cd_draw_item(short dlog_num,short item_num)
 					 dlg_buttons_gworld[button_type[item_flag[item_index]]][0],item_rect[item_index],0,2);
 					RGBForeColor(&c[2]);
 					TextSize(12);
+					if (dlg_item_type[item_index] == 10){
+						ForeColor(whiteColor);
+						TextSize(8);
+					}
 					if (dlg_item_type[item_index] < 2)
 						OffsetRect(&item_rect[item_index],-1 * button_left_adj[item_flag[item_index]],0);
 					if (dlg_item_type[item_index] < 2) {
 						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
 						 (char *) (button_strs[item_flag[item_index]]),1,8);
-						}
-						else {
-							char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+					}
+					else {
+						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
 							 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-							  text_short_str[item_index - 10]),1,8);
-							}
+						text_short_str[item_index - 10]),1,8);
+					}
 					if (dlg_item_type[item_index] < 2)
 						OffsetRect(&item_rect[item_index],button_left_adj[item_flag[item_index]],0);
 					TextSize(10);
@@ -1124,7 +1133,7 @@ void cd_draw(short dlog_num)
 
 void cd_redraw(WindowPtr window)
 {
-	short which_dlg,dlg_num,dlg_key;
+	short which_dlg,dlg_num=-1,dlg_key;
 
 	if ((which_dlg = cd_find_dlog(window,&dlg_num,&dlg_key)) < 0)
 		return;
@@ -1261,7 +1270,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	if (cd_get_indices(dlog_num,item_num,&dlg_index,&item_index) < 0)
 		return;
 
-	// no press action for redio buttons
+	// no press action for radio buttons
 	if ((dlg_item_type[item_index] == 2) && (mode == eDLGBtnResCompatible) ) {
 		play_sound(34);
 		return;

@@ -1,8 +1,5 @@
 // global.h
 
-// These are the variable structures. You really shouldn't change
-// these.
-
 // The comments are partial, intermittent, and may be wrong.
 
 #define EXILE_BIG_GUNS 1
@@ -29,10 +26,11 @@
 #define	LEFT_TEXT_LINE_WIDTH	240
 #define	TEXT_LINE_HEIGHT	12
 #define	RIGHT_TEXT_LINE_ULX	5
-#define	RIGHT_TEXT_LINE_ULY	487
-#define	RIGHT_BUTTONS_X_SHIFT	540
+#define	RIGHT_TEXT_LINE_ULY	105
+#define	RIGHT_BUTTONS_X_SHIFT 540
+#define RIGHT_BUTTONS_Y_SHIFT 382
 
-#define	PALETTE_BUT_UL_X	5
+#define	PALETTE_BUT_UL_X	0
 #define	PALETTE_BUT_UL_Y	382
 
 #define	NUM_PC_I	34
@@ -101,9 +99,10 @@ enum EDLGBtnRes {
 #define	inThumb	kControlIndicatorPart
 #define	DisposDialog	DisposeDialog
 #define	GetMHandle	GetMenuHandle
+
 typedef struct {
 	char x,y;
-	} location;
+} location;
 
 //typedef struct {
 //	short type,sd1,sd2,pic,m1,m2,ex1a,ex1b,ex2a,ex2b,jumpto;
@@ -114,7 +113,7 @@ typedef struct {
 	short condition1[4],condition2[4];
 	short action_when_selected,default_jump_state;
 	short action_mods[4];
-	} talking_node_type;
+} talking_node_type;
 
 typedef struct {
 	unsigned char short_strlens[NUM_TALK_NODES];
@@ -123,9 +122,9 @@ typedef struct {
 	short p_start_node[NUM_P_PER_TOWN];
 	short p_start_state[NUM_P_PER_TOWN];
 	talking_node_type talk_nodes[NUM_TALK_NODES];
-	} talking_record_type;
+} talking_record_type;
 
-// The data for the locaiton for an icon in memory.
+// The data for the location for an icon in memory.
 class graphic_id_type {
 public:
 	graphic_id_type();
@@ -135,8 +134,8 @@ public:
 	short which_sheet; // the resource number of the graphic
 	short which_icon; // the icon in the resource. icons are in resources 
 		// 16 icons per row
-	short graphic_adjust; // not yet used
-	};
+	short graphic_adjust;
+};
 	
 class floor_type_type {
 public:
@@ -175,7 +174,7 @@ public:
 		// 0 - 
 	unsigned char shortcut_key;
 	short extra[6];
-	};
+};
 
 class terrain_type_type {
 public:
@@ -276,7 +275,7 @@ public:
 	// 43			waterfall - south
 	// 44			waterfall - west
 	// 45			destroyed by quickfire	
-	} ;
+} ;
 
 class out_wandering_type {
 public:
@@ -339,8 +338,7 @@ public:
 	short is_on_surface;
 	
 	short extra[10];	// extra[0]: region number
-	} ;
-
+} ;
 
 class creature_type {
 public:
@@ -405,7 +403,7 @@ public:
 	short default_aggression,default_courage;
 	short summon_class; // -1 - never summoned, otherwise, number from 0-6, higher = harder to summon
 	short extra[10];
-	};
+};
 
 class item_record_type {
 public:
@@ -537,7 +535,7 @@ public:
 	location item_loc;
 	unsigned char charges;
 	unsigned char properties; 
-		// bit 0 - ident   1 - property   2 - contained   3 - cursed 4 - used today
+		// bit 0 - ident   1 - property   2 - contained   3 - cursed  4 - used today
 	location item_shift;
 	} ;
 
@@ -589,7 +587,7 @@ public:
 	short act_at_distance;
 	
 	short extra[4];
-	};
+};
 	
 class preset_field_type {
 public:
@@ -599,9 +597,9 @@ public:
 	
 	location field_loc;
 	short field_type;
-	} ;
+} ;
 
-// when a terrain spot has a script, the detains for that script are remembered in
+// when a terrain spot has a script, the details for that script are remembered in
 // this record. It a terrain spot has a script, it MUST has a corresponding
 // record of this sort active
 class in_town_on_ter_script_type {
@@ -614,7 +612,7 @@ public:
 	location loc; // location of the terrain spot this is for
 	char script_name[SCRIPT_NAME_LEN]; 
 	short memory_cells[10];
-	};
+};
 
 
 class town_record_type {
@@ -666,8 +664,7 @@ public:
 
 	short exit_specs[4];
 	short spec_on_entry,spec_on_entry_if_dead;
-
-	} ;
+} ;
 
 class big_tr_type {
 public:
@@ -678,7 +675,7 @@ public:
 	short terrain[64][64];
 	unsigned char floor[64][64],height[64][64];
 	unsigned char lighting[64][64];
-	} ;
+} ;
 
 class ave_tr_type {
 public:
@@ -689,7 +686,7 @@ public:
 	short terrain[48][48];
 	unsigned char floor[48][48],height[48][48];
 	unsigned char lighting[48][48];
-	} ;
+} ;
 	
 class tiny_tr_type {
 public:
@@ -700,12 +697,12 @@ public:
 	short terrain[32][32];
 	unsigned char floor[32][32],height[32][32];
 	unsigned char lighting[32][32];
-	} ;	
+} ;	
 
 
 typedef struct {
 	short ter_type,item_num[10],item_odds[10],property;
-	} item_storage_shortcut_type;
+} item_storage_shortcut_type;
 
 class scen_item_data_type {
 public:
@@ -716,7 +713,20 @@ public:
 	floor_type_type scen_floors[256];
 	terrain_type_type scen_ter_types[512];
 	creature_type scen_creatures[256];
-	} ;
+} ;
+
+//town i's name is stored in town_names[i]
+//outdoor section i,j's name is stored in
+// section_names[i+out_width*j]
+class zone_names_data_type {
+public:
+	char town_names[200][20];
+	char section_names[100][20];
+	int out_width;
+	int out_height;
+	//width and height are stored seperately here as these data structures may 
+	//be used to store information about scenarios from which zones are being imported
+};
 
 class boat_record_type {
 public:
@@ -726,7 +736,7 @@ public:
 	location boat_loc,boat_loc_in_sec,boat_sector;
 	short which_town;
 	Boolean exists,property;
-	} ;
+} ;
 class horse_record_type {
 public:
 	horse_record_type();
@@ -830,8 +840,6 @@ typedef struct
 	char token_text[MAX_DESCRIBER_LEN];
 } token_describer_type;
 
-
-
 // Stores a loaded script, in tokenized form.
 class script_type
 {
@@ -927,28 +935,28 @@ public:
 
 typedef struct {
 	short type,sd1,sd2,pic,m1,m2,ex1a,ex1b,ex2a,ex2b,jumpto;
-	} old_blades_special_node_type;
+} old_blades_special_node_type;
 
 typedef struct {
 	short personality,type;
 	char link1[4],link2[4];
 	short extras[4];
-	} old_blades_talking_node_type;
+} old_blades_talking_node_type;
 
 typedef struct {
 	unsigned char strlens[200];
 	old_blades_talking_node_type talk_nodes[60];
-	} old_blades_talking_record_type;
+} old_blades_talking_record_type;
 
 typedef struct {
 	short picture;
 	unsigned char blockage,flag1,flag2,special,trans_to_what,fly_over,boat_over;
 	unsigned char block_horse,light_radius,step_sound,shortcut_key,res1,res2,res3;
-	} old_blades_terrain_type_type;
+} old_blades_terrain_type_type;
 	
 typedef	struct {
 	unsigned char monst[4];
-	} old_blades_wandering_type;
+} old_blades_wandering_type;
 
 typedef struct {
 	unsigned char monst[7];
@@ -969,7 +977,7 @@ typedef struct {
 	Rect info_rect[8];
 	unsigned char strlens[180];
 	old_blades_special_node_type specials[60];
-	} old_blades_outdoor_record_type;
+} old_blades_outdoor_record_type;
 
 typedef struct {
 	unsigned char number;
@@ -982,9 +990,7 @@ typedef struct {
 	char spec_enc_code,time_code;
 	short monster_time,personality;
 	short special_on_kill,facial_pic;
-	
-	} old_blades_creature_start_type;
-
+} old_blades_creature_start_type;
 
 typedef struct {
 	short variety, item_level;
@@ -1014,12 +1020,12 @@ typedef struct {
 	location item_loc;
 	short item_code,ability;
 	unsigned char charges,always_there,property,contained;
-	} old_blades_preset_item_type;
+} old_blades_preset_item_type;
 	
 typedef struct {
 	location field_loc;
 	short field_type;
-	} old_blades_preset_field_type;
+} old_blades_preset_field_type;
 	
 typedef struct {
 	short town_chop_time,town_chop_key;
@@ -1043,40 +1049,38 @@ typedef struct {
 	old_blades_special_node_type specials[100];
 	unsigned char specials1,specials2,res1,res2;
 	short difficulty;
-	} old_blades_town_record_type;
-
-
+} old_blades_town_record_type;
 
 typedef struct {
 	unsigned char terrain[64][64];
 	Rect room_rect[16];
 	old_blades_creature_start_type creatures[60];
 	unsigned char lighting[8][64];
-	} old_blades_big_tr_type;
+} old_blades_big_tr_type;
 
 typedef struct {
 	unsigned char terrain[48][48];
 	Rect room_rect[16];
 	old_blades_creature_start_type creatures[40];
 	unsigned char lighting[6][48];
-	} old_blades_ave_tr_type;
+} old_blades_ave_tr_type;
 	
 typedef struct {
 	unsigned char terrain[32][32];
 	Rect room_rect[16];
 	old_blades_creature_start_type creatures[30];
 	unsigned char lighting[4][32];
-	} old_blades_tiny_tr_type;	
+} old_blades_tiny_tr_type;	
 
 typedef struct {
 	old_blades_item_record_type scen_items[400];
 	char monst_names[256][20];
 	char ter_names[256][30];
-	} old_blades_scen_item_data_type;
+} old_blades_scen_item_data_type;
 
 typedef struct {
 	short ter_type,item_num[10],item_odds[10],property;
-	} old_blades_item_storage_shortcut_type;
+} old_blades_item_storage_shortcut_type;
 
 typedef struct {
 	unsigned char m_num,level,m_name[26];
@@ -1091,7 +1095,7 @@ typedef struct {
 	unsigned char default_attitude,summon_type,default_facial_pic,res1,res2,res3;
 	short picture_num;
 	
-	} old_blades_monster_record_type;
+} old_blades_monster_record_type;
 	
 typedef struct {
 	short active,attitude;
@@ -1101,14 +1105,14 @@ typedef struct {
 	Boolean mobile;
 	short summoned;
 	old_blades_creature_start_type monst_start;
-	} old_blades_creature_data_type;
-	
+} old_blades_creature_data_type;	
 	
 typedef struct {
 	location horse_loc,horse_loc_in_sec,horse_sector;
 	short which_town;
 	Boolean exists,property;
-	} old_blades_horse_record_type;
+} old_blades_horse_record_type;
+
 typedef struct {
 	location boat_loc,boat_loc_in_sec,boat_sector;
 	short which_town;
@@ -1162,19 +1166,16 @@ typedef struct {
 	location last_out_edited;
 	short last_town_edited;
 
-	} old_blades_scenario_data_type;
+} old_blades_scenario_data_type;
 
 typedef struct {
 	char town_strs[180][256];
 	char out_strs[120][256];
 	char scen_strs[270][256];
 	char talk_strs[170][256];
-	} old_blades_piles_of_stuff_dumping_type;
+} old_blades_piles_of_stuff_dumping_type;
 	
 // end BoE records
-
-
-			
 
 typedef struct {
 	/*char strings_ls[NLS][40];
@@ -1184,8 +1185,272 @@ typedef struct {
 	char short_talk_strs[NUM_TALK_NODES][120];
 	char talk_strs[NUM_TALK_NODES * 2][256];*/
 	scen_item_data_type scen_item_list;
-	} piles_of_stuff_dumping_type;
+} piles_of_stuff_dumping_type;
+
+//undo system data types
 	
+//The printable class was made the parent of a number of other classes 
+//for debugging purposes. These other classes override the print() 
+//function to print a description of themselves to the standard output.
+class printable{
+public:
+	virtual void print()
+	{
+		printf("printable!");
+	}
+	virtual ~printable(){}
+};
+
+//A listNode is a wrapper object so that items can be stored in a 
+//linkedList. It should not be needed except by the linkedList class.
+class listNode: public printable{
+public:
+	listNode* next;
+	void* data;
+	
+	listNode():next(NULL), data(NULL)
+	{}
+	listNode(listNode* n, void* d):next(n), data(d)
+	{}
+	void print()
+	{
+		printf("listnode with data=%p and next=%p",data,next);
+	}
+};
+
+//This is a linked list class mostly intended for use as a stack,
+//items are added and removed using the push() and pop() functions
+//However, it can also be accessed like an array; fetching the item
+//at an arbitrary index. This is normally a slow operation on a 
+//linked list, so this class caches the address of the most recently
+//accessed item, allowing that item or the item after it to be retrieved 
+//in constant time. This means that iterating through the elements of 
+//the list in order is must faster than it would otherwise be. 
+//And CFArray is EVIL! EVIL!!!
+class linkedList: public printable{
+private:
+	listNode* start;
+	int numItems;
+	listNode* currentItem;
+	int indexOfCurrentItem;
+public:
+		linkedList()
+	{
+			start=NULL;
+			numItems=0;
+			currentItem=NULL;
+			indexOfCurrentItem=-1;
+	}
+	~linkedList()
+	{
+		this->clear();
+	}
+	int size()
+	{
+		return(numItems);
+	}
+	void push(void* newItem)
+	{
+		listNode* temp = new listNode(start,newItem);
+		start=temp;
+		currentItem=start;
+		indexOfCurrentItem=0;
+		numItems++;
+	}
+	void* pop()
+	{
+		if(start == NULL)
+			return(NULL);
+		listNode* temp = start;
+		start = temp->next;
+		currentItem=start;
+		if(start==NULL)
+			indexOfCurrentItem=-1;
+		else
+			indexOfCurrentItem=0;
+		void* data = temp->data;
+		delete temp;
+		numItems--;
+		return(data);
+	}
+	void* itemAtIndex(int i)
+	{
+		if(i<0 || i>=numItems)
+			return(NULL);
+		if(indexOfCurrentItem>=0){//we have a cached index, test if it's useful
+			if(i==indexOfCurrentItem)//the caller wants the item at the cached index
+				return(currentItem->data);
+			if(i==(indexOfCurrentItem+1)){//the caller wants the next item after the cached index
+				currentItem=currentItem->next;
+				indexOfCurrentItem++;
+				return(currentItem->data);
+			}
+		}
+		//the user wants an item we can't get to easily from the cached position, so find it the hard way
+		indexOfCurrentItem=0;
+		currentItem=start;
+		while(indexOfCurrentItem<i){
+			currentItem=currentItem->next;
+			indexOfCurrentItem++;
+		}
+		if(indexOfCurrentItem!=i){//something must have gone wrong; bail out
+			currentItem=NULL;
+			indexOfCurrentItem=-1;
+			return(NULL);
+		}
+		return(currentItem->data);
+	}
+	void clear()
+	{
+		if(numItems==0)
+			return;
+		currentItem=start;
+		while(currentItem!=NULL){
+			listNode* temp=currentItem;
+			currentItem=currentItem->next;
+			delete temp;
+		}
+		numItems=0;
+		indexOfCurrentItem=-1;
+		start=NULL;
+	}
+	void print()
+	{
+		printf("linkedList: there are %i nodes\n",numItems);
+		listNode* temp=start;
+		int i=0;
+		while(temp!=NULL){
+			printf("node %i: &[i]=%p, i=\n",i,temp);
+			temp->print();
+			printf("\n");
+			temp=temp->next;
+			i++;
+		}
+	}
+};
+
+//a drawing change object represents a change in one of the floor, terrain 
+//or hieght at a single space in the current zone. Both the new and old
+//floor/terrain/height values are stored so that the operation can be undone
+//or redone. The invert function reverses the old and new values so that a 
+//change stored for undo purposes is usable for redo purposes
+class drawingChange: public printable{
+public:
+	short x;
+	short y;
+	short newval;
+	short oldval;
+	short type;
+	//-1 = null step
+	//0 = nothing, needs to be set
+	//1 = floor change
+	//2 = terrain change
+	//3 = height change
+	
+	drawingChange(short xloc, short yloc, short nval, short oval, short t):x(xloc), y(yloc), newval(nval), oldval(oval), type(t)
+	{}
+	void invert()
+	{
+		short temp=oldval;
+		oldval=newval;
+		newval=temp;
+	}
+	void print()
+	{
+		printf("change of type %i at (%i,%i) from %i to %i",type,x,y,oldval,newval);
+	}
+};
+
+//A drawingUndoStep object stores a set of related changes to the current zone 
+//which should be undone or redone as a group changes are registered using the 
+//appendChange functions. The invert function can be used to invert all of the 
+//changes stored so that the undo step becomes usable as a redo step. 
+class drawingUndoStep: public printable{
+public:
+	Boolean locked;
+	linkedList changes;
+	drawingUndoStep()
+	{
+		changes = linkedList();
+		locked=FALSE;
+	}
+	~drawingUndoStep()
+	{
+		this->clear();
+	}
+	bool collapseChange(drawingChange* c)
+	{
+		for(int i=0; i<changes.size(); i++){
+			drawingChange* temp = ((drawingChange*)(changes.itemAtIndex(i)));
+			if((temp->x == c->x) && (temp->y == c->y) && (temp->type == c->type)){
+				temp->newval=c->newval;
+				return(true);
+			}
+		}
+		return(false);
+	}
+	bool appendChange(int x,int y, int newval, int oldval, int type)
+	{
+		if(locked)
+			return(false);
+		drawingChange* c = new drawingChange(x,y,newval,oldval,type);
+		changes.push(&c);
+		return(true);
+	}
+	bool appendChange(drawingChange* c)
+	{
+		if(locked)
+			return(false);
+		if(collapseChange(c)){
+			delete(c);
+			return(true);
+		}
+		changes.push(c);
+		return(true);
+	}
+	void clear()
+	{
+		changes.clear();
+	}
+	void invert()
+	{
+		for(int i=0; i<changes.size(); i++)
+			((drawingChange*)(changes.itemAtIndex(i)))->invert();
+	}
+	drawingChange* getChange(int i)
+	{
+		return((drawingChange*)(changes.itemAtIndex(i)));
+	}
+	int numChanges()
+	{
+		return(changes.size());
+	}
+	void print()
+	{
+		printf("drawingUndoStep:");
+		printf("%i changes in this step.\n",changes.size());
+		for(int i=0; i<changes.size(); i++){
+			printf("\t");
+			((drawingChange*)(changes.itemAtIndex(i)))->print();
+			printf("\n");
+		}
+		printf("linked list dump:\n");
+		changes.print();
+	}
+};
+//end undo system types
+
+/*struct app_refs{
+	FSRef textEditorRef;
+	FSRef alintRef;
+	FSRef dialogueEditorRef;
+	FSRef graphicAdjusterRef;
+	UInt8 textEditorPath[512];
+	UInt8 alintPath[512];
+	UInt8 dialogueEditorPath[512];
+	UInt8 graphicAdjusterPath[512];
+};*/
+
 short get_ran (short times,short  min,short  max);
 short s_pow(short x,short y);
 short dist(location p1,location p2);
@@ -1203,16 +1468,20 @@ void open_Appl_resource( char * rsrc_file );
 bool init_directories( void );
 void save_campaign();
 void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_south,short plus_east,short on_surface);
-void load_campaign();
+void save_change_to_town_size(int old_town_size);
+void load_campaign(FSSpec* file_to_load);
 void augment_terrain(location to_create);
 void load_outdoor_borders(location which_out);
 void load_outdoors(location which_out,short mode);
+void load_all_outdoor_names(FSSpec* to_open);
 void load_town(short which_town);
+void load_all_town_names(FSSpec* to_open);
 void oops_error(short error);
 void start_data_dump();
 short str_to_num(Str255 str) ;
 Boolean create_basic_scenario(char *scen_name_short,char *scen_name_with_ext,char *scen_full_name,short out_width,short out_height,short on_surface,Boolean use_warriors_grove);
-void import_boa_town();
+Boolean import_boa_town();
+Boolean import_boa_outdoors();
 void EdSysBeep(short duration);
 void get_name_of_current_scenario(char *name);
 void extract_old_scen_text();
@@ -1249,9 +1518,17 @@ void port_dialogue_node(short *current_dialogue_node,short which_slot,short file
 void clean_str(char *str);
 void open_current_scenario_resources();
 void close_current_scenario_resources();
-void import_boa_outdoors();
-Boolean SelectSaveFileToOpen(FSSpecPtr defaultLocationfssPtr,FSSpec *file_picked);
+Boolean SelectSaveFileToOpen(FSSpecPtr defaultLocationfssPtr,FSSpec *file_picked, bool BoAScen);
 void kludge_correct_old_bad_data();
+bool get_user_pref_bool_value(int which);
+void write_user_pref_bool_value(int which, bool value);
+bool get_should_play_sounds();
+void write_should_play_sounds(bool play);
+bool get_should_use_strict_adjusts();
+void write_should_use_strict_adjusts(bool use);
+bool get_always_show_heights();
+void write_always_show_heights(bool show);
+bool find_app();
 
 // dlogtool
 void cd_init_dialogs();
@@ -1301,7 +1578,7 @@ Rect get_item_rect(WindowPtr hDlg, short item_num);
 void frame_dlog_rect(GrafPtr hDlg, Rect rect, short val);
 void draw_dialog_graphic(GrafPtr hDlg, Rect rect, short which_g, Boolean do_frame,short win_or_gworld);
 Rect calc_rect(short i, short j);
-void beep() ;
+void beep();
 void cd_hit_led_range(short dlog_num,short first_led,short last_led,short which_to_set);
 short cd_get_led_range(short dlog_num,short first_led,short last_led);
 void cd_set_led_range(short dlog_num,short first_led,short last_led,short which_to_set);
@@ -1314,17 +1591,20 @@ Rect get_graphic_rect(GWorldPtr graf);
 // EDFCns
 void init_screen_locs();
 void handle_action(Point the_point,EventRecord event);
-void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit);
+void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hit);
 void play_press_snd();
 void swap_terrain();
 void set_new_terrain(short selected_terrain);
 void set_new_floor(short selected_terrain);
+void set_new_creature(short selected_creature);
+void set_new_item(short selected_item);
 void handle_keystroke(char chr,char chr2,EventRecord event);
 Boolean is_hill(short i,short j);
 Boolean is_rocks(short i,short j);
 Boolean is_water(short i,short j);
 void shy_change_circle_terrain(location center,short radius,short terrain_type,short probability);
 void change_circle_terrain(location center,short radius,short terrain_type,short probability);
+void change_circle_height(location center,short radius,short lower_or_raise,short probability);
 void change_rect_terrain(Rect r,short terrain_type,short probability,Boolean hollow);
 void set_terrain(location l,short terrain_type);
 Boolean town_fix_grass_rocks(location l);
@@ -1341,7 +1621,7 @@ void change_height(location l,short lower_or_raise);
 void adjust_space_height(location l,short lower_or_raise);
 void adjust_space_height_lower(location l);
 void adjust_space_height_raise(location l);
-void shut_down_menus(short mode);
+void shut_down_menus();
 Boolean save_check(short which_dlog);
 void update_item_menu();
 short locs_to_dir(location l1,location l2);
@@ -1351,6 +1631,7 @@ void cut_selected_instance();
 void paste_selected_instance(location create_loc);
 void check_selected_item_number();
 void shift_selected_instance(short dx,short dy);
+void rotate_selected_instance(int dir);
 void create_navpoint(location spot_hit);
 void delete_navpoint(location spot_hit);
 void frill_terrain();
@@ -1359,9 +1640,11 @@ void create_new_creature(short c_to_create,location create_loc,creature_start_ty
 Boolean create_new_item(short item_to_create,location create_loc,Boolean property,item_type *i_to_make);
 void shift_item_locs(location spot_hit);
 void place_items_in_town();
+void set_all_items_contained();
 void create_town_entry(Rect rect_hit);
 void edit_town_entry(location spot_hit);
 void set_rect_height(Rect r);
+void add_rect_height(Rect r);
 void shy_put_terrain(short i,short j,short ter);
 void transform_walls(Rect working_rect);
 Boolean is_not_darkness_floor(short i,short j); 
@@ -1384,7 +1667,7 @@ Boolean move_block(location l, short direction);
 void clear_selected_copied_objects();
 void set_drawing_mode(short new_mode);
 void reset_drawing_mode();
-Boolean create_new_ter_script(char *ter_script_name,location create_loc,in_town_on_ter_script_type *script_to_make);
+Boolean create_new_ter_script(char* ter_script_name,location create_loc,in_town_on_ter_script_type* script_to_make);
 void recursive_clean_terrain(location l);
 void recursive_adjust_space_height_raise(location l);
 void recursive_adjust_space_height_lower(location l);
@@ -1401,10 +1684,25 @@ void set_se_corner(short sector_offset_x, short sector_offset_y, short x, short 
 short get_ne_corner(short sector_offset_x, short sector_offset_y, short x, short y);
 void set_ne_corner(short sector_offset_x, short sector_offset_y, short x, short y, short value);
 void set_up_corner_and_sight_map();
-void find_out_about_corner_walls(outdoor_record_type *drawing_terrain, short x, short y, short current_size, short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
+void find_out_about_corner_walls(outdoor_record_type* drawing_terrain, short x, short y, short current_size, short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
 void find_out_about_corner_walls_being_hidden(outdoor_record_type *drawing_terrain, short sector_offset_x, short sector_offset_y, short x, short y, short current_size, Boolean see_in_neighbors[3][3], Boolean see_to_neighbors[3][3], /*Boolean see_to, */short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
 Boolean is_wall_drawn(outdoor_record_type *drawing_terrain, short sector_offset_x, short sector_offset_y, short x, short y);
 Boolean clean_up_from_scrolling( int map_size, short dx, short dy );
+void paste_terrain(location l,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hit);
+void copy_rect_terrain(Rect r);
+int flood_fill_floor(short new_floor, short old_floor, int x, int y);
+int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y);
+void pushNewUndoStep();
+void pushUndoStep(drawingUndoStep* s);
+drawingUndoStep* popUndoStep();
+void appendChangeToLatestStep(drawingChange* c);
+void lockLatestStep();
+void purgeUndo();
+void performUndo();
+void pushRedoStep(drawingUndoStep* s);
+drawingUndoStep* popRedoStep();
+void purgeRedo();
+void performRedo();
 
 // EDGlobal.c
 short get_ran (short times,short  min,short  max);
@@ -1510,6 +1808,7 @@ void place_left_text();
 void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gworld,Rect targ_rect,
   char masked,short main_win);
 void place_right_buttons(short mode);
+void draw_function_buttons(int mode);
 void set_string(char *string,char *string2);
 void undo_clip();
 Boolean container_there(location l);
@@ -1520,6 +1819,7 @@ void p2c(Str255 str);
 void get_str(Str255 str,short i, short j);
 short string_length(char *str);
 Boolean spot_in_rect(location l,Rect r);
+Boolean clear_graphics_library();
 Boolean refresh_graphics_library();
 Boolean load_sheet_into_library(graphic_id_type *new_sheet);
 short get_index_of_sheet(graphic_id_type *sheet);
@@ -1579,8 +1879,8 @@ Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_
 void give_error(char *text1, char *text2,short parent_num);
 void display_strings_event_filter (short item_hit);
 void display_strings(char *text1, char *text2,
-	char *title,short sound_num,short graphic_num,short parent_num);
-	void choose_text_res_event_filter (short item_hit);
+char *title,short sound_num,short graphic_num,short parent_num);
+void choose_text_res_event_filter (short item_hit);
 void put_text_res();
 short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,char *title);
 void edit_special_num_event_filter (short item_hit);
@@ -1644,6 +1944,8 @@ Boolean change_outdoor_size();
 void new_town_event_filter (short item_hit);
 Boolean new_town();
 void delete_last_town();
+Boolean change_town_size();
+void change_town_size_event_filter(short item_hit);
 void pick_import_town_event_filter (short item_hit);
 short pick_import_town(short which_dlog,short def);
 Boolean terrains_match(short terrain_drawn,short terrain_there);
@@ -1681,6 +1983,6 @@ void edit_scen_intro_event_filter (short item_hit);
 void edit_scen_intro(short which_part);
 void edit_scen_intro_pic_event_filter (short item_hit);
 void edit_scen_intro_pic();
-
-
-
+void pick_town_event_filter (short item_hit, int which_dlg);
+void edit_item_properties_event_filter (short item_hit);
+void edit_item_properties(short which_i);

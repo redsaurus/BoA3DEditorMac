@@ -51,8 +51,6 @@ static Boolean load_when_play[100] = {
 1,1,1,1,1,1,1,1,1,0
 };
 
-
-
 static short sound_delay[100] = {0,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,0,0,
 						0,0,0,0,25,25,0,0,0,0,
@@ -80,9 +78,9 @@ void load_sounds ()
 		load_when_play[i] = TRUE;
 		always_asynch[i] = FALSE;
 		if (load_when_play[i] == FALSE) {
-		sound_handles[i] = GetResource('snd ', 20000 + i);
+			sound_handles[i] = GetResource('snd ', 20000 + i);
 		}	
-		}
+	}
 
  for(t=0;t<4;t++)/****** setup 4 sound channels **********/
   { 
@@ -178,6 +176,6 @@ void clear_sound_memory()
 
 void flip_sound()
 {
-	play_sounds = (play_sounds == TRUE) ? FALSE : TRUE;
+	play_sounds = (play_sounds) ? FALSE : TRUE;
 }
 

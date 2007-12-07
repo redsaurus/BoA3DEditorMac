@@ -174,16 +174,17 @@ short text_block_type::estimate_num_of_tokens()
 		if ((text_block[i] == ' ') || (text_block[i] == '\r') || (text_block[i] == '\t')) {
 			current_mode = 0;
 			space = TRUE;
-			}
-			else if ((text_block[i] >= '0') && (text_block[i] <= '9'))
-				current_mode = 2;
-			else if ((text_block[i] >= 'a') && (text_block[i] <= 'z'))
-				current_mode = 1;
-				else if ((text_block[i] >= 'A') && (text_block[i] <= 'Z'))
-					current_mode = 1;
-					else if (text_block[i] == '_')
-						current_mode = 1;
-						else current_mode = 3;
+		}
+		else if ((text_block[i] >= '0') && (text_block[i] <= '9'))
+			current_mode = 2;
+		else if ((text_block[i] >= 'a') && (text_block[i] <= 'z'))
+			current_mode = 1;
+		else if ((text_block[i] >= 'A') && (text_block[i] <= 'Z'))
+			current_mode = 1;
+		else if (text_block[i] == '_')
+			current_mode = 1;
+		else 
+			current_mode = 3;
 		if ((space == FALSE) && ((old_mode != current_mode) || (current_mode == 3))) {
 			//dbug[0] = text_block[i];
 			//dbug[1] = text_block[i + 1];
@@ -191,8 +192,8 @@ short text_block_type::estimate_num_of_tokens()
 			//dbug[3] = text_block[i + 3];
 			//dbug[4] = 0;
 			num_tokens++;
-			}
 		}
+	}
 	return num_tokens + 20;
 }
 
@@ -218,19 +219,19 @@ script_type::script_type()
 	for (short i = 0; i < NUM_SCRIPT_INTS; i++) {
 		int_var_names[i][0] = 0;
 		int_var_values[i] = 0;
-		}
+	}
 	for (short i = 0; i < NUM_SCRIPT_LOCATIONS; i++) 
 		location_var_names[i][0] = 0;
 	for (short i = 0; i < NUM_SCRIPT_STRING_VARS; i++) {
 		string_var_names[i][0] = 0;
 		string_var_values[i] = NULL;
-		}
+	}
 
 	for (short i = 0; i < NUM_PROCEDURE_PASS_VARS; i++) {
 		procedure_passed_variable_types[i] = 0;
 		procedure_passed_values[i] = 0;
 		procedure_passed_locations[i].x = procedure_passed_locations[i].y = 0;
-		}
+	}
 }
 script_type::~script_type()
 {
@@ -241,26 +242,27 @@ script_type::~script_type()
 
 void script_type::flush_data () 
 {
-	for (short i = 0; i < NUM_SCRIPT_STRINGS; i++)
+	for (short i = 0; i < NUM_SCRIPT_STRINGS; i++){
 		if (string_data[i] != NULL) {
 			delete[] string_data[i];
 			string_data[i] = NULL;
-			}
+		}
+	}
 	if (token_list != NULL)
 		delete[] token_list;
 	token_list = NULL;
-	for (short i = 0; i < NUM_SCRIPT_STRING_VARS; i++)
+	for (short i = 0; i < NUM_SCRIPT_STRING_VARS; i++){
 		if (string_var_values[i] != NULL) {
 			delete[] string_var_values[i];
 			string_var_values[i] = NULL;
 			string_var_names[i][0] = 0;
-			}
-
+		}
+	}
 	for (short i = 0; i < NUM_PROCEDURE_PASS_VARS; i++) {
 		procedure_passed_variable_types[i] = 0;
 		procedure_passed_values[i] = 0;
 		procedure_passed_locations[i].x = procedure_passed_locations[i].y = 0;
-		}
+	}
 	script_killed = FALSE;
 }
 
@@ -315,13 +317,13 @@ short script_type::IsVariable (char * string, int length, token_type *token)
 short script_type::IsBlockDefiner (char *string, int length, short *value)
 {
 
-	for (short i = 0; i < NUM_BLOCK_DEFINERS; i++)
+	for (short i = 0; i < NUM_BLOCK_DEFINERS; i++){
 		if (((int)strlen(block_definers[i].token_text) == length) && 
 		  (strncmp(string,block_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		  	
+		}
+	}  	
     return -1;
 }
 
@@ -331,13 +333,13 @@ short script_type::IsVarDefiner (char * string, int length, short *value)
 	if (type_of_script != 0)
 		return -1;
 	
-	for (short i = 0; i < NUM_VAR_DEFINERS; i++)
+	for (short i = 0; i < NUM_VAR_DEFINERS; i++){
 		if (((int)strlen(variable_definers[i].token_text) == length) && 
 		  (strncmp(string,variable_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		  	
+		}
+	}
     return -1;
 }
 
@@ -347,13 +349,13 @@ short script_type::IsVarArrayDefiner (char * string, int length, short *value)
 	if (type_of_script != 0)
 		return -1;
 
-	for (short i = 0; i < NUM_ARRAY_VAR_DEFINERS; i++)
+	for (short i = 0; i < NUM_ARRAY_VAR_DEFINERS; i++){
 		if (((int)strlen(variable_array_definers[i].token_text) == length) && 
 		  (strncmp(string,variable_array_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		  	
+		}
+	}  	
     return -1;
 }
 
@@ -363,65 +365,65 @@ short script_type::IsVarStringDefiner (char * string, int length, short *value)
 	if (type_of_script != 0)
 		return -1;
 
-	for (short i = 0; i < NUM_STRING_VAR_DEFINERS; i++)
+	for (short i = 0; i < NUM_STRING_VAR_DEFINERS; i++){
 		if (((int)strlen(variable_string_definers[i].token_text)  == length) && 
 		  (strncmp(string,variable_string_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		  	
+		}
+	}  	
     return -1;
 }
 
 short script_type::IsNewVariableDefiner (char * string, int length, short *value)
 {
 
-	for (short i = 0; i < NUM_VAR_TYPE_DEFINERS; i++)
+	for (short i = 0; i < NUM_VAR_TYPE_DEFINERS; i++){
 		if (((int)strlen(new_variable_definers[i].token_text) == length) && 
 		  (strncmp(string,new_variable_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		  	
+		}
+	}  	
     return -1;
 }
 
 short script_type::IsConstant (char * string, int length, short *value)
 {
-	for (short i = 0; i < NUM_CONST_TYPE_DEFINERS; i++)
+	for (short i = 0; i < NUM_CONST_TYPE_DEFINERS; i++){
 		if (((int)strlen(constant_definers[i].token_text) == length) && 
 		  (strncmp(string,constant_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	}
     return -1;
 }
 
 
 short script_type::IsOperator (char * string, int length, short *value)
 {
-	for (short i = 0; i < NUM_OPERATORS; i++)
+	for (short i = 0; i < NUM_OPERATORS; i++){
 		//if (same_string(string,(char *) operator_definers[i].token_text)) {
 		if (((int)strlen(operator_definers[i].token_text) == length) && 
 		  (strncmp(string,operator_definers[i].token_text,length) == 0)) { 
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 
 short script_type::IsNoParameterFunction (char * string, int length, short *value)
 {
-	for (short i = 0; i < NUM_NO_PARAM_FUNCTIONS; i++)
+	for (short i = 0; i < NUM_NO_PARAM_FUNCTIONS; i++){
 		//if (same_string(string,(char *) no_parameter_function_definers[i].token_text)) {
 		if (((int)strlen(no_parameter_function_definers[i].token_text) == length) && 
 		  (strncmp(string,no_parameter_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	}
     return -1;
 }
 
@@ -432,14 +434,14 @@ short script_type::IsFunction (char * string, int length, short *value)
 	if (type_of_script == 0)
 		return -1;
 		
-	for (short i = 0; i < NUM_UNARY_FUNCTIONS; i++)
+	for (short i = 0; i < NUM_UNARY_FUNCTIONS; i++){
 		//if (same_string(string,(char *) unary_function_definers[i].token_text)) {
 		if (((int)strlen(unary_function_definers[i].token_text) == length) && 
 		  (strncmp(string,unary_function_definers[i].token_text,length) == 0)) { 
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	}
     return -1;
 }
 
@@ -450,27 +452,27 @@ short script_type::IsProcedure (char * string, int length, short *value)
 	if (type_of_script == 0)
 		return -1;
 
-	for (short i = 0; i < NUM_PROCEDURES; i++)
+	for (short i = 0; i < NUM_PROCEDURES; i++){
 		//if (same_string(string,(char *) procedure_definers[i].token_text)) {
 		if ((strlen(procedure_definers[i].token_text) > 0) && 
 		  (strncmp(string,procedure_definers[i].token_text,length) == 0) &&
 		  ((int)strlen(procedure_definers[i].token_text) == length)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 
 short script_type::IsFlowController (char * string, int length, short *value)
 {
-	for (short i = 0; i < NUM_FLOW_CONTROLLERS; i++)
+	for (short i = 0; i < NUM_FLOW_CONTROLLERS; i++){
 		if (((int)strlen(flow_controller_definers[i].token_text) == length) && 
 		  (strncmp(string,flow_controller_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 
@@ -480,14 +482,14 @@ short script_type::IsBinaryFunction (char * string, int length, short *value)
 	if (type_of_script == 0)
 		return -1;
 
-	for (short i = 0; i < NUM_BINARY_FUNCTIONS; i++)
+	for (short i = 0; i < NUM_BINARY_FUNCTIONS; i++){
 		//if (same_string(string,(char *) binary_function_definers[i].token_text)) {
 		if (((int)strlen(binary_function_definers[i].token_text) == length) && 
 		  (strncmp(string,binary_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 
@@ -497,14 +499,14 @@ short script_type::IsTrinaryFunction (char * string, int length, short *value)
 	if (type_of_script == 0)
 		return -1;
 
-	for (short i = 0; i < NUM_TRINARY_FUNCTIONS; i++)
+	for (short i = 0; i < NUM_TRINARY_FUNCTIONS; i++){
 		//if (same_string(string,(char *) trinary_function_definers[i].token_text)) {
 		if (((int)strlen(trinary_function_definers[i].token_text)  == length) && 
 		 (strncmp(string,trinary_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 short script_type::IsLocationFunction (char * string, int length, short *value)
@@ -513,14 +515,14 @@ short script_type::IsLocationFunction (char * string, int length, short *value)
 	if (type_of_script == 0)
 		return -1;
 
-	for (short i = 0; i < NUM_LOCATION_FUNCTIONS; i++)
+	for (short i = 0; i < NUM_LOCATION_FUNCTIONS; i++){
 		//if (same_string(string,(char *) location_returning_function_definers[i].token_text)) {
 		if (((int)strlen(location_returning_function_definers[i].token_text) == length) && 
 		  (strncmp(string,location_returning_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
 		  	return i;
-		  	}
-		 
+		}
+	} 
     return -1;
 }
 // Loads in the text of the script. Tokenizes it. Sets up all variables and initializes them. Gets rid of loaded text.
@@ -572,12 +574,12 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 	if (num_tokens < 0) {
 		ASB_big("The script ",script_name," is too long.","",-1,"");
 		return FALSE;
-		}
+	}
 	token_list = new token_type[num_tokens];
 	if (token_list == NULL) {
 		ASB("Failed to allocate memory for token list.");
 		return FALSE;
-		}
+	}
 
 	// Everything worked out. So far.
 	type_of_script = type_of_script_to_load;
@@ -767,7 +769,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 						return FALSE;
 	           			}
             		}
-            		else { // it's crap. error out
+            		else { // it's junk. error out
 		            	char* save = new char[length+1];
 		                strncpy(save,f,length);
 		                save[length] = 0;
@@ -917,8 +919,6 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 	delete script;	
 	script = NULL;
 
-	
-	
 	return TRUE;
 }
 
@@ -1764,10 +1764,12 @@ Boolean script_type::evaluate_int_expression(short next_token,short *result,shor
 		
 		if (token.type == SEMICOLON_TYPE) {
 			expression_ended = TRUE;
-		} else if (token.type == NUMBER_TYPE || token.type == INT_VARIABLE_TYPE ) {
+		}
+		else if (token.type == NUMBER_TYPE || token.type == INT_VARIABLE_TYPE ) {
 			tokenList[tokenListLength++] = token;
 			next_token++;
-		} else {
+		}
+		else {
 			if ( tokenStackTop >= 0 )
 				topOp = tokenStack[tokenStackTop];
 
@@ -2123,30 +2125,29 @@ Boolean script_type::process_scenario_data()
 							ASB_big("Scenario data file error: Out of place import command in line ","","","",token_list[next_token].line,".");
 							return FALSE;
 							break;
-						}
-				
 					}
-					else {
-						switch (cur_editing_type) {
-							case 1: // editing a character
-								assignment_result = set_char_variable(current_char_edited,type_of_edit,new_value);
-								break;
-							case 2: // editing a floor
-								assignment_result = set_floor_variable(current_floor_edited,type_of_edit,new_value);
-								break;
-							case 3: // editing terrain
-								assignment_result = set_terrain_variable(current_terrain_edited,type_of_edit,new_value);
-								break;
-							case 4: // editing item
-								assignment_result = set_item_variable(current_item_edited,type_of_edit,new_value);
-								break;
+				}
+				else {
+					switch (cur_editing_type) {
+						case 1: // editing a character
+							assignment_result = set_char_variable(current_char_edited,type_of_edit,new_value);
+							break;
+						case 2: // editing a floor
+							assignment_result = set_floor_variable(current_floor_edited,type_of_edit,new_value);
+							break;
+						case 3: // editing terrain
+							assignment_result = set_terrain_variable(current_terrain_edited,type_of_edit,new_value);
+							break;
+						case 4: // editing item
+							assignment_result = set_item_variable(current_item_edited,type_of_edit,new_value);
+							break;
 
-							default:
-								ASB_big("Scenario data file error: Out of place variable definer in line ","","","",token_list[next_token].line,".");
-								return FALSE;
-								break;
-							}
-						}
+						default:
+							ASB_big("Scenario data file error: Out of place variable definer in line ","","","",token_list[next_token].line,".");
+							return FALSE;
+							break;
+					}
+				}
 				if (assignment_result == FALSE) {
 					ASB_big("Scenario data file error: Assignment error in line ","","","",token_list[next_token].line,".");
 					return FALSE;			
@@ -2939,7 +2940,7 @@ Boolean set_char_string(short which_char_type,short which_value,char *new_str)
 				ASB_big("String error: ",new_str," is too long.","",-1,"");
 				return FALSE;
 				}
-			strcpy(scen_data.scen_creatures[which_char_type].default_script,new_str); 		
+			strcpy(scen_data.scen_creatures[which_char_type].default_script,new_str);
 			break;
 
 		default:
@@ -3396,7 +3397,7 @@ Boolean script_type::run_procedure(short which_procedure,short which_line)
 	if (error) {
 		ASB_big(script_name," Error: Procedure call error in line ","","",which_line,".");
 		script_killed = TRUE; return TRUE;
-		}
+	}
 		
 	return FALSE;
 }
@@ -3421,8 +3422,6 @@ location script_type::location_function_value(short what_function,short what_pas
 	if (error) {
 		ASB_big(script_name," Error: Location-returning function error in line ","","",what_line,".");
 		script_killed = TRUE;
-		}
+	}
 	return dummy_loc;
 }
-
-

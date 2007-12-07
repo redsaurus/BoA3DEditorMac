@@ -1,0 +1,706 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXApplicationTarget section */
+		6A86A27F0688BD08009593BC /* Isaacs - BoA Editor */ = {
+			isa = PBXApplicationTarget;
+			buildConfigurationList = 9D5ECA630C029A1800C5BE06 /* Build configuration list for PBXApplicationTarget "Isaacs - BoA Editor" */;
+			buildPhases = (
+				6A86A27A0688BD08009593BC /* Headers */,
+				6A86A27C0688BD08009593BC /* Sources */,
+				6A86A27D0688BD08009593BC /* Frameworks */,
+				6A86A27E0688BD08009593BC /* Rez */,
+				C742589D07AF7F2500B47EBF /* Resources */,
+			);
+			dependencies = (
+			);
+			name = "Isaacs - BoA Editor";
+			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+			productName = "Isaacs - BoA Editor";
+			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */;
+			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>3D Blades of Avernum Editor</string>
+	<key>CFBundleGetInfoString</key>
+	<string>v1.02b5</string>
+	<key>CFBundleIconFile</key>
+	<string>BoAEdAPPL.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.spidweb.BoA3DEditor</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>3D BoA Editor</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>v1.02b5</string>
+	<key>CFBundleSignature</key>
+	<string>blED</string>
+	<key>CFBundleVersion</key>
+	<string>v1.03b</string>
+</dict>
+</plist>
+";
+		};
+/* End PBXApplicationTarget section */
+
+/* Begin PBXBuildFile section */
+		6A86A2860688BDF2009593BC /* Bl A Editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40006771A6E0030138E /* Bl A Editor.cpp */; };
+		6A86A2870688BDF6009593BC /* Bl A Fileio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40206771A6F0030138E /* Bl A Fileio.cpp */; };
+		6A86A2880688BDFA009593BC /* dlogtool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40306771A6F0030138E /* dlogtool.cpp */; };
+		6A86A2890688BDFF009593BC /* EdFcns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40406771A6F0030138E /* EdFcns.cpp */; };
+		6A86A28B0688BE05009593BC /* EdGlobal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40506771A6F0030138E /* EdGlobal.cpp */; };
+		6A86A28C0688BE08009593BC /* EdParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40606771A6F0030138E /* EdParser.cpp */; };
+		6A86A28D0688BE0A009593BC /* EdUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40706771A6F0030138E /* EdUtils.cpp */; };
+		6A86A28E0688BE12009593BC /* Graphics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40906771A6F0030138E /* Graphics.cpp */; };
+		6A86A28F0688BE18009593BC /* keydlgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40A06771A6F0030138E /* keydlgs.cpp */; };
+		6A86A2900688BE1B009593BC /* Library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40B06771A6F0030138E /* Library.cpp */; };
+		6A86A2910688BE1E009593BC /* sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40C06771A6F0030138E /* sound.cpp */; };
+		6A86A2920688BE20009593BC /* townout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40E06771A6F0030138E /* townout.cpp */; };
+		6A86A2930688BE38009593BC /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+		6A86A2940688BE3E009593BC /* global.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40806771A6F0030138E /* global.h */; };
+		6A86A2980688BE57009593BC /* tokntype.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40D06771A6F0030138E /* tokntype.h */; };
+		9D4864990CDCDAD100444D09 /* BoAScen.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D4864980CDCDAD100444D09 /* BoAScen.icns */; };
+		9DD2E4680CC079810078A447 /* libstdc++-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD2E4670CC079810078A447 /* libstdc++-static.a */; };
+		9DFCBBCA0CC0728000DD1669 /* global.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40806771A6F0030138E /* global.h */; };
+		9DFCBBCB0CC0728000DD1669 /* tokntype.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40D06771A6F0030138E /* tokntype.h */; };
+		9DFCBBCC0CC0728000DD1669 /* 3D BoA Editor_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */; };
+		9DFCBBCE0CC0728000DD1669 /* Graphics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40906771A6F0030138E /* Graphics.cpp */; };
+		9DFCBBCF0CC0728000DD1669 /* EdFcns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40406771A6F0030138E /* EdFcns.cpp */; };
+		9DFCBBD00CC0728000DD1669 /* Bl A Fileio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40206771A6F0030138E /* Bl A Fileio.cpp */; };
+		9DFCBBD10CC0728000DD1669 /* Bl A Editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40006771A6E0030138E /* Bl A Editor.cpp */; };
+		9DFCBBD20CC0728000DD1669 /* dlogtool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40306771A6F0030138E /* dlogtool.cpp */; };
+		9DFCBBD30CC0728000DD1669 /* EdGlobal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40506771A6F0030138E /* EdGlobal.cpp */; };
+		9DFCBBD40CC0728000DD1669 /* EdParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40606771A6F0030138E /* EdParser.cpp */; };
+		9DFCBBD50CC0728000DD1669 /* EdUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40706771A6F0030138E /* EdUtils.cpp */; };
+		9DFCBBD60CC0728000DD1669 /* keydlgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40A06771A6F0030138E /* keydlgs.cpp */; };
+		9DFCBBD70CC0728000DD1669 /* Library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40B06771A6F0030138E /* Library.cpp */; };
+		9DFCBBD80CC0728000DD1669 /* sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40C06771A6F0030138E /* sound.cpp */; };
+		9DFCBBD90CC0728000DD1669 /* townout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40E06771A6F0030138E /* townout.cpp */; };
+		9DFCBBDB0CC0728000DD1669 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+		9DFCBBDD0CC0728000DD1669 /* 3D Editor Graphics.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */; };
+		9DFCBBDE0CC0728000DD1669 /* Bl A Editor.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2907AF567300D7E90C /* Bl A Editor.r */; };
+		9DFCBBE00CC0728000DD1669 /* BoAEdAPPL.icns in Resources */ = {isa = PBXBuildFile; fileRef = C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */; };
+		C76F042607B0F35400A7A55E /* BoAEdAPPL.icns in Resources */ = {isa = PBXBuildFile; fileRef = C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */; };
+		C7DE88D60775BF6000258194 /* 3D BoA Editor_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */; };
+		C7E5FD2607AF566300D7E90C /* 3D Editor Graphics.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */; };
+		C7E5FD2A07AF567300D7E90C /* Bl A Editor.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2907AF567300D7E90C /* Bl A Editor.r */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0249A66BFF388E3F11CA2CEA /* libstdc++.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++.a"; path = "/usr/lib/libstdc++.a"; sourceTree = "<absolute>"; };
+		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		6A66C40006771A6E0030138E /* Bl A Editor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = "Bl A Editor.cpp"; sourceTree = "<group>"; };
+		6A66C40206771A6F0030138E /* Bl A Fileio.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = "Bl A Fileio.cpp"; sourceTree = "<group>"; };
+		6A66C40306771A6F0030138E /* dlogtool.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dlogtool.cpp; sourceTree = "<group>"; };
+		6A66C40406771A6F0030138E /* EdFcns.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = EdFcns.cpp; sourceTree = "<group>"; };
+		6A66C40506771A6F0030138E /* EdGlobal.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = EdGlobal.cpp; sourceTree = "<group>"; };
+		6A66C40606771A6F0030138E /* EdParser.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = EdParser.cpp; sourceTree = "<group>"; };
+		6A66C40706771A6F0030138E /* EdUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = EdUtils.cpp; sourceTree = "<group>"; };
+		6A66C40806771A6F0030138E /* global.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = global.h; sourceTree = "<group>"; };
+		6A66C40906771A6F0030138E /* Graphics.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Graphics.cpp; sourceTree = "<group>"; };
+		6A66C40A06771A6F0030138E /* keydlgs.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = keydlgs.cpp; sourceTree = "<group>"; };
+		6A66C40B06771A6F0030138E /* Library.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Library.cpp; sourceTree = "<group>"; };
+		6A66C40C06771A6F0030138E /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
+		6A66C40D06771A6F0030138E /* tokntype.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tokntype.h; sourceTree = "<group>"; };
+		6A66C40E06771A6F0030138E /* townout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = townout.cpp; sourceTree = "<group>"; };
+		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D4864980CDCDAD100444D09 /* BoAScen.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAScen.icns; sourceTree = "<group>"; };
+		9DD2E4670CC079810078A447 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
+		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
+		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAEdAPPL.icns; sourceTree = "<group>"; };
+		C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "3D BoA Editor_Prefix.pch"; sourceTree = "<group>"; };
+		C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "3D Editor Graphics.r"; sourceTree = "<group>"; };
+		C7E5FD2907AF567300D7E90C /* Bl A Editor.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "Bl A Editor.r"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6A86A27D0688BD08009593BC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A86A2930688BE38009593BC /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DFCBBDA0CC0728000DD1669 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DFCBBDB0CC0728000DD1669 /* Carbon.framework in Frameworks */,
+				9DD2E4680CC079810078A447 /* libstdc++-static.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		195DF8CFFE9D517E11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */,
+				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		20286C29FDCF999611CA2CEA /* Isaacs - BoA Editor v1.1 */ = {
+			isa = PBXGroup;
+			children = (
+				C74258B507AF849F00B47EBF /* Headers */,
+				20286C2AFDCF999611CA2CEA /* Sources */,
+				20286C2CFDCF999611CA2CEA /* Resources */,
+				20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */,
+				C74258B607AF84F100B47EBF /* Bundle Resources */,
+				195DF8CFFE9D517E11CA2CBB /* Products */,
+				9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */,
+			);
+			name = "Isaacs - BoA Editor v1.1";
+			sourceTree = "<group>";
+		};
+		20286C2AFDCF999611CA2CEA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				6A66C40006771A6E0030138E /* Bl A Editor.cpp */,
+				6A66C40206771A6F0030138E /* Bl A Fileio.cpp */,
+				6A66C40306771A6F0030138E /* dlogtool.cpp */,
+				6A66C40406771A6F0030138E /* EdFcns.cpp */,
+				6A66C40506771A6F0030138E /* EdGlobal.cpp */,
+				6A66C40606771A6F0030138E /* EdParser.cpp */,
+				6A66C40706771A6F0030138E /* EdUtils.cpp */,
+				6A66C40906771A6F0030138E /* Graphics.cpp */,
+				6A66C40A06771A6F0030138E /* keydlgs.cpp */,
+				6A66C40B06771A6F0030138E /* Library.cpp */,
+				6A66C40C06771A6F0030138E /* sound.cpp */,
+				6A66C40E06771A6F0030138E /* townout.cpp */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		20286C2CFDCF999611CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9D4864980CDCDAD100444D09 /* BoAScen.icns */,
+				C7E5FD2907AF567300D7E90C /* Bl A Editor.r */,
+				C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				9DD2E4670CC079810078A447 /* libstdc++-static.a */,
+				20286C33FDCF999611CA2CEA /* Carbon.framework */,
+				0249A66BFF388E3F11CA2CEA /* libstdc++.a */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		C74258B507AF849F00B47EBF /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */,
+				6A66C40806771A6F0030138E /* global.h */,
+				6A66C40D06771A6F0030138E /* tokntype.h */,
+			);
+			name = Headers;
+			sourceTree = "<group>";
+		};
+		C74258B607AF84F100B47EBF /* Bundle Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */,
+			);
+			name = "Bundle Resources";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		6A86A27A0688BD08009593BC /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A86A2940688BE3E009593BC /* global.h in Headers */,
+				6A86A2980688BE57009593BC /* tokntype.h in Headers */,
+				C7DE88D60775BF6000258194 /* 3D BoA Editor_Prefix.pch in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DFCBBC90CC0728000DD1669 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DFCBBCA0CC0728000DD1669 /* global.h in Headers */,
+				9DFCBBCB0CC0728000DD1669 /* tokntype.h in Headers */,
+				9DFCBBCC0CC0728000DD1669 /* 3D BoA Editor_Prefix.pch in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		9DFCBBC80CC0728000DD1669 /* Isaacs - BoA Editor (Upgraded) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DFCBBE10CC0728000DD1669 /* Build configuration list for PBXNativeTarget "Isaacs - BoA Editor (Upgraded)" */;
+			buildPhases = (
+				9DFCBBC90CC0728000DD1669 /* Headers */,
+				9DFCBBCD0CC0728000DD1669 /* Sources */,
+				9DFCBBDA0CC0728000DD1669 /* Frameworks */,
+				9DFCBBDC0CC0728000DD1669 /* Rez */,
+				9DFCBBDF0CC0728000DD1669 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Isaacs - BoA Editor (Upgraded)";
+			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+			productName = "Isaacs - BoA Editor";
+			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		20286C28FDCF999611CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 9D5ECA680C029A1800C5BE06 /* Build configuration list for PBXProject "3D BoA Editor" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 20286C29FDCF999611CA2CEA /* Isaacs - BoA Editor v1.1 */;
+			projectDirPath = "";
+			targets = (
+				6A86A27F0688BD08009593BC /* Isaacs - BoA Editor */,
+				9DFCBBC80CC0728000DD1669 /* Isaacs - BoA Editor (Upgraded) */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9DFCBBDF0CC0728000DD1669 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DFCBBE00CC0728000DD1669 /* BoAEdAPPL.icns in Resources */,
+				9D4864990CDCDAD100444D09 /* BoAScen.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C742589D07AF7F2500B47EBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C76F042607B0F35400A7A55E /* BoAEdAPPL.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		6A86A27E0688BD08009593BC /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C7E5FD2607AF566300D7E90C /* 3D Editor Graphics.r in Rez */,
+				C7E5FD2A07AF567300D7E90C /* Bl A Editor.r in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DFCBBDC0CC0728000DD1669 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DFCBBDD0CC0728000DD1669 /* 3D Editor Graphics.r in Rez */,
+				9DFCBBDE0CC0728000DD1669 /* Bl A Editor.r in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6A86A27C0688BD08009593BC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A86A28E0688BE12009593BC /* Graphics.cpp in Sources */,
+				6A86A2890688BDFF009593BC /* EdFcns.cpp in Sources */,
+				6A86A2870688BDF6009593BC /* Bl A Fileio.cpp in Sources */,
+				6A86A2860688BDF2009593BC /* Bl A Editor.cpp in Sources */,
+				6A86A2880688BDFA009593BC /* dlogtool.cpp in Sources */,
+				6A86A28B0688BE05009593BC /* EdGlobal.cpp in Sources */,
+				6A86A28C0688BE08009593BC /* EdParser.cpp in Sources */,
+				6A86A28D0688BE0A009593BC /* EdUtils.cpp in Sources */,
+				6A86A28F0688BE18009593BC /* keydlgs.cpp in Sources */,
+				6A86A2900688BE1B009593BC /* Library.cpp in Sources */,
+				6A86A2910688BE1E009593BC /* sound.cpp in Sources */,
+				6A86A2920688BE20009593BC /* townout.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DFCBBCD0CC0728000DD1669 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DFCBBCE0CC0728000DD1669 /* Graphics.cpp in Sources */,
+				9DFCBBCF0CC0728000DD1669 /* EdFcns.cpp in Sources */,
+				9DFCBBD00CC0728000DD1669 /* Bl A Fileio.cpp in Sources */,
+				9DFCBBD10CC0728000DD1669 /* Bl A Editor.cpp in Sources */,
+				9DFCBBD20CC0728000DD1669 /* dlogtool.cpp in Sources */,
+				9DFCBBD30CC0728000DD1669 /* EdGlobal.cpp in Sources */,
+				9DFCBBD40CC0728000DD1669 /* EdParser.cpp in Sources */,
+				9DFCBBD50CC0728000DD1669 /* EdUtils.cpp in Sources */,
+				9DFCBBD60CC0728000DD1669 /* keydlgs.cpp in Sources */,
+				9DFCBBD70CC0728000DD1669 /* Library.cpp in Sources */,
+				9DFCBBD80CC0728000DD1669 /* sound.cpp in Sources */,
+				9DFCBBD90CC0728000DD1669 /* townout.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9D5ECA640C029A1800C5BE06 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRECOMPILE_PREFIX_HEADER = YES;
+				PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		9D5ECA650C029A1800C5BE06 /* Shadow variable check */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_WARN_SHADOW = YES;
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRECOMPILE_PREFIX_HEADER = YES;
+				PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			name = "Shadow variable check";
+		};
+		9D5ECA660C029A1800C5BE06 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUGGING_SYMBOLS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRECOMPILE_PREFIX_HEADER = YES;
+				PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		9D5ECA670C029A1800C5BE06 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = NO;
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRECOMPILE_PREFIX_HEADER = YES;
+				PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		9D5ECA690C029A1800C5BE06 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ppc;
+			};
+			name = Development;
+		};
+		9D5ECA6A0C029A1800C5BE06 /* Shadow variable check */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ppc;
+			};
+			name = "Shadow variable check";
+		};
+		9D5ECA6B0C029A1800C5BE06 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ppc;
+				GCC_OPTIMIZATION_LEVEL = 0;
+			};
+			name = Deployment;
+		};
+		9D5ECA6C0C029A1800C5BE06 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = ppc;
+			};
+			name = Default;
+		};
+		9DFCBBE20CC0728000DD1669 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "Info-Isaacs___BoA_Editor__Upgraded_.plist";
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/lib/,
+					/usr/lib/gcc/darwin/3.3,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		9DFCBBE30CC0728000DD1669 /* Shadow variable check */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_SHADOW = YES;
+				INFOPLIST_FILE = "Info-Isaacs___BoA_Editor__Upgraded_.plist";
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/lib/,
+					/usr/lib/gcc/darwin/3.3,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = "";
+				ZERO_LINK = YES;
+			};
+			name = "Shadow variable check";
+		};
+		9DFCBBE40CC0728000DD1669 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPYING_PRESERVES_HFS_DATA = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				INFOPLIST_FILE = "Info-Isaacs___BoA_Editor__Upgraded_.plist";
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/lib/,
+					/usr/lib/gcc/darwin/3.3,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		9DFCBBE50CC0728000DD1669 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "Info-Isaacs___BoA_Editor__Upgraded_.plist";
+				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/lib/,
+					/usr/lib/gcc/darwin/3.3,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "-Wshadow";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "3D Blades of Avernum Editor";
+				SECTORDER_FLAGS = "";
+				SKIP_INSTALL = YES;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9D5ECA630C029A1800C5BE06 /* Build configuration list for PBXApplicationTarget "Isaacs - BoA Editor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D5ECA640C029A1800C5BE06 /* Development */,
+				9D5ECA650C029A1800C5BE06 /* Shadow variable check */,
+				9D5ECA660C029A1800C5BE06 /* Deployment */,
+				9D5ECA670C029A1800C5BE06 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		9D5ECA680C029A1800C5BE06 /* Build configuration list for PBXProject "3D BoA Editor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D5ECA690C029A1800C5BE06 /* Development */,
+				9D5ECA6A0C029A1800C5BE06 /* Shadow variable check */,
+				9D5ECA6B0C029A1800C5BE06 /* Deployment */,
+				9D5ECA6C0C029A1800C5BE06 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		9DFCBBE10CC0728000DD1669 /* Build configuration list for PBXNativeTarget "Isaacs - BoA Editor (Upgraded)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DFCBBE20CC0728000DD1669 /* Development */,
+				9DFCBBE30CC0728000DD1669 /* Shadow variable check */,
+				9DFCBBE40CC0728000DD1669 /* Deployment */,
+				9DFCBBE50CC0728000DD1669 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 20286C28FDCF999611CA2CEA /* Project object */;
+}

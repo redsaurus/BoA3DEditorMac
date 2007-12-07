@@ -138,284 +138,284 @@ short constant_values[NUM_CONST_TYPE_DEFINERS] = {
 	0,0,0,0,0, 0,0,0,0,0
 	};
 token_describer_type constant_definers[NUM_CONST_TYPE_DEFINERS] = {
-	"init_state",
-	"dead_state",
-	"start_state",
-	"true",
-	"false",
+{"init_state"},
+{"dead_state"},
+{"start_state"},
+{"true"},
+{"false"},
 	
-	"me",
-	"exit_state",
-	"search_state",
-	"",
-	"talking_state",
+{"me"},
+{"exit_state"},
+{"search_state"},
+{""},
+{"talking_state"},
 	
-	"dep_on_sdf",
-	"set_sdf",
-	"shop",
-	"set_to_1",
-	"pay",
+{"dep_on_sdf"},
+{"set_sdf"},
+{"shop"},
+{"set_to_1"},
+{"pay"},
 	
-	"end_talk",
-	"intro",
-	"unlock_spell_state",
-	"sanctification_state",
-	"",
+{"end_talk"},
+{"intro"},
+{"unlock_spell_state"},
+{"sanctification_state"},
+{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+{""},
+{""},
+{""},
+{""},
+{""},
 	
-	"",
-	"",
-	"",
-	"",
-	""
+{""},
+{""},
+{""},
+{""},
+{""}
 	
 	};
 	
 token_describer_type no_parameter_function_definers[NUM_NO_PARAM_FUNCTIONS] = {
-	"pc_num",
-	"current_unlock_strength",
-	"random_party_member",
-	"is_group",
-	"is_combat",
+{"pc_num"},
+{"current_unlock_strength"},
+{"random_party_member"},
+{"is_group"},
+{"is_combat"},
 	
-	"get_crime_level",
-	"coins_amount",
-	"get_current_tick",
-	"current_personality",
-	"current_zone",
+{"get_crime_level"},
+{"coins_amount"},
+{"get_current_tick"},
+{"current_personality"},
+{"current_zone"},
 	
-	"dist_to_pc", // 10 // creature/object
-	"am_i_doing_action",
-	"my_current_message",
-	"my_number",
-	"item_used_on_me",
+{"dist_to_pc"}, // 10 // creature/object
+{"am_i_doing_action"},
+{"my_current_message"},
+{"my_number"},
+{"item_used_on_me"},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+{""},
+{""},
+{""},
+{""},
+{""},
 	
-	"target_ok", // 20 // creature
-	"get_target",
-	"my_group",
-	"my_dist_from_start",
-	"friendly_target_ok",
+{"target_ok"}, // 20 // creature
+{"get_target"},
+{"my_group"},
+{"my_dist_from_start"},
+{"friendly_target_ok"},
 	
-	"who_shot_me",
-	"my_ap",
-	"get_friend_target",
-	"",
-	"",
+{"who_shot_me"},
+{"my_ap"},
+{"get_friend_target"},
+{""},
+{""},
 
-	"get_pc_skill_pts", // 30
-	"",
-	"",
-	"",
-	"",
+{"get_pc_skill_pts"}, // 30
+{""},
+{""},
+{""},
+{""},
 
-	"",
-	"",
-	"",
-	"",
-	""
+{""},
+{""},
+{""},
+{""},
+{""}
 
 };
 
 token_describer_type unary_function_definers[NUM_UNARY_FUNCTIONS] = {
-	"char_ok", // general
-	"what_group_in",
-	"num_chars_in_group",
-	"get_attitude",
-	"object_type",
+	{"char_ok"}, // general
+	{"what_group_in"},
+	{"num_chars_in_group"},
+	{"get_attitude"},
+	{"object_type"},
 	
-	"creature_type",
-	"has_spec_item",
-	"get_stat",
-	"get_courage",
-	"get_strategy",
+	{"creature_type"},
+	{"has_spec_item"},
+	{"get_stat"},
+	{"get_courage"},
+	{"get_strategy"},
 	
-	"get_aggression", // 10
-	"pay_coins",
-	"has_item",
-	"take_all_of_item",
-	"get_level",
+	{"get_aggression"}, // 10
+	{"pay_coins"},
+	{"has_item"},
+	{"take_all_of_item"},
+	{"get_level"},
 	
-	"zone_clear",
-	"can_see_char",
-	"spawn_creature",
-	"creature_on_obj",
-	"",
+	{"zone_clear"},
+	{"can_see_char"},
+	{"spawn_creature"},
+	{"creature_on_obj"},
+	{""},
 	
-	"get_memory_cell", // 20 // creature/object only
-	"dist_to_char",
-	"get_nearest_char",
-	"get_nearest_good_char",
-	"get_nearest_evil_char",
+	{"get_memory_cell"}, // 20 // creature/object only
+	{"dist_to_char"},
+	{"get_nearest_char"},
+	{"get_nearest_good_char"},
+	{"get_nearest_evil_char"},
 	
-	"get_nearest_like_char",
-	"get_nearest_hate_char",
-	"",
-	"",
-	"",
+	{"get_nearest_like_char"},
+	{"get_nearest_hate_char"},
+	{""},
+	{""},
+	{""},
 	
-	"", // 30
-	"",
-	"",
-	"",
-	"",
+	{""}, // 30
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"friends_nearby", // 40 // creature only
-	"enemies_nearby",
-	"",
-	"",
-	"",
+	{"friends_nearby"}, // 40 // creature only
+	{"enemies_nearby"},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"get_health", // 50 more general
-	"get_max_health",
-	"num_of_item",
-	"get_obj_tool_difficulty",
-	"get_obj_num_tools_needed",
+	{"get_health"}, // 50 more general
+	{"get_max_health"},
+	{"num_of_item"},
+	{"get_obj_tool_difficulty"},
+	{"get_obj_num_tools_needed"},
 	
-	"pc_can_disarm_obj",
-	"",
-	"",
-	"",
-	""
+	{"pc_can_disarm_obj"},
+	{""},
+	{""},
+	{""},
+	{""}
 	
 	};
 	
 token_describer_type binary_function_definers[NUM_BINARY_FUNCTIONS] = {
-	"get_sdf",
-	"char_in_group",
-	"get_flag",
-	"tick_difference",
-	"get_terrain",
+	{"get_sdf"},
+	{"char_in_group"},
+	{"get_flag"},
+	{"tick_difference"},
+	{"get_terrain"},
 	
-	"get_floor",
-	"get_char_status",
-	"dist_to_nav_point",
-	"",
-	"",
+	{"get_floor"},
+	{"get_char_status"},
+	{"dist_to_nav_point"},
+	{""},
+	{""},
 	
-	"", // 10
-	"",
-	"",
-	"",
-	"",
+	{""}, // 10
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"return_to_start", // 20
-	"",
-	"",
-	"",
-	"",
+	{"return_to_start"}, // 20
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	""
+	{""},
+	{""},
+	{""},
+	{""},
+	{""}
 	
 	};
 
 token_describer_type trinary_function_definers[NUM_TRINARY_FUNCTIONS] = {
-	"get_ran",
-	"middle_num",
-	"last_num",
-	"",
-	"",
+	{"get_ran"},
+	{"middle_num"},
+	{"last_num"},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"", // 10
-	"",
-	"",
-	"",
-	"",
+	{""}, // 10
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"follow_path", // 20 // begin creature only
-	"approach_char",
-	"approach_object",
-	"approach_nav_point",
-	"",
+	{"follow_path"}, // 20 // begin creature only
+	{"approach_char"},
+	{"approach_object"},
+	{"approach_nav_point"},
+	{""},
 	
-	"maintain_dist_to_char",
-	"flee_char",
-	"get_foe_target",
-	"get_friendly_target",
-	""
+	{"maintain_dist_to_char"},
+	{"flee_char"},
+	{"get_foe_target"},
+	{"get_friendly_target"},
+	{""}
 	
 	};
 
 token_describer_type location_returning_function_definers[NUM_LOCATION_FUNCTIONS] = {
-	"character_loc",
-	"my_loc",
-	"",
-	"",
-	"",
+	{"character_loc"},
+	{"my_loc"},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	""
+	{""},
+	{""},
+	{""},
+	{""},
+	{""}
 	
 	};
 // 0 - int, 1 - pix_loc, 2 - some string type
@@ -577,189 +577,189 @@ char procedure_expected_variable_types[NUM_PROCEDURES][6] = {
 	{-1,-1,-1,-1,-1}
 	};
 token_describer_type procedure_definers[NUM_PROCEDURES] = {
-	"print_num",
-	"print_nums",
-	"print_str",
-	"print_str_color",
-	"print_loc",
+	{"print_num"},
+	{"print_nums"},
+	{"print_str"},
+	{"print_str_color"},
+	{"print_loc"},
 	
-	"end",
-	"",
-	"begin_talk_mode",
-	"set_spec_item",
-	"alter_stat",
+	{"end"},
+	{""},
+	{"begin_talk_mode"},
+	{"set_spec_item"},
+	{"alter_stat"},
 	
-	"set_state", // 10 begin creature/object only
-	"run_object_animation",
-	"broadcast_char_message",
-	"broadcast_object_message",
-	"heal_nearby",
+	{"set_state"}, // 10 begin creature/object only
+	{"run_object_animation"},
+	{"broadcast_char_message"},
+	{"broadcast_object_message"},
+	{"heal_nearby"},
 	
-	"damage_nearby",
-	"run_reverse_object_animation",
-	"open_container",
-	"close_container",
-	"shift_graphic",
+	{"damage_nearby"},
+	{"run_reverse_object_animation"},
+	{"open_container"},
+	{"close_container"},
+	{"shift_graphic"},
 	
-	"shift_destroyed_graphic", // 20
-	"play_sound",
-	"pc_heard_sound",
-	"set_terrain_string",
-	"set_terrain_string_range",
+	{"shift_destroyed_graphic"}, // 20
+	{"play_sound"},
+	{"pc_heard_sound"},
+	{"set_terrain_string"},
+	{"set_terrain_string_range"},
 	
-	"create_text_bubble",
-	"drain_charge_of_used_object",
-	"set_memory_cell",
-	"play_sound_delay",
-	"pc_heard_sound_delay",
+	{"create_text_bubble"},
+	{"drain_charge_of_used_object"},
+	{"set_memory_cell"},
+	{"play_sound_delay"},
+	{"pc_heard_sound_delay"},
 		
-	"fidget", // 30 // begin creature only
-	"move_to_loc",
-	"do_attack",
-	"set_foe_target",
-	"set_friend_target",
+	{"fidget"}, // 30 // begin creature only
+	{"move_to_loc"},
+	{"do_attack"},
+	{"set_foe_target"},
+	{"set_friend_target"},
 	
-	"kill_char",
-	"run_char_animation",
-	"deduct_ap",
-	"end_combat_turn",
-	"",
+	{"kill_char"},
+	{"run_char_animation"},
+	{"deduct_ap"},
+	{"end_combat_turn"},
+	{""},
 	
-	"", // 40
-	"",
-	"",
-	"",
-	"",
+	{""}, // 40
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"status_nearby", // 50 more creature/object only
-	"",
-	"",
-	"",
-	"",
+	{"status_nearby"}, // 50 more creature/object only
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"set_flag", // 60 // begin general
-	"clear_group",
-	"add_char_to_group",
-	"remove_char_from_group",
-	"",
+	{"set_flag"}, // 60 // begin general
+	{"clear_group"},
+	{"add_char_to_group"},
+	{"remove_char_from_group"},
+	{""},
 	
-	"kill_object",
-	"change_object_type",
-	"give_object_message",
-	"set_object_icon",
-	"set_object_destroyed_icon",
+	{"kill_object"},
+	{"change_object_type"},
+	{"give_object_message"},
+	{"set_object_icon"},
+	{"set_object_destroyed_icon"},
 	
-	"give_char_message", // 70 Functions which can be fed a group
-	"set_attitude",
-	"set_char_status",
-	"set_courage",
-	"set_strategy",
+	{"give_char_message"}, // 70 Functions which can be fed a group
+	{"set_attitude"},
+	{"set_char_status"},
+	{"set_courage"},
+	{"set_strategy"},
 	
-	"set_aggression",
-	"erase_char",
-	"set_name",
-	"set_level",
-	"alert_char",
+	{"set_aggression"},
+	{"erase_char"},
+	{"set_name"},
+	{"set_level"},
+	{"alert_char"},
 	
-	"set_object_blockage", // 80 // more general
-	"print_big_str",
-	"print_big_str_num",
-	"run_sparkles_on_char",
-	"run_sparkles_on_object",
+	{"set_object_blockage"}, // 80 // more general
+	{"print_big_str"},
+	{"print_big_str_num"},
+	{"run_sparkles_on_char"},
+	{"run_sparkles_on_object"},
 	
-	"activate_hidden_group",
-	"award_party_xp",
-	"change_crime_level",
-	"",
-	"",
+	{"activate_hidden_group"},
+	{"award_party_xp"},
+	{"change_crime_level"},
+	{""},
+	{""},
 	
-	"add_string", // 90 // special/talk only
-	"remove_string",
-	"clear_strings",
-	"",
-	"",
+	{"add_string"}, // 90 // special/talk only
+	{"remove_string"},
+	{"clear_strings"},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	"",
+	{""},
+	{""},
+	{""},
+	{""},
+	{""},
 	
-	"restore_energy_nearby", // 100 - more general
-	"inc_flag",
-	"make_zone_hostile",
-	"toggle_quest",
-	"change_coins",
+	{"restore_energy_nearby"}, // 100 - more general
+	{"inc_flag"},
+	{"make_zone_hostile"},
+	{"toggle_quest"},
+	{"change_coins"},
 	
-	"reward_give",
-	"take_item",
-	"put_object_on_navpoint",
-	"revive_party",
-	"begin_shop_mode",
+	{"reward_give"},
+	{"take_item"},
+	{"put_object_on_navpoint"},
+	{"revive_party"},
+	{"begin_shop_mode"},
 	
-	"set_crime_tolerance", // 110
-	"add_range_to_group",
-	"clear_zone",
-	"set_terrain",
-	"set_floor",
+	{"set_crime_tolerance"}, // 110
+	{"add_range_to_group"},
+	{"clear_zone"},
+	{"set_terrain"},
+	{"set_floor"},
 	
-	"set_act_at_dist",
-	"drop_item",
-	"print_named_str",
-	"set_items_not_property",
-	"heal_char",
+	{"set_act_at_dist"},
+	{"drop_item"},
+	{"print_named_str"},
+	{"set_items_not_property"},
+	{"heal_char"},
 	
-	"set_walk_damage", // 120
-	"take_num_of_item",
-	"nav_point_damage_party",
-	"change_pc_skill_pts",
-	"turret_heal",
+	{"set_walk_damage"}, // 120
+	{"take_num_of_item"},
+	{"nav_point_damage_party"},
+	{"change_pc_skill_pts"},
+	{"turret_heal"},
 	
-	"restore_energy_char",
-	"set_obj_tool_difficulty",
-	"show_object_disarm_window",
-	"",
-	"",
+	{"restore_energy_char"},
+	{"set_obj_tool_difficulty"},
+	{"show_object_disarm_window"},
+	{""},
+	{""}
 	};
 	
 token_describer_type new_variable_definers[NUM_VAR_TYPE_DEFINERS] = {
-	"short",
-	"int",
-	"string",
-	"location",
-	"",
+	{"short"},
+	{"int"},
+	{"string"},
+	{"location"},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	""
+	{""},
+	{""},
+	{""},
+	{""},
+	{""}
 	};
 
 token_describer_type flow_controller_definers[NUM_FLOW_CONTROLLERS] = {
-	"if",
-	"while",
-	"else",
-	"",
-	"",
+	{"if"},
+	{"while"},
+	{"else"},
+	{""},
+	{""},
 	
-	"",
-	"",
-	"",
-	"",
-	""
+	{""},
+	{""},
+	{""},
+	{""},
+	{""}
 	};
 	
 // precedence of operators, higher number is more precedence
@@ -768,29 +768,29 @@ short operator_precedence[NUM_OPERATORS] = {
 	10,9,0,0,0, 0,0,0,0,0};
 
 token_describer_type operator_definers[NUM_OPERATORS] = {
-	"+",
-	"-",
-	"*",
-	"/",
-	"&&",
+	{"+"},
+	{"-"},
+	{"*"},
+	{"/"},
+	{"&&"},
 	
-	"||",
-	"==",
-	">",
-	"<",
-	">=",
+	{"||"},
+	{"=="},
+	{">"},
+	{"<"},
+	{">="},
 	
-	"<=",
-	"!=",
-	"",
-	"",
-	"",
+	{"<="},
+	{"!="},
+	{""},
+	{""},
+	{""},
 
-	"",
-	"",
-	"",
-	"",
-	""	
+	{""},
+	{""},
+	{""},
+	{""},
+	{""}	
 	};	
 	
 token_describer_type variable_array_definers[NUM_ARRAY_VAR_DEFINERS] = {

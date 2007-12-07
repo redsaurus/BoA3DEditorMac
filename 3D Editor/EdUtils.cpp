@@ -91,12 +91,10 @@ void RedAlert_big (char *str1,char *str2,char *str3,char *str4,short num,char *s
 	display_error_dialog(str,TRUE);
 }
 
-
 void display_error_dialog(StringPtr theStr,Boolean shut_down)
 {
 	#define		kRedAlertID		128
 	short		whoCares;
-
 
 	ParamText(theStr, "\p", "\p", "\p");		// Replace ^0 in alert with error mssg.
 	whoCares = Alert(kRedAlertID, 0L);			// Bring up alert.
@@ -164,7 +162,6 @@ short rect_dist(Rect *r1,Rect *r2)
 		cur_dist = r2->top - r1->bottom;
 		
 	return cur_dist;
-
 }
 
 Boolean rect_empty(Rect *r)
@@ -232,14 +229,11 @@ Boolean same_string(char *str1,char *str2)
 	return FALSE;
 }
 
-
-
 // Returns TRUE is this location is in the active region of the zone
 Boolean loc_in_active_area(location loc)
 {
 	return loc_touches_rect(loc,town.in_town_rect);
 }
-
 
 Boolean loc_in_rect(location loc,Rect r)
 {
@@ -263,14 +257,12 @@ Boolean loc_touch_rect(location loc,Rect r)
 	return FALSE;
 }
 
-
 short a_v(short x)
 {
 	if (x < 0)
 		return (-1 * x);
 		else return x;
 }
-
 
 terrain_type_type get_ter(short which_ter)
 {

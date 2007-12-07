@@ -9,7 +9,6 @@
 //#include <ctype.h>
 #include "global.h"
 
-
 extern Boolean dialog_not_toast;
 extern short cur_viewing_mode;
 
@@ -29,7 +28,6 @@ short current_cursor = 0;
 
 static Boolean store_strict_string;
 
-	
 void fancy_choice_dialog_event_filter (short item_hit)
 {
 	dialog_not_toast = FALSE;
@@ -45,25 +43,22 @@ short fancy_choice_dialog(short which_dlog,short parent)
 	//make_cursor_sword();
 	
 	cd_create_dialog_parent_num(which_dlog,parent);
-	
-
 //#ifndef EXILE_BIG_GUNS
 //	while (dialog_not_toast)
 //		ModalDialog((ModalFilterProcPtr) cd_event_filter, &item_hit);
-//#endif		
+//#endif
+	if(which_dlog == 1062)//this is a hack to show the version number correctly
+		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.4 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
 	cd_kill_dialog(which_dlog,0);
-
 
 	i = dialog_answer;
 	dialog_answer = store_dialog_answer;
 	
 	return i;
 }
-
-
 
 //cre = check range error
 Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_num) 
@@ -82,20 +77,22 @@ Boolean string_not_clean(char *str,short max_length,short strict_file_naming,cha
 	
 	if ((short)strlen(str) > max_length - 1)
 		error = TRUE;
-		else if (strict_file_naming) {
-			for (short i = 0; i < (short)strlen(str); i++) 
-				if ((isalpha(str[i]) == FALSE) && (isdigit(str[i]) == FALSE) && (str[i] != ' '))
-						error = TRUE;
-			}
+	else if (strict_file_naming) {
+		for (short i = 0; i < (short)strlen(str); i++){
+			if ((isalpha(str[i]) == FALSE) && (isdigit(str[i]) == FALSE) && (str[i] != ' '))
+					error = TRUE;
+		}
+	}
 			
 	if (error) {
 		if (strict_file_naming)
 			sprintf(error_str,"%s is either too long (max. length is %d characters) or has an illegal character. There can be only letters and numbers (no spaces or other characters).",
 			  beginning_of_error,max_length - 1);
-			else sprintf(error_str,"%s too long (max. length is %d characters.",beginning_of_error,max_length - 1);
+		else 
+			sprintf(error_str,"%s too long (max. length is %d characters.",beginning_of_error,max_length - 1);
 		give_error(error_str,"",parent_num);
 		return TRUE;
-		}
+	}
 	return FALSE;
 }
 
@@ -110,12 +107,10 @@ void display_strings_event_filter (short item_hit)
 		case 1:
 			dialog_not_toast = FALSE;
 			break;
-
-		}
+	}
 }
 
-void display_strings(char *text1, char *text2,
-	char *title,short sound_num,short graphic_num,short parent_num)
+void display_strings(char *text1, char *text2,char *title,short sound_num,short graphic_num,short parent_num)
 {
 	short item_hit;
 		
@@ -132,7 +127,7 @@ void display_strings(char *text1, char *text2,
 	csit(store_which_string_dlog,4,(char *) text1);
 	if ((text2 != NULL) && (text2[0] != 0)) {
 		csit(store_which_string_dlog,5,(char *) text2);
-		}
+	}
 	if (strlen(title) > 0)
 		csit(store_which_string_dlog,6,title);
 
@@ -175,7 +170,7 @@ void choose_text_res_event_filter (short item_hit)
 					cd_set_led(820,i,(i == item_hit) ? 1 : 0);
 				}
 			break;
-		}
+	}
 }
 
 void put_text_res()
@@ -187,17 +182,17 @@ void put_text_res()
 		if (store_first_t + which_page * 40 + i > store_last_t) {
 			csit(820,7 + i * 2,"");
 			cd_activate_item(820,8 + i * 2,0);
-			}
-			else {
-				get_str(str,store_res_list,store_first_t + 40 * which_page + i);
-				csit(820,7 + i * 2,(char *) str);
-				cd_activate_item(820,8 + i * 2,1);
-				}
+		}
+		else {
+			get_str(str,store_res_list,store_first_t + 40 * which_page + i);
+			csit(820,7 + i * 2,(char *) str);
+			cd_activate_item(820,8 + i * 2,1);
+		}
 		if (which_page * 40 + i == store_cur_t - store_first_t)
 			cd_set_led(820,8 + i * 2,1);
-			else cd_set_led(820,8 + i * 2,0);
-		}
-
+		else
+			cd_set_led(820,8 + i * 2,0);
+	}
 }
 
 // res_list:
@@ -207,9 +202,10 @@ void put_text_res()
 //   -3 - buttons
 //   -4 - terrain
 //   -6 - floor
+//   -7 - town names
+//   -8 - outdoor section names
 short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,char *title)
 {
-
 	short item_hit;
 
 	store_res_list = res_list;
@@ -217,7 +213,8 @@ short choose_text_res(short res_list,short first_t,short last_t,short cur_choice
 	store_last_t = last_t;
 	if ((cur_choice >= first_t) && (cur_choice <= last_t))
 		store_cur_t = cur_choice;
-		else store_cur_t = first_t;
+	else 
+		store_cur_t = first_t;
 	which_page = (store_cur_t - store_first_t) / 40;
 
 	cd_create_dialog_parent_num(820,parent_num);
@@ -226,10 +223,9 @@ short choose_text_res(short res_list,short first_t,short last_t,short cur_choice
 	if (last_t - first_t < 40) {
 		cd_activate_item(820,4,0);
 		cd_activate_item(820,5,0);
-		}
+	}
 	put_text_res();
 		
-
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 	
@@ -248,13 +244,12 @@ void edit_special_num_event_filter (short item_hit)
 			dialog_answer = -1;
 			dialog_not_toast = FALSE; 
 			break;
-
 		case 3:
 			i = CDGN(825,2);
 			dialog_answer = i;
 			dialog_not_toast = FALSE;
 			break;
-		}
+	}
 }
 
 // mode - unused
@@ -262,12 +257,8 @@ void edit_special_num_event_filter (short item_hit)
 short edit_special_num(short mode,short what_start)
 {
 	short item_hit;
-			
 	cd_create_dialog_parent_num(825,0);
-	
 	CDSN(825,2,what_start);
-		
-
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 	
@@ -280,18 +271,15 @@ short edit_special_num(short mode,short what_start)
 
 void how_many_dlog_event_filter (short item_hit)
 {
-	short i;
-	
 	switch (item_hit) {
 		case 3:
-			i = CDGN(828,2);
+			short i = CDGN(828,2);
 			dialog_answer = i;
 			dialog_not_toast = FALSE;
 			break;
-		}
+	}
 }
 
-// mode - unused
 // what_start - starting value
 short how_many_dlog(short what_start,short minimum,short maximum,char *what_text)
 {
@@ -301,8 +289,7 @@ short how_many_dlog(short what_start,short minimum,short maximum,char *what_text
 	
 	csit(828,4,what_text);
 	CDSN(828,2,what_start);
-		
-
+	
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
@@ -310,47 +297,42 @@ short how_many_dlog(short what_start,short minimum,short maximum,char *what_text
 	
 	dialog_answer = minmax(minimum,maximum,dialog_answer);
 	//if (dialog_answer < 0)
-	//	return what_start;
-	
+	//	return what_start;	
 	return dialog_answer;
 }
 
 void get_str_dlog_event_filter (short item_hit)
 {
 	char str[256];
-	
 	switch (item_hit) {
 		case 3:
 			if (store_strict_string) {
 				CDGT(829,2,str);
 				if (string_not_clean(str,SCRIPT_NAME_LEN,1,"This script name",829)) 
 					return;
-				}
+			}
 			dialog_not_toast = FALSE;
 			break;
-		}
+	}
 }
 
 // strict_string - If true, only alphanumeric characters
 void get_str_dlog(char *start_str,char *header_str,char *response,Boolean strict_string)
 {
 	short item_hit;
-			
+	
 	cd_create_dialog_parent_num(829,0);
 	
 	store_strict_string = strict_string;
 	CDST(829,2,start_str);
 	csit(829,4,header_str);
-		
-
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 	
 	CDGT(829,2,response);
 	cd_kill_dialog(829,0);
-	
-
 }
+
 void make_cursor_sword() 
 {
 	set_cursor(0);
@@ -359,24 +341,36 @@ void make_cursor_sword()
 void set_cursor(short which_c) 
 {
 	short i;
-	static CursHandle cursors[10] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-	
+	static CursHandle cursors[11] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 	if(cur_viewing_mode == 10 || cur_viewing_mode == 11) {
 		if(which_c == 5)
 			which_c = 8;
 		if(which_c == 6)
 			which_c = 9;
 	}
-	
+	//printf("Trying to set cursor %i\n",which_c);
 	if (cursors[0] == NULL) {
-		for (i = 0; i < 10; i++)
+		//printf("First cursor is NULL, initializing all cursors\n");
+		for (i = 0; i < 11; i++){
 			cursors[i] = GetCursor(130 + i);
 		}
+		InitCursor();
+	}
+	if(cursors[which_c]==NULL){
+		//printf("Cursor %i is still NULL. Attempting to reload.\n",which_c);
+		cursors[which_c] = GetCursor(130 + which_c);
+		if(cursors[which_c]==NULL){
+			//printf("STILL NULL. Bailing out\n");
+			return;//something's wrong
+		}
+		//printf("Cursor seems to have loaded; proceeding\n");
+	}
 	current_cursor = which_c;
 	HLock ((Handle) cursors[current_cursor]);
 	SetCursor (*cursors[current_cursor]);
 	HUnlock((Handle) cursors[current_cursor]);
 }
+
 void restore_cursor()
 {
 	set_cursor(current_cursor);
@@ -392,16 +386,10 @@ short choice_dialog(short pic,short num)
 	if (select_dialog == NULL) { 
 		SysBeep(50);
 		ExitToShell();
-		}
-
+	}
 	SetPort(GetDialogPort(select_dialog));	
-
 	//ShowWindow(select_dialog);
-
 	ModalDialog(NIL, &item_hit);
-		
 	DisposeDialog(select_dialog);
-
 	return item_hit;
-
 }
