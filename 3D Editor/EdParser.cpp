@@ -548,7 +548,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 	if ((strlen(script_to_load) <= 0) || (strlen(script_to_load) >= 100)){
 		ASB_big("Script name empty or too long.","","","",-1,"");
 		return FALSE;
-		}
+	}
 	//strcpy(script_name,script_to_load);
 	sprintf(script_name,"%s.txt",script_to_load);	
 	
@@ -558,14 +558,14 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 	if (script == NULL) {
 		ASB("Failed to allocate script memory.");
 		return FALSE;
-		}
+	}
 		
 	if (script->load_text_file_into_buffer(script_name,file_location) == FALSE) {
 		ASB("Failed to load script text.");
 		delete script;	
 		script = NULL;
 		return FALSE;
-		}
+	}
 		
 	script->preprocess_text();
 	
@@ -593,8 +593,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 	short current_variable_created = -1;
 	
 	
-	for (char *f = s; *f; f = s)
-    {
+	for (char *f = s; *f; f = s){
     	int length;
 
 
@@ -602,8 +601,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 			cur_line++;
 			
     	// get token from input string
-        if ( IsWhiteSpace(*s) )
-        {
+        if ( IsWhiteSpace(*s) ){
         	s++;
             continue;
         }
@@ -639,8 +637,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
         		current_variable_created = -1;
             s++;
         }
-		else if ( IsIdentifier(*s) )
-        {
+		else if ( IsIdentifier(*s) ){
 //        	short length;
         	
         	for (length = 0; IsIdentifier(*s) || isdigit(*s) ; length++)
@@ -655,7 +652,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
          
             if ( IsBlockDefiner(f,length,&token.what_sort) >= 0) {
             	token.type = 1;
- 	           }
+			}
             else if ( IsVarDefiner(f,length,&token.what_sort) >= 0) {
             	token.type = 44;
             }
@@ -682,11 +679,11 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
             {
             	token.type = PROCEDURE_TYPE;
             }
-             else if ( IsNoParameterFunction(f,length,&token.what_sort)  >= 0)
+			else if ( IsNoParameterFunction(f,length,&token.what_sort)  >= 0)
             {
             	token.type = NO_PARAM_FUNCTION_TYPE;
             }
-           else if ( IsFunction(f,length,&token.what_sort)  >= 0)
+			else if ( IsFunction(f,length,&token.what_sort)  >= 0)
             {
             	token.type = UNARY_FUNCTION_TYPE;
             }
@@ -718,11 +715,11 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 						delete[] token_list;
 		                token_list = NULL;
 						return FALSE;
-            			}
+					}
             		
             		switch (defining_new_variable_type) {
             			case 0: case 1: // int
-            				for (i = 0; i < NUM_SCRIPT_INTS; i++) 
+            				for (i = 0; i < NUM_SCRIPT_INTS; i++){
 								if (strlen(int_var_names[i]) == 0) {
  		            			    strncpy(int_var_names[i],f,length);
 		         			    	int_var_names[i][length] = 0;
@@ -730,12 +727,13 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
            						 	token.type = INT_VARIABLE_TYPE;
             						token.what_sort = i;
             						i = NUM_SCRIPT_INTS + 10;
-            						}
+								}
+							}
             				if (i < NUM_SCRIPT_INTS + 10)
             					no_room_in_list = TRUE;	
             				break;
             			case 2: // string
-            				for (i = 0; i < NUM_SCRIPT_STRING_VARS; i++) 
+            				for (i = 0; i < NUM_SCRIPT_STRING_VARS; i++){
 								if (strlen(string_var_names[i]) == 0) {
  		            			    strncpy(string_var_names[i],f,length);
 		         			    	string_var_names[i][length] = 0;
@@ -743,12 +741,13 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
            						 	token.type = STRING_VARIABLE_TYPE;
             						token.what_sort = i;
             						i = NUM_SCRIPT_STRING_VARS + 10;
-            						}
+								}
+							}
             				if (i < NUM_SCRIPT_STRING_VARS + 10)
             					no_room_in_list = TRUE;	
             				break;
             			case 3: // location
-            				for (i = 0; i < NUM_SCRIPT_LOCATIONS; i++) 
+            				for (i = 0; i < NUM_SCRIPT_LOCATIONS; i++){
 								if (strlen(location_var_names[i]) == 0) {
  		            			    strncpy(location_var_names[i],f,length);
 		         			    	location_var_names[i][length] = 0;
@@ -756,29 +755,30 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
            						 	token.type = LOCATION_VARIABLE_TYPE;
             						token.what_sort = i;
 	           						i = NUM_SCRIPT_LOCATIONS + 10;
-            						}
+								}
+							}
             				if (i < NUM_SCRIPT_LOCATIONS + 10)
             					no_room_in_list = TRUE;	
             				break;
-            			}
+					}
             			
-            		if (no_room_in_list) {
- 						ASB_big(script_to_load," script failure: Too many variables defined in line ","","",cur_line,".");
+					if (no_room_in_list) {
+						ASB_big(script_to_load," script failure: Too many variables defined in line ","","",cur_line,".");
 						delete[] token_list;
-		                token_list = NULL;
+						token_list = NULL;
 						return FALSE;
-	           			}
-            		}
-            		else { // it's junk. error out
-		            	char* save = new char[length+1];
-		                strncpy(save,f,length);
-		                save[length] = 0;
-						ASB_big(script_to_load," script failure: Invalid identifier ",save," in line ",cur_line,".");
-		                delete[] save;
-						delete[] token_list;
-		                token_list = NULL;
-		                return FALSE;
-                		}
+					}
+				}
+				else { // it's junk. error out
+					char* save = new char[length+1];
+					strncpy(save,f,length);
+					save[length] = 0;
+					ASB_big(script_to_load," script failure: Invalid identifier ",save," in line ",cur_line,".");
+					delete[] save;
+					delete[] token_list;
+					token_list = NULL;
+					return FALSE;
+				}
             }
         }
 
@@ -803,8 +803,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
             	token.what_sort = token.what_sort * -1;
             //delete[] number;
         }
-        else if ( IsOperatorCharacter(*s) )
-        {
+        else if ( IsOperatorCharacter(*s) ){
 			for (length = 0; IsOperatorCharacter(*s); length++)
 				s++;        
 			if (length > 2) {
@@ -815,16 +814,16 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 				}
 			if ( IsOperator(f,length,&token.what_sort) >= 0) {
 				token.type = BINARY_OPERATOR_TYPE;
-				}
-				else if ((length == 1) && (*f == '=')) {
-					token.type = EQUALS_TYPE;
-					}
-					else {
-						ASB_big(script_to_load," script failure: Invalid operator ",""," in line ",cur_line,".");
-						delete[] token_list;
-						token_list = NULL;
-						return FALSE;
-						}
+			}
+			else if ((length == 1) && (*f == '=')) {
+				token.type = EQUALS_TYPE;
+			}
+			else {
+				ASB_big(script_to_load," script failure: Invalid operator ",""," in line ",cur_line,".");
+				delete[] token_list;
+				token_list = NULL;
+				return FALSE;
+			}
 
         }
     	else if ( *s == '"' ) { // create string data
@@ -836,7 +835,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 				delete[] token_list;
                 token_list = NULL;
 				return FALSE;
-				}
+			}
 
 			short i = 0;
 			
@@ -850,7 +849,8 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
 						string_var_values[current_variable_created][255] = 0;
 						
 				}
-			} else {
+			} 
+			else {
 				for (i = 0; i < NUM_SCRIPT_STRINGS; i++) {
 					if (string_data[i] == NULL) {
 						string_data[i] = new char[length + 1];
@@ -874,8 +874,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
         	s++;
 		}
     	else {
-	        if ( *s )
-	        {
+	        if ( *s ){
 				ASB_big(script_to_load," script failure: Invalid symbol in line ","","",cur_line,".");
 				delete[] token_list;
                 token_list = NULL;
@@ -889,7 +888,7 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
  			delete[] token_list;
  		    token_list = NULL;
 			return FALSE;
-       		}
+		}
        	
        if (token.type == 17) {
             // Now, we may want to take this number and use it to initialize a variable
@@ -906,15 +905,14 @@ Boolean script_type::load_script(short type_of_script_to_load,char *script_to_lo
         					location_var_values[current_variable_created].y = token.what_sort;
         					else location_var_values[current_variable_created].x = token.what_sort;
         				break;
-        			}
-				
+				}
 
-            	}
-       		}
+			}
+		}
        token.line = cur_line;
        token_list[cur_list_position] = token;
        cur_list_position++;
-       }
+   }
 
 	delete script;	
 	script = NULL;
@@ -955,11 +953,10 @@ Boolean script_type::token_match(short which_token,short type,short what_sort)
 short script_type::find_first_matching_token(short type_of_token,short what_sort)
 {
 	short i;
-	
-	for (i = 0; i < num_tokens; i++)
-		if ((token_list[i].type == type_of_token) &&
-		  ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
+	for (i = 0; i < num_tokens; i++){
+		if ((token_list[i].type == type_of_token) && ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
 		  	return i;
+	}
 	return -1;
 }
 
@@ -970,10 +967,10 @@ short script_type::find_next_matching_token(short start_token,short type_of_toke
 {
 	if (start_token >= num_tokens)
 		return -1;
-	for (short i = start_token; i < num_tokens; i++)
-		if ((token_list[i].type == type_of_token) &&
-		  ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
+	for (short i = start_token; i < num_tokens; i++){
+		if ((token_list[i].type == type_of_token) && ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
 		  	return i;
+	}
 	return -1;
 }
 
@@ -984,10 +981,10 @@ short script_type::find_previous_matching_token(short start_token,short type_of_
 {
 	if (start_token >= num_tokens)
 		return -1;
-	for (short i = start_token; i >= 0; i--)
-		if ((token_list[i].type == type_of_token) &&
-		  ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
+	for (short i = start_token; i >= 0; i--){
+		if ((token_list[i].type == type_of_token) && ((what_sort < 0) || (what_sort == token_list[i].what_sort)))
 		  	return i;
+	}
 	return -1;
 }
 
@@ -1009,9 +1006,9 @@ short script_type::end_of_current_line(short start_token)
 	  	if (token_type_match(start_token,LEFTBRACKET_TYPE)) {
 	  		current_bracket_count++;
 	  		got_brackets = TRUE;
-	  		}
-	  		else if (token_type_match(start_token,RIGHTBRACKET_TYPE))
-	  			current_bracket_count--;
+		}
+		else if (token_type_match(start_token,RIGHTBRACKET_TYPE))
+			current_bracket_count--;
 	  			
 	  	if ((token_type_match(start_token,SEMICOLON_TYPE)) && (got_brackets == FALSE))
 	  		return start_token;
@@ -1019,7 +1016,7 @@ short script_type::end_of_current_line(short start_token)
 	  		return start_token;
 	  		
 	  	start_token++;
-	  	}
+	}
 	return -1;
 }
 
@@ -1035,14 +1032,14 @@ short script_type::find_conditional_matching_bracket(short start_token)
 		ASB_big_color(script_name," Error: Internal error 1 in line ","","",token_list[start_token].line,".",1); 
 		script_killed = TRUE;
 		return -1;		
-		}
+	}
 
 	short left_matching = find_matching_bracket(start_token);
 	if (left_matching < 0) {
 		ASB_big_color(script_name," Error: Unmatched right bracket in line ","","",token_list[start_token].line,".",1); 
 		script_killed = TRUE;
 		return -1;		
-		}
+	}
 	
 	left_matching--;
 	if (token_type_match(left_matching,FLOW_CONTROLLER_TYPE)) 
@@ -1052,7 +1049,7 @@ short script_type::find_conditional_matching_bracket(short start_token)
 		ASB_big_color(script_name," Error: Internal error 2 in line ","","",token_list[start_token].line,".",1); 
 		script_killed = TRUE;
 		return -1;		
-		}
+	}
 	
 	short left_matching2 = find_matching_bracket(left_matching);
 		
@@ -1084,7 +1081,7 @@ short script_type::find_matching_bracket(short start_token)
 				if (current_count == 0)
 					return start_token;
 				start_token++;
-				}
+			}
 			break;
 		case RIGHTPARAN_TYPE:
 			start_token--;
@@ -1096,7 +1093,7 @@ short script_type::find_matching_bracket(short start_token)
 				if (current_count == 0)
 					return start_token;
 				start_token--;
-				}
+			}
 			break;
 		case LEFTBRACKET_TYPE:
 			start_token++;
@@ -1108,7 +1105,7 @@ short script_type::find_matching_bracket(short start_token)
 				if (current_count == 0)
 					return start_token;
 				start_token++;
-				}
+			}
 			break;
 		case RIGHTBRACKET_TYPE:
 			start_token--;
@@ -1120,9 +1117,9 @@ short script_type::find_matching_bracket(short start_token)
 				if (current_count == 0)
 					return start_token;
 				start_token--;
-				}
+			}
 			break;
-		}
+	}
 	return -1;
 }
 
@@ -1133,7 +1130,7 @@ Boolean script_type::semicolon_check(short check_token)
 		ASB_big_color(script_name," Error: Missing semicolon in line ","","",token_list[check_token].line,".",1); 
 		script_killed = TRUE;
 		return FALSE;
-		}
+	}
 	return TRUE;
 }
 
@@ -1147,7 +1144,7 @@ short script_type::find_start_of_state(short which_state)
 		script_killed = TRUE;
 		ASB_big_color(script_name," Error: No body declared.","","",-1,".",1); 
 		return -1;
-		}
+	}
 
 	current_pos++;	
 	if (semicolon_check(current_pos) == FALSE)
@@ -1159,14 +1156,14 @@ short script_type::find_start_of_state(short which_state)
 		if (token_type_match(current_pos,NUMBER_TYPE) == FALSE) {
 			ASB_big_color(script_name," Error: State with no number in line ","","",token_list[current_pos].line,".",1); 
 			return -1;
-			}
+		}
 		if (token_list[current_pos].what_sort == which_state) {
 			current_pos++;
 			if (semicolon_check(current_pos) == FALSE)
 				return -1;
 			return current_pos + 1;
-			}
 		}
+	}
 	return -1;
 }
 
@@ -1487,7 +1484,7 @@ Boolean script_type::run_script(short next_token)
 			ASB_big_color(script_name," Error: Too many nodes used in line ","","",token_list[next_token].line,".",1);
 			ASB_color("  Your script is doing too much, hot-shot!",1);
 			script_killed = TRUE; return FALSE;
-			}
+		}
 		
 		need_semicolon = TRUE;
 		
@@ -1499,10 +1496,11 @@ Boolean script_type::run_script(short next_token)
 			case BLOCK_TYPE: // block definer. If not break, it's an error.
 				if (token_list[next_token].what_sort == 18)
 					quit_run = TRUE;
-					else {
-						ASB_big(script_name," Error: State not ended properly in line ","","",token_list[next_token].line,".");
-						script_killed = TRUE; return FALSE;
-						}
+				else {
+					ASB_big(script_name," Error: State not ended properly in line ","","",token_list[next_token].line,".");
+					script_killed = TRUE; 
+					return FALSE;
+				}
 				next_token++;
 				break;
 			case FLOW_CONTROLLER_TYPE:
@@ -1511,10 +1509,11 @@ Boolean script_type::run_script(short next_token)
 				if (controller_type != 2) { //if else, need a conditional
 					if (token_type_match(next_token,LEFTPARAN_TYPE) == FALSE) {
 						ASB_big(script_name," Error: Missing ( in line ","","",token_list[next_token].line,".");
-						script_killed = TRUE; return FALSE;
-						}				
+						script_killed = TRUE; 
+						return FALSE;
+					}				
 					next_token++;
-					}
+				}
 					
 				switch (controller_type) { 
 					case 0: // if
@@ -1525,8 +1524,9 @@ Boolean script_type::run_script(short next_token)
 
 						if (token_type_match(next_token,RIGHTPARAN_TYPE) == FALSE) {
 							ASB_big(script_name," Error: Missing ) in line ","","",token_list[next_token].line,".");
-							script_killed = TRUE; return FALSE;
-							}				
+							script_killed = TRUE; 
+							return FALSE;
+						}				
 						next_token++;
 
 						matching_bracket = -1;
@@ -1535,15 +1535,16 @@ Boolean script_type::run_script(short next_token)
 							if (matching_bracket < 0) {
 								ASB_big(script_name," Error: Unmatched left bracket in line ","","",token_list[next_token].line,".");
 								script_killed = TRUE; return FALSE;
-								}				
-							}
+							}				
+						}
 
 						need_semicolon = FALSE;
 						if (expression_value == 0) { // FALSE
 							// first, skip stuff we don't want to call.
 							if (matching_bracket >= 0)
 								next_token = matching_bracket;
-								else next_token = end_of_current_line(next_token);
+							else 
+								next_token = end_of_current_line(next_token);
 							next_token++;
 
 							
@@ -1558,7 +1559,7 @@ Boolean script_type::run_script(short next_token)
 							else { // TRUE
 								if (token_type_match(next_token,LEFTBRACKET_TYPE)) 
 									next_token++;
-								}
+							}
 						
 						break;
 					case 1: // while
@@ -1569,8 +1570,9 @@ Boolean script_type::run_script(short next_token)
 
 						if (token_type_match(next_token,RIGHTPARAN_TYPE) == FALSE) {
 							ASB_big(script_name," Error: Missing ) in line ","","",token_list[next_token].line,".");
-							script_killed = TRUE; return FALSE;
-							}				
+							script_killed = TRUE; 
+							return FALSE;
+						}				
 						next_token++;
 
 						matching_bracket = -1;
@@ -1578,26 +1580,29 @@ Boolean script_type::run_script(short next_token)
 							matching_bracket = find_matching_bracket(next_token);
 							if (matching_bracket < 0) {
 								ASB_big(script_name," Error: Unmatched left bracket in line ","","",token_list[next_token].line,".");
-								script_killed = TRUE; return FALSE;
-								}				
-							}
-							else {
-								ASB_big(script_name," Error: While loop without left bracket in line ","","",token_list[next_token].line,".");
-								script_killed = TRUE; return FALSE;
-								}
+								script_killed = TRUE; 
+								return FALSE;
+							}				
+						}
+						else {
+							ASB_big(script_name," Error: While loop without left bracket in line ","","",token_list[next_token].line,".");
+							script_killed = TRUE; 
+							return FALSE;
+						}
 
 						need_semicolon = FALSE;
 						if (expression_value == 0) { // FALSE
 							// Skip stuff we don't want to call.
 							if (matching_bracket >= 0)
 								next_token = matching_bracket;
-								else next_token = end_of_current_line(next_token);
+							else 
+								next_token = end_of_current_line(next_token);
 							next_token++;
-							}
-							else { // TRUE
-								if (token_type_match(next_token,LEFTBRACKET_TYPE)) 
-									next_token++;
-								}
+						}
+						else { // TRUE
+							if (token_type_match(next_token,LEFTBRACKET_TYPE)) 
+								next_token++;
+						}
 						
 						break;
 					case 2: // else
@@ -1624,7 +1629,7 @@ Boolean script_type::run_script(short next_token)
 				if (token_type_match(next_token,LEFTPARAN_TYPE) == FALSE) {
 					ASB_big(script_name," Error: Missing ( in line ","","",token_list[next_token].line,".");
 					script_killed = TRUE; return FALSE;
-					}				
+				}				
 				next_token++;
 									
 				for (i = 0; i < NUM_PROCEDURE_PASS_VARS; i++)
@@ -1635,26 +1640,26 @@ Boolean script_type::run_script(short next_token)
 						procedure_passed_variable_types[current_variable] = 3;
 						procedure_passed_values[current_variable] = token_list[next_token].what_sort;
 						next_token++;
-						}
-						else if (token_type_match(next_token,STRING_TYPE)) {
-							procedure_passed_variable_types[current_variable] = 2;
-							procedure_passed_values[current_variable] = token_list[next_token].what_sort;
-							next_token++;
-							}
-							else if (token_type_match(next_token,LOCATION_VARIABLE_TYPE)) {
-								procedure_passed_variable_types[current_variable] = 1;
-								procedure_passed_locations[current_variable] = location_var_values[token_list[next_token].what_sort];
-								next_token++;
-								}
-								else {
-									if (evaluate_int_expression(next_token,&expression_value,&new_position) == FALSE)
-										return FALSE;
+					}
+					else if (token_type_match(next_token,STRING_TYPE)) {
+						procedure_passed_variable_types[current_variable] = 2;
+						procedure_passed_values[current_variable] = token_list[next_token].what_sort;
+						next_token++;
+					}
+					else if (token_type_match(next_token,LOCATION_VARIABLE_TYPE)) {
+						procedure_passed_variable_types[current_variable] = 1;
+						procedure_passed_locations[current_variable] = location_var_values[token_list[next_token].what_sort];
+						next_token++;
+					}
+					else {
+						if (evaluate_int_expression(next_token,&expression_value,&new_position) == FALSE)
+							return FALSE;
 
-									next_token = new_position;
+						next_token = new_position;
 
-									procedure_passed_variable_types[current_variable] = 0;
-									procedure_passed_values[current_variable] = expression_value;
-									}
+						procedure_passed_variable_types[current_variable] = 0;
+						procedure_passed_values[current_variable] = expression_value;
+					}
 
 					current_variable++;
 					if (token_type_match(next_token,COMMA_TYPE) == TRUE) 
@@ -1682,20 +1687,23 @@ Boolean script_type::run_script(short next_token)
 				next_token++;
 				if (token_type_match(next_token,EQUALS_TYPE) == FALSE) {
 					ASB_big(script_name," Error: Missing = in line ","","",token_list[next_token].line,".");
-					script_killed = TRUE; return FALSE;
-					}
+					script_killed = TRUE; 
+					return FALSE;
+				}
 				next_token++;
 				if (token_type_match(next_token,LOCATION_FUNCTION_TYPE) == FALSE) {
 					ASB_big(script_name," Error: Wrong function type in line ","","",token_list[next_token].line,".");
-					script_killed = TRUE; return FALSE;
-					}
+					script_killed = TRUE; 
+					return FALSE;
+				}
 				short function_used = token_list[next_token].what_sort;
 				short which_line = token_list[next_token].line;
 				next_token++;
 				if (token_type_match(next_token,LEFTPARAN_TYPE) == FALSE) {
 					ASB_big(script_name," Error: Missing left parenthesis in line ","","",token_list[next_token].line,".");
-					script_killed = TRUE; return FALSE;
-					}
+					script_killed = TRUE; 
+					return FALSE;
+				}
 				next_token++;
 				if (evaluate_int_expression(next_token,&expression_value,&new_position) == FALSE)
 					return FALSE;								
@@ -1790,7 +1798,8 @@ Boolean script_type::evaluate_int_expression(short next_token,short *result,shor
 			}
 			else if ( tokenStackTop >= 0 ) {
 				op = tokenStack[tokenStackTop--];
-			} else {
+			} 
+			else {
 			// unmatched right parenthesis. This is a stop condition.
 				expression_ended = TRUE;
 									
@@ -1798,7 +1807,7 @@ Boolean script_type::evaluate_int_expression(short next_token,short *result,shor
 			//script_killed = TRUE; return FALSE;
 			}
 			if (expression_ended == FALSE)
-			next_token++;
+				next_token++;
 		}
 		if (next_token >= num_tokens) {
 			ASB_big(script_name," Error: Unexpected end of file in line ","","",token_list[next_token].line,".");
