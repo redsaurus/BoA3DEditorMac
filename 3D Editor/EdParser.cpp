@@ -1906,16 +1906,16 @@ Boolean script_type::higher_precedence (token_type op1, token_type op2)
     	case BINARY_OPERATOR_TYPE:
     		if ((op2.type == RIGHTPARAN_TYPE) || (op2.type == COMMA_TYPE))
     			result = 1;
-    			else if ((op2.type == BINARY_OPERATOR_TYPE) &&
-    				(operator_precedence[op1.what_sort] > operator_precedence[op2.what_sort]))
-    					result = 1;
-    					else result = 0;
-
+			else if ((op2.type == BINARY_OPERATOR_TYPE) && (operator_precedence[op1.what_sort] > operator_precedence[op2.what_sort]))
+				result = 1;
+			else
+				result = 0;
 			break;
-        case UNARY_FUNCTION_TYPE: case BINARY_FUNCTION_TYPE: case TRINARY_FUNCTION_TYPE: case NO_PARAM_FUNCTION_TYPE:
-        	result = op2.type == RIGHTPARAN_TYPE
-             	||   op2.type == COMMA_TYPE
-           	||   op2.type == BINARY_OPERATOR_TYPE;
+        case UNARY_FUNCTION_TYPE: 
+		case BINARY_FUNCTION_TYPE: 
+		case TRINARY_FUNCTION_TYPE: 
+		case NO_PARAM_FUNCTION_TYPE:
+        	result = op2.type == RIGHTPARAN_TYPE || op2.type == COMMA_TYPE || op2.type == BINARY_OPERATOR_TYPE;
 			break;
         default:
         	result = 0;

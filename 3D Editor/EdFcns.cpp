@@ -3829,7 +3829,10 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 			if (property)
 				town.preset_items[i].properties += 2;
 			
-			set_all_items_containment();
+			//set_all_items_containment();
+			town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
+												(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
+												(scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
 			shift_item_locs(create_loc);
 			
 			return TRUE;
@@ -3934,7 +3937,9 @@ void set_all_items_contained()
 			   (int)town.preset_items[i].item_loc.x,(int)town.preset_items[i].item_loc.y,
 			   scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].ter_name,
 			   (int)scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special);*/
-		town.preset_items[i].properties |= (scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40)<<2;
+		town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
+											(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
+											(scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
 	}
 }
 
@@ -4289,8 +4294,8 @@ void set_all_items_containment()
 			
 			if (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) 
 				|| (is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y))
-				|| (scen_data.scen_ter_types[ter].special == 40));
-			//				town.preset_items[i].properties = town.preset_items[i].properties | 4;
+				|| (scen_data.scen_ter_types[ter].special == 40))
+							town.preset_items[i].properties = town.preset_items[i].properties | 4;
             else 
                 town.preset_items[i].properties = town.preset_items[i].properties & 251;
 		} 

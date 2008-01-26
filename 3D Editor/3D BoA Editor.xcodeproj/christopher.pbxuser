@@ -60,7 +60,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					609,
+					455,
 					20,
 					123,
 					43,
@@ -135,7 +135,7 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 220752053;
+			PBXPerProjectTemplateStateSaveDate = 223076951;
 			PBXPrepackagedSmartGroups_v2 = (
 				{
 					PBXTransientLocationAtTop = bottom;
@@ -646,7 +646,7 @@
 				PBXModuleWindowStatusBarHidden = YES;
 				RubberWindowFrame = "267 352 745 464 0 0 1280 832 ";
 			};
-			PBXWorkspaceStateSaveDate = 220752053;
+			PBXWorkspaceStateSaveDate = 223076951;
 		};
 		sourceControlManager = 9D905FA00881979E0041D080 /* Source Control */;
 		userBuildSettings = {
@@ -654,17 +654,17 @@
 	};
 	6A66C40006771A6E0030138E /* Bl A Editor.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1241, 17640}}";
-			sepNavSelRange = "{0, 0}";
-			sepNavVisRect = "{{0, 1358}, {1241, 699}}";
+			sepNavIntBoundsRect = "{{0, 0}, {983, 17640}}";
+			sepNavSelRange = "{5219, 25}";
+			sepNavVisRect = "{{0, 2216}, {983, 398}}";
 			sepNavWindowFrame = "{{0, 4}, {1280, 828}}";
 		};
 	};
 	6A66C40206771A6F0030138E /* Bl A Fileio.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1241, 79954}}";
-			sepNavSelRange = "{197538, 26}";
-			sepNavVisRect = "{{0, 77182}, {1241, 699}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1214, 79954}}";
+			sepNavSelRange = "{11395, 494}";
+			sepNavVisRect = "{{0, 4736}, {983, 398}}";
 			sepNavWindowFrame = "{{0, 4}, {1280, 828}}";
 		};
 	};
@@ -694,10 +694,10 @@
 	};
 	6A66C40606771A6F0030138E /* EdParser.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1310, 47978}}";
-			sepNavSelRange = "{14973, 24}";
-			sepNavVisRect = "{{0, 12558}, {1241, 699}}";
-			sepNavWindowFrame = "{{0, 4}, {1280, 828}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1310, 48104}}";
+			sepNavSelRange = "{56055, 36}";
+			sepNavVisRect = "{{0, 24836}, {985, 613}}";
+			sepNavWindowFrame = "{{0, 4}, {1024, 742}}";
 		};
 	};
 	6A66C40706771A6F0030138E /* EdUtils.cpp */ = {
@@ -711,17 +711,17 @@
 	6A66C40806771A6F0030138E /* global.h */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {1964, 27832}}";
-			sepNavSelRange = "{23529, 0}";
-			sepNavVisRect = "{{0, 10956}, {1241, 699}}";
+			sepNavSelRange = "{62918, 119}";
+			sepNavVisRect = "{{0, 25322}, {983, 398}}";
 			sepNavWindowFrame = "{{0, 4}, {1280, 828}}";
 		};
 	};
 	6A66C40906771A6F0030138E /* Graphics.cpp */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {2696, 71470}}";
-			sepNavSelRange = "{9996, 0}";
-			sepNavVisRect = "{{0, 3942}, {1241, 699}}";
-			sepNavWindowFrame = "{{-1, 4}, {1280, 828}}";
+			sepNavSelRange = "{169944, 2014}";
+			sepNavVisRect = "{{0, 57098}, {1241, 613}}";
+			sepNavWindowFrame = "{{-1, 4}, {1280, 742}}";
 		};
 	};
 	6A66C40A06771A6F0030138E /* keydlgs.cpp */ = {
