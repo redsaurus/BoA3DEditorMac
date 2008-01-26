@@ -4,7 +4,12 @@
 
 #define EXILE_BIG_GUNS 1
 
-#define	SLEEP_TICKS		0L
+//lengths of time to wait between events
+#define DENSE_TICKS 10
+#define SPARSE_TICKS 60
+#define VERY_SPARSE_TICKS 300
+#define	SLEEP_TICKS 0L
+
 #define	MOUSE_REGION	0L
 #define DRAG_EDGE		15
 #define IN_FRONT	(WindowPtr)-1L
@@ -711,7 +716,7 @@ public:
 	
 	item_record_type scen_items[NUM_SCEN_ITEMS];
 	floor_type_type scen_floors[256];
-	terrain_type_type scen_ter_types[512];
+	terrain_type_type scen_terrains[512];
 	creature_type scen_creatures[256];
 } ;
 

@@ -227,7 +227,7 @@ bool process_scroll_click( int map_size, Point the_point, bool ctrlKey, bool shf
 	
 	EventRecord	anEvent;			// retreive MouseUp event
 	WaitNextEvent( mUpMask, &anEvent, SLEEP_TICKS, MOUSE_REGION);
-	ticks_to_wait=60;//return to long waits between events
+	ticks_to_wait=SPARSE_TICKS;//return to long waits between events
 	return true;
 }
 
@@ -1153,7 +1153,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			mouse_button_held = TRUE;
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,4,(option_hit != 0) ? 0 : 1,20);
-				ticks_to_wait = 20;
+				ticks_to_wait = DENSE_TICKS;
 			}
 			else
 				change_circle_terrain(spot_hit,4,current_terrain_type,20);
@@ -1162,7 +1162,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			mouse_button_held = TRUE;
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,1,(option_hit != 0) ? 0 : 1,20);
-				ticks_to_wait = 20;
+				ticks_to_wait = DENSE_TICKS;
 			}
 			else
 				change_circle_terrain(spot_hit,1,current_terrain_type,20);
@@ -1171,7 +1171,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			mouse_button_held = TRUE;
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,4,(option_hit != 0) ? 0 : 1,1);
-				ticks_to_wait = 20;
+				ticks_to_wait = DENSE_TICKS;
 			}
 			else
 				change_circle_terrain(spot_hit,4,current_terrain_type,1);
@@ -1180,7 +1180,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			mouse_button_held = TRUE;
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,2,(option_hit != 0) ? 0 : 1,1);
-				ticks_to_wait = 20;
+				ticks_to_wait = DENSE_TICKS;
 			}
 			else
 				change_circle_terrain(spot_hit,2,current_terrain_type,1);
@@ -1339,7 +1339,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 					}
 				}
 				// no sign. make one?
-				if ((x < 30) && (scen_data.scen_ter_types[t_d.terrain[spot_hitx][spot_hity]].special == 39)) {
+				if ((x < 30) && (scen_data.scen_terrains[t_d.terrain[spot_hitx][spot_hity]].special == 39)) {
 					for (x = 0; x < 15; x++){
 						if (town.sign_locs[x].x < 0) {
 							town.sign_locs[x].x = spot_hit.x;
@@ -1363,7 +1363,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 					}
 				}
 				// no sign. make one?
-				if ((x < 30) && (scen_data.scen_ter_types[current_terrain.terrain[spot_hitx][spot_hity]].special == 39)) {
+				if ((x < 30) && (scen_data.scen_terrains[current_terrain.terrain[spot_hitx][spot_hity]].special == 39)) {
 					for (x = 0; x < 8; x++){
 						if (current_terrain.sign_locs[x].x < 0) {
 							current_terrain.sign_locs[x].x = spot_hit.x;
@@ -1652,13 +1652,13 @@ void swap_terrain()
 //sets a new terrain for drawing with
 void set_new_terrain(short selected_terrain)
 {
-	if (scen_data.scen_ter_types[selected_terrain].ed_pic.not_legit() == TRUE)
+	if (scen_data.scen_terrains[selected_terrain].ed_pic.not_legit() == TRUE)
 		return;
 	current_terrain_drawn = selected_terrain;
 	
 	char str1[256],str2[256];
 	sprintf(str1,"Drawing terrain number %d:",current_terrain_drawn);
-	sprintf(str2,"  %s",scen_data.scen_ter_types[current_terrain_drawn].ter_name);
+	sprintf(str2,"  %s",scen_data.scen_terrains[current_terrain_drawn].ter_name);
 	set_string(str1,str2);
 	place_right_buttons(0);
 }
@@ -1918,7 +1918,7 @@ void handle_keystroke(char chr,char chr2,EventRecord event)
 					for (i = 0; i < 512; i++) {
 						j = current_terrain_type + i + 1;
 						j = j % 512;
-						if ((scen_data.scen_ter_types[j].shortcut_key < 26) && (scen_data.scen_ter_types[j].shortcut_key == chr - 'a')) {
+						if ((scen_data.scen_terrains[j].shortcut_key < 26) && (scen_data.scen_terrains[j].shortcut_key == chr - 'a')) {
 							set_new_terrain(j);
 							return;	
 						}
@@ -1928,7 +1928,7 @@ void handle_keystroke(char chr,char chr2,EventRecord event)
 					for (i = 0; i < 512; i++) {
 						j = current_terrain_type + i + 1;
 						j = j % 512;
-						if ((scen_data.scen_ter_types[j].shortcut_key < 26) && (scen_data.scen_ter_types[j].shortcut_key == chr - 'a')) {
+						if ((scen_data.scen_terrains[j].shortcut_key < 26) && (scen_data.scen_terrains[j].shortcut_key == chr - 'a')) {
 							set_new_terrain(j);
 							return;	
 						}
@@ -2427,7 +2427,7 @@ void set_terrain(location l,short terrain_type)
 	// now handle placing signs
 	if(current_drawing_mode>0){//if we just placed a floor, it can't be a sign
 		Boolean sign_error_received = FALSE;
-		ter_info = scen_data.scen_ter_types[terrain_type];
+		ter_info = scen_data.scen_terrains[terrain_type];
 		if (ter_info.special == 39) { // town mode, is a sign
 			if (editing_town == TRUE) { /// it's a sign
 				for (i = 0; i < 15; i++) // find is this sign has already been assigned
@@ -2508,8 +2508,8 @@ void set_terrain(location l,short terrain_type)
 				check_selected_item_number();
 			}
 		}
-		if (strlen(scen_data.scen_ter_types[t_d.terrain[(int)l.x][(int)l.y]].default_script) > 0) {
-			create_new_ter_script(scen_data.scen_ter_types[t_d.terrain[(int)l.x][(int)l.y]].default_script,l,NULL);
+		if (strlen(scen_data.scen_terrains[t_d.terrain[(int)l.x][(int)l.y]].default_script) > 0) {
+			create_new_ter_script(scen_data.scen_terrains[t_d.terrain[(int)l.x][(int)l.y]].default_script,l,NULL);
 			mouse_button_held = FALSE;
 		}
 	}
@@ -2981,9 +2981,9 @@ short get_corner_height(short x, short y,short out_or_town,short which_corner)
 	short new_ter;
 	
 	new_ter = adjust_get_ter(x,y,out_or_town);
-	if ((scen_data.scen_ter_types[new_ter].special < 19) || (scen_data.scen_ter_types[new_ter].special > 30))
+	if ((scen_data.scen_terrains[new_ter].special < 19) || (scen_data.scen_terrains[new_ter].special > 30))
 		return 0;
-	return hill_c_heights[scen_data.scen_ter_types[new_ter].special - 19][which_corner];
+	return hill_c_heights[scen_data.scen_terrains[new_ter].special - 19][which_corner];
 }
 
 //returns the height at location (x,y) in the outdoor section or town
@@ -3832,7 +3832,7 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 			//set_all_items_containment();
 			town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
 												(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-												(scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
+												(scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
 			shift_item_locs(create_loc);
 			
 			return TRUE;
@@ -3935,11 +3935,11 @@ void set_all_items_contained()
 		/*printf("Item %i: %s at (%i,%i) on terrain %s with special %i\n",i,
 			   scen_data.scen_items[town.preset_items[i].which_item].name,
 			   (int)town.preset_items[i].item_loc.x,(int)town.preset_items[i].item_loc.y,
-			   scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].ter_name,
-			   (int)scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special);*/
+			   scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].ter_name,
+			   (int)scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special);*/
 		town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
 											(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-											(scen_data.scen_ter_types[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
+											(scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
 	}
 }
 
@@ -4294,7 +4294,7 @@ void set_all_items_containment()
 			
 			if (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) 
 				|| (is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y))
-				|| (scen_data.scen_ter_types[ter].special == 40))
+				|| (scen_data.scen_terrains[ter].special == 40))
 							town.preset_items[i].properties = town.preset_items[i].properties | 4;
             else 
                 town.preset_items[i].properties = town.preset_items[i].properties & 251;
@@ -4793,13 +4793,13 @@ Boolean look_block(location l, short direction)
 	//t = get_ter(ter);
 	
 	switch (direction) {
-		case 0: return scen_data.scen_ter_types[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[0] ; break;
+		case 0: return scen_data.scen_terrains[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[0] ; break;
 		case 1: return ((look_block(l,0)) || (look_block(l,2))); break;
-		case 2: return scen_data.scen_ter_types[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[1] ; break;
+		case 2: return scen_data.scen_terrains[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[1] ; break;
 		case 3: return ((look_block(l,2)) || (look_block(l,4))); break;
-		case 4: return scen_data.scen_ter_types[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[2] ; break;
+		case 4: return scen_data.scen_terrains[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[2] ; break;
 		case 5: return ((look_block(l,4)) || (look_block(l,6))); break;
-		case 6: return scen_data.scen_ter_types[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[3] ; break;
+		case 6: return scen_data.scen_terrains[(editing_town == FALSE) ? ( ((unsigned char)l.x > 47) ? border_terrains[(lx + 48) / 48][(ly + 48) / 48].terrain[lx - (((lx + 48) / 48) * 48 - 48)][ly - (((ly + 48) / 48) * 48 - 48)] : current_terrain.terrain[lx][ly]) : t_d.terrain[lx][ly]].see_block[3] ; break;
 		case 7: return ((look_block(l,6)) || (look_block(l,0))); break;
 	}
 	return TRUE;
@@ -5398,10 +5398,10 @@ Boolean is_wall_drawn(outdoor_record_type *drawing_terrain, short sector_offset_
 		return FALSE;
 	
 	return (
-			(scen_data.scen_ter_types[wall_terrain].see_block[0] == 1 && get_see_in(sector_offset_x,sector_offset_y,x,y - 1) == TRUE) ||
-			(scen_data.scen_ter_types[wall_terrain].see_block[1] == 1 && get_see_in(sector_offset_x,sector_offset_y,x - 1,y) == TRUE) ||
-			(scen_data.scen_ter_types[wall_terrain].see_block[2] == 1 && get_see_in(sector_offset_x,sector_offset_y,x,y + 1) == TRUE) ||
-			(scen_data.scen_ter_types[wall_terrain].see_block[3] == 1 && get_see_in(sector_offset_x,sector_offset_y,x + 1,y) == TRUE)
+			(scen_data.scen_terrains[wall_terrain].see_block[0] == 1 && get_see_in(sector_offset_x,sector_offset_y,x,y - 1) == TRUE) ||
+			(scen_data.scen_terrains[wall_terrain].see_block[1] == 1 && get_see_in(sector_offset_x,sector_offset_y,x - 1,y) == TRUE) ||
+			(scen_data.scen_terrains[wall_terrain].see_block[2] == 1 && get_see_in(sector_offset_x,sector_offset_y,x,y + 1) == TRUE) ||
+			(scen_data.scen_terrains[wall_terrain].see_block[3] == 1 && get_see_in(sector_offset_x,sector_offset_y,x + 1,y) == TRUE)
 			);
 }
 

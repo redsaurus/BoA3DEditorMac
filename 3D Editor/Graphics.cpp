@@ -364,17 +364,17 @@ void set_up_terrain_buttons()
 					if(/*sbar_pos * 12 + */i == 0)
 						fill_rect_in_gworld(terrain_buttons_gworld,terrain_rects_3D[i],255,255,255);
 					//if (/*sbar_pos * 12 + */i < 512) {
-					a = scen_data.scen_ter_types[/*sbar_pos * 12 + */i].pic;
+					a = scen_data.scen_terrains[/*sbar_pos * 12 + */i].pic;
 					//if a wall (or fence - at least one move block, but not all)
 					//this doesn't include open fence gates, but perhaps that's good - they can 
 					//stick out of a square unpredictably
 					if((store_ter_type >= 2 && store_ter_type <= 73) ||
 						   (
-							!(scen_data.scen_ter_types[store_ter_type].move_block[0] == 1 && scen_data.scen_ter_types[store_ter_type].move_block[1] == 1 &&
-							  scen_data.scen_ter_types[store_ter_type].move_block[2] == 1 && scen_data.scen_ter_types[store_ter_type].move_block[3] == 1)
+							!(scen_data.scen_terrains[store_ter_type].move_block[0] == 1 && scen_data.scen_terrains[store_ter_type].move_block[1] == 1 &&
+							  scen_data.scen_terrains[store_ter_type].move_block[2] == 1 && scen_data.scen_terrains[store_ter_type].move_block[3] == 1)
 							&&
-							(scen_data.scen_ter_types[store_ter_type].move_block[0] == 1 || scen_data.scen_ter_types[store_ter_type].move_block[1] == 1 ||
-							 scen_data.scen_ter_types[store_ter_type].move_block[2] == 1 || scen_data.scen_ter_types[store_ter_type].move_block[3] == 1)
+							(scen_data.scen_terrains[store_ter_type].move_block[0] == 1 || scen_data.scen_terrains[store_ter_type].move_block[1] == 1 ||
+							 scen_data.scen_terrains[store_ter_type].move_block[2] == 1 || scen_data.scen_terrains[store_ter_type].move_block[3] == 1)
 							)
 						   ) {
 						draw_wall_3D_sidebar(/*sbar_pos * 12 + */i, terrain_rects_3D[i]);
@@ -415,7 +415,7 @@ void set_up_terrain_buttons()
 			switch (current_drawing_mode) {
 				case 0:
 					a = scen_data.scen_floors[i].ed_pic;
-					if(a.graphic_adjust==0 && scen_data.scen_floors[i].pic.graphic_adjust!=0)
+					if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_floors[i].pic.graphic_adjust!=0)
 						a.graphic_adjust=scen_data.scen_floors[i].pic.graphic_adjust;
 					OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE) * (a.which_icon / 10) + 1);
 					if (a.not_legit())
@@ -425,7 +425,9 @@ void set_up_terrain_buttons()
 					short sbar_pos = GetControlValue(right_sbar);
 					store_ter_type = /*sbar_pos * 12 + */i;
 					//if (sbar_pos * 12 + i < 512) {
-						a = scen_data.scen_ter_types[/*sbar_pos * 12 + */i].ed_pic;
+						a = scen_data.scen_terrains[/*sbar_pos * 12 + */i].ed_pic;
+						if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_terrains[i].pic.graphic_adjust!=0)
+							a.graphic_adjust=scen_data.scen_terrains[i].pic.graphic_adjust;
 						OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE) * (a.which_icon / 10) + 1);
 						if (a.not_legit())
 							do_this_item = FALSE;
@@ -583,9 +585,9 @@ void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect)
 	fill_rect_in_gworld(terrain_buttons_gworld,to_rect,255,255,255);
 	/*use cutaway when possible, so user can see better*/
 	//but not in sidebar
-	//a = scen_data.scen_ter_types[t_to_draw].cut_away_pic;
+	//a = scen_data.scen_terrains[t_to_draw].cut_away_pic;
 	//if (a.not_legit())
-	a = scen_data.scen_ter_types[t_to_draw].pic;
+	a = scen_data.scen_terrains[t_to_draw].pic;
 	/*walls*/
 	if(t_to_draw >= 2 && t_to_draw <= 73) {
 		if(editing_town == FALSE) {
@@ -602,8 +604,8 @@ void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect)
 	if(t_to_draw == 6 || t_to_draw == 42) {//NW
 		a.which_icon = 5;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[t_to_draw].icon_offset_y - 10) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[t_to_draw].icon_offset_y - 10) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 	}
 	else if(t_to_draw == 7 || t_to_draw == 43) {//SW
@@ -611,21 +613,21 @@ void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect)
 		temp_t_to_draw = 3;//west
 		a.which_icon = 1;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[temp_t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[temp_t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[temp_t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[temp_t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 		temp_t_to_draw = 4;//south
 		a.which_icon = 0;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[temp_t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[temp_t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[temp_t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[temp_t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 	}
 	else if(t_to_draw == 8 || t_to_draw == 44) {//SE
 		a.which_icon = 4;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 	}
 	else if(t_to_draw == 9 || t_to_draw == 45) {//NE
@@ -633,26 +635,26 @@ void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect)
 		temp_t_to_draw = 2;//north wall
 		a.which_icon = 0;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[temp_t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[temp_t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[temp_t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[temp_t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 		temp_t_to_draw = 5;//east wall
 		a.which_icon = 1;
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[temp_t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[temp_t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[temp_t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[temp_t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 	}
 	else {
 		if (a.not_legit() == FALSE)
-			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_ter_types[t_to_draw].icon_offset_x,
-										   scen_data.scen_ter_types[t_to_draw].icon_offset_y) == FALSE)
+			if (place_icon_into_3D_sidebar(a,to_rect,scen_data.scen_terrains[t_to_draw].icon_offset_x,
+										   scen_data.scen_terrains[t_to_draw].icon_offset_y) == FALSE)
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 		/*draw second icon if it exists*/
-		/*a.which_icon = scen_data.scen_ter_types[t_to_draw].second_icon;
+		/*a.which_icon = scen_data.scen_terrains[t_to_draw].second_icon;
 		if (a.not_legit() == FALSE)
-		if (place_icon_into_ter_3D_large(a,at_point_center_x + scen_data.scen_ter_types[t_to_draw].second_icon_offset_x,
-										 at_point_center_y + scen_data.scen_ter_types[t_to_draw].second_icon_offset_y) == FALSE)
+		if (place_icon_into_ter_3D_large(a,at_point_center_x + scen_data.scen_terrains[t_to_draw].second_icon_offset_x,
+										 at_point_center_y + scen_data.scen_terrains[t_to_draw].second_icon_offset_y) == FALSE)
 		cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);*/
 	}
 }
@@ -949,12 +951,12 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 	/*
 		//I don't think either of these is necessary for users understanding.  Their only 'purpose' is to look bad.
 		// signs
-	 if (scen_data.scen_ter_types[t_to_draw].special == 39) {
+	 if (scen_data.scen_terrains[t_to_draw].special == 39) {
 		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,20);
 		 small_icon_position++;
 	 }			
 	 //containers
-	 if (scen_data.scen_ter_types[t_to_draw].special == 40) {
+	 if (scen_data.scen_terrains[t_to_draw].special == 40) {
 		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,21);
 		 small_icon_position++;
 	 }			*/
@@ -965,23 +967,23 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 		small_icon_position++;
 	}
 	// icons for floor damage
-	if ((scen_data.scen_ter_types[t_to_draw].special == 1) || 
+	if ((scen_data.scen_terrains[t_to_draw].special == 1) || 
 		(scen_data.scen_floors[floor_to_draw].special == 1)) {
 		place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,37,to_whole_area_rect);
 		small_icon_position++;
 	}
-	if ((scen_data.scen_ter_types[t_to_draw].special == 2) || 
+	if ((scen_data.scen_terrains[t_to_draw].special == 2) || 
 		(scen_data.scen_floors[floor_to_draw].special == 2)) {
 		place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,38,to_whole_area_rect);
 		small_icon_position++;
 	}
-	if ((scen_data.scen_ter_types[t_to_draw].special == 3) || 
+	if ((scen_data.scen_terrains[t_to_draw].special == 3) || 
 		(scen_data.scen_floors[floor_to_draw].special == 3)) {
 		place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,39,to_whole_area_rect);
 		small_icon_position++;
 	}
 	
-	if ((scen_data.scen_ter_types[t_to_draw].special == 6) || 
+	if ((scen_data.scen_terrains[t_to_draw].special == 6) || 
 		(scen_data.scen_floors[floor_to_draw].special == 6)) {
 		place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,22,to_whole_area_rect);
 		small_icon_position++;
@@ -1065,8 +1067,8 @@ void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,gra
 	short i;
 	if (a.not_legit() == FALSE) {
 		for(i = 0; i < height; i++) {
-			if (place_icon_into_ter_3D_large(a,x + scen_data.scen_ter_types[terrain_number].icon_offset_x,
-											 y + scen_data.scen_ter_types[terrain_number].icon_offset_y - i * 35,to_whole_area_rect,lighting) == FALSE) {
+			if (place_icon_into_ter_3D_large(a,x + scen_data.scen_terrains[terrain_number].icon_offset_x,
+											 y + scen_data.scen_terrains[terrain_number].icon_offset_y - i * 35,to_whole_area_rect,lighting) == FALSE) {
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 				break;
 			}
@@ -1088,7 +1090,7 @@ void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short se
 	
 	if(cur_viewing_mode == 10) {
 		//use cutaway when possible, so user can see better
-		a = scen_data.scen_ter_types[t_to_draw].cut_away_pic;
+		a = scen_data.scen_terrains[t_to_draw].cut_away_pic;
 		cutaway = TRUE;
 	}
 	else {
@@ -1097,39 +1099,39 @@ void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short se
 			//They block the party's sight only if the party could see to the space that they're blocking sight from.
 			//If they successfully block the party's sight at all, then they're displayed.
 			if(!(
-				 (scen_data.scen_ter_types[t_to_draw].see_block[0] == 1 && see_in_neighbors[1][0] == TRUE) ||
-				 (scen_data.scen_ter_types[t_to_draw].see_block[1] == 1 && see_in_neighbors[0][1] == TRUE) ||
-				 (scen_data.scen_ter_types[t_to_draw].see_block[2] == 1 && see_in_neighbors[1][2] == TRUE) ||
-				 (scen_data.scen_ter_types[t_to_draw].see_block[3] == 1 && see_in_neighbors[2][1] == TRUE)
+				 (scen_data.scen_terrains[t_to_draw].see_block[0] == 1 && see_in_neighbors[1][0] == TRUE) ||
+				 (scen_data.scen_terrains[t_to_draw].see_block[1] == 1 && see_in_neighbors[0][1] == TRUE) ||
+				 (scen_data.scen_terrains[t_to_draw].see_block[2] == 1 && see_in_neighbors[1][2] == TRUE) ||
+				 (scen_data.scen_terrains[t_to_draw].see_block[3] == 1 && see_in_neighbors[2][1] == TRUE)
 				 ||
 				 (/*poor, foolish BoA that I have to emulate...*/
-				 is_wall_corner && scen_data.scen_ter_types[t_to_draw].see_block[0] == 0 && 
-				 scen_data.scen_ter_types[t_to_draw].see_block[1] == 0 && 
-				 scen_data.scen_ter_types[t_to_draw].see_block[2] == 0 &&
-				 scen_data.scen_ter_types[t_to_draw].see_block[3] == 0
+				 is_wall_corner && scen_data.scen_terrains[t_to_draw].see_block[0] == 0 && 
+				 scen_data.scen_terrains[t_to_draw].see_block[1] == 0 && 
+				 scen_data.scen_terrains[t_to_draw].see_block[2] == 0 &&
+				 scen_data.scen_terrains[t_to_draw].see_block[3] == 0
 				 )
 			   ))
 return;
 		}
 //use cutaway?
-if((scen_data.scen_ter_types[t_to_draw].blocks_view[0] && see_in_neighbors[1][0]) ||
-   (scen_data.scen_ter_types[t_to_draw].blocks_view[1] && see_in_neighbors[0][1]) ||
-   (scen_data.scen_ter_types[t_to_draw].blocks_view[2] && see_in_neighbors[1][1]) ||
-   (scen_data.scen_ter_types[t_to_draw].blocks_view[3] && see_in_neighbors[1][1]) ||
+if((scen_data.scen_terrains[t_to_draw].blocks_view[0] && see_in_neighbors[1][0]) ||
+   (scen_data.scen_terrains[t_to_draw].blocks_view[1] && see_in_neighbors[0][1]) ||
+   (scen_data.scen_terrains[t_to_draw].blocks_view[2] && see_in_neighbors[1][1]) ||
+   (scen_data.scen_terrains[t_to_draw].blocks_view[3] && see_in_neighbors[1][1]) ||
    (editing_town == FALSE && (
-							  (scen_data.scen_ter_types[t_to_draw].blocks_view[0] && see_in_neighbors[0][0]) ||
-							  (scen_data.scen_ter_types[t_to_draw].blocks_view[1] && see_in_neighbors[0][0])
+							  (scen_data.scen_terrains[t_to_draw].blocks_view[0] && see_in_neighbors[0][0]) ||
+							  (scen_data.scen_terrains[t_to_draw].blocks_view[1] && see_in_neighbors[0][0])
 							  ))
    ) {
-	a = scen_data.scen_ter_types[t_to_draw].cut_away_pic;
+	a = scen_data.scen_terrains[t_to_draw].cut_away_pic;
 	cutaway = TRUE;
 }
 else
-a = scen_data.scen_ter_types[t_to_draw].pic;
+a = scen_data.scen_terrains[t_to_draw].pic;
 	}
 //if there is no cutaway pic, use the normal one
 if (a.not_legit())
-a = scen_data.scen_ter_types[t_to_draw].pic;
+a = scen_data.scen_terrains[t_to_draw].pic;
 
 //walls
 if(t_to_draw >= 2 && t_to_draw <= 73) {
@@ -1137,7 +1139,7 @@ if(t_to_draw >= 2 && t_to_draw <= 73) {
 		//sometimes walls next to slopes aren't displayed, in order to make it look better
 		short other_terrain = 0, special;
 		//if it blocks moves to the north
-		if(scen_data.scen_ter_types[t_to_draw].move_block[0] == 1) {
+		if(scen_data.scen_terrains[t_to_draw].move_block[0] == 1) {
 			//if the requested other terrain exists
 			if(!(
 				 (editing_town && (y == 0))
@@ -1147,13 +1149,13 @@ if(t_to_draw >= 2 && t_to_draw <= 73) {
 				other_terrain = (editing_town) ? t_d.terrain[x][y - 1] : 
 				border_terrains[sector_x - cur_out.x + 1][sector_y - cur_out.y + 1 - ((y == 0) ? 1 : 0)].terrain[x][(y == 0) ? 47 : y - 1];
 				
-				special = scen_data.scen_ter_types[other_terrain].special;
+				special = scen_data.scen_terrains[other_terrain].special;
 				if(special == 19 || special == 20 || special == 22 || special == 23 || special == 27 || special == 30)
 					return;
 			}
 		}
 		//if it blocks moves to the west
-		if(scen_data.scen_ter_types[t_to_draw].move_block[1] == 1) {
+		if(scen_data.scen_terrains[t_to_draw].move_block[1] == 1) {
 			//if the requested other terrain exists
 			if(!(
 				 (editing_town && (x == 0))
@@ -1163,7 +1165,7 @@ if(t_to_draw >= 2 && t_to_draw <= 73) {
 				other_terrain = (editing_town) ? t_d.terrain[x - 1][y] : 
 				border_terrains[sector_x - cur_out.x + 1 - ((x == 0) ? 1 : 0)][sector_y - cur_out.y + 1].terrain[(x == 0) ? 47 : x - 1][y];
 				
-				special = scen_data.scen_ter_types[other_terrain].special;
+				special = scen_data.scen_terrains[other_terrain].special;
 				if(special == 21 || special == 22 || special == 24 || special == 25 || special == 27 || special == 28)
 					return;
 			}
@@ -1280,18 +1282,18 @@ else if(t_to_draw == 9 || t_to_draw == 45) {//NE
 else {
 	if (a.not_legit() == FALSE) {
 		for(i = 0; i < cutHeight; i++) {
-			if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_ter_types[t_to_draw].icon_offset_x,
-											 at_y + scen_data.scen_ter_types[t_to_draw].icon_offset_y - i * 35,to_whole_area_rect, lighting) == FALSE) {
+			if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_terrains[t_to_draw].icon_offset_x,
+											 at_y + scen_data.scen_terrains[t_to_draw].icon_offset_y - i * 35,to_whole_area_rect, lighting) == FALSE) {
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 				break;
 			}
 		}
 	}
 	//draw second icon if it exists
-	a.which_icon = scen_data.scen_ter_types[t_to_draw].second_icon;
+	a.which_icon = scen_data.scen_terrains[t_to_draw].second_icon;
 	if (a.not_legit() == FALSE)
-		if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_ter_types[t_to_draw].second_icon_offset_x,
-										 at_y + scen_data.scen_ter_types[t_to_draw].second_icon_offset_y,to_whole_area_rect, lighting) == FALSE)
+		if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_terrains[t_to_draw].second_icon_offset_x,
+										 at_y + scen_data.scen_terrains[t_to_draw].second_icon_offset_y,to_whole_area_rect, lighting) == FALSE)
 			cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 }
 }
@@ -1353,7 +1355,7 @@ g = 31;*/
 	if (a.not_legit() == FALSE)
 		if(place_creature_icon_into_ter_3D_large(a, at_point_center_x,
 												 at_point_center_y
-												 - scen_data.scen_ter_types[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect,lighting,r,g,b) == FALSE)
+												 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect,lighting,r,g,b) == FALSE)
 			cant_draw_graphics_error(a,"Error was for creature type",town.creatures[creature_num].number);
 	
 	//draw second (top) icon if it exists (tall creatures like giants)
@@ -1425,7 +1427,7 @@ void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y
 	if (a.not_legit() == FALSE)
 		if(place_item_icon_into_ter_3D_large(a, at_point_center_x + town.preset_items[item_num].item_shift.x,
 											 at_point_center_y + town.preset_items[item_num].item_shift.y
-											 - scen_data.scen_ter_types[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect, lighting) == FALSE)
+											 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect, lighting) == FALSE)
 			cant_draw_graphics_error(a,"Error was for item type",town.preset_items[item_num].which_item);
 	
 	/*if (same_point(town.preset_items[item_num].item_loc,loc_drawn)) {
@@ -1715,7 +1717,7 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		//Avernum uses, but it should work.  Also, not all of Avernum's "hills" are like that.  There are also stairs.
 		short height_adjust_label_x = 0, height_adjust_label_y = 0;
 		short t_to_draw = (editing_town) ? t_d.terrain[square_2D_x][square_2D_y] : drawing_terrain->terrain[square_2D_x][square_2D_y];
-		short hill_ability = scen_data.scen_ter_types[t_to_draw].special;
+		short hill_ability = scen_data.scen_terrains[t_to_draw].special;
 		if(hill_ability >= 19 && hill_ability <= 30) {
 			hill_ability -= 19;
 			if(right) {
@@ -1843,31 +1845,31 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 		a.which_sheet = 707;
 		a.which_icon = 5;
 		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
-									 - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	if (field_of_type[6]) {
 		a.which_sheet = 707;
 		a.which_icon = 6;
 		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
-									 - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	if (field_of_type[5]) {
 		a.which_sheet = 707;
 		a.which_icon = 8;
 		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
-									 - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	if (field_of_type[4]) {
 		a.which_sheet = 743;
 		a.which_icon = 3;
 		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
-									 - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	if (field_of_type[3]) {
 		a.which_sheet = 743;
 		a.which_icon = 6;
 			place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
-										 - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+										 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	// draw stains
 	for (short j = 0; j < 8; j++) {
@@ -1882,7 +1884,7 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 				a.which_sheet = 707;
 				a.which_icon = 0;
 			}
-			place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y - scen_data.scen_ter_types[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+			place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 		}
 	}
 	
@@ -2241,7 +2243,7 @@ continue;*/
 						   !((temp_height[1][0] >= height_to_draw) && (temp_height[0][1] < height_to_draw)) && //??? this is what I got from observing BoA...
 						   (temp_floor[0][1] != 255) &&
 						   (temp_see_to[0][1]) &&
-						   !(temp_height[0][1] == height_to_draw - 1 && (scen_data.scen_ter_types[temp_terrain[1][1]].special == 19 || scen_data.scen_ter_types[temp_terrain[1][1]].special == 25 || scen_data.scen_ter_types[temp_terrain[1][1]].special == 26 || scen_data.scen_ter_types[temp_terrain[1][1]].special == 27 || scen_data.scen_ter_types[temp_terrain[1][1]].special == 28 || scen_data.scen_ter_types[temp_terrain[1][1]].special == 30))) {
+						   !(temp_height[0][1] == height_to_draw - 1 && (scen_data.scen_terrains[temp_terrain[1][1]].special == 19 || scen_data.scen_terrains[temp_terrain[1][1]].special == 25 || scen_data.scen_terrains[temp_terrain[1][1]].special == 26 || scen_data.scen_terrains[temp_terrain[1][1]].special == 27 || scen_data.scen_terrains[temp_terrain[1][1]].special == 28 || scen_data.scen_terrains[temp_terrain[1][1]].special == 30))) {
 							neighbor_height = temp_height[1][1];
 							while(neighbor_height < min(height_to_draw,temp_height[0][1])) {
 								if (place_cliff_icon_into_ter_3D_large(sheet,center_of_current_square_x, center_of_current_square_y +
@@ -2256,7 +2258,7 @@ continue;*/
 						   (temp_height[1][0] < height_to_draw) && 
 						   (temp_floor[1][0] != 255) &&
 						   (temp_see_to[1][0]) &&
-						   !(temp_height[1][0] == height_to_draw - 1 && (scen_data.scen_ter_types[temp_terrain[1][0]].special == 19 || scen_data.scen_ter_types[temp_terrain[1][0]].special == 27 || scen_data.scen_ter_types[temp_terrain[1][0]].special == 28))) {
+						   !(temp_height[1][0] == height_to_draw - 1 && (scen_data.scen_terrains[temp_terrain[1][0]].special == 19 || scen_data.scen_terrains[temp_terrain[1][0]].special == 27 || scen_data.scen_terrains[temp_terrain[1][0]].special == 28))) {
 							neighbor_height = min(temp_height[1][0],temp_height[1][1]);//as in BoA, depends on lower of east and southeast spaces
 							while(neighbor_height < height_to_draw) {
 								if (place_cliff_icon_into_ter_3D_large(sheet,center_of_current_square_x, center_of_current_square_y +
@@ -2271,7 +2273,7 @@ continue;*/
 						   (temp_height[0][1] < height_to_draw) && 
 						   (temp_floor[0][1] != 255) &&
 						   (temp_see_to[0][1]) &&
-						   !(temp_height[0][1] == height_to_draw - 1 && (scen_data.scen_ter_types[temp_terrain[0][1]].special == 25 || scen_data.scen_ter_types[temp_terrain[0][1]].special == 27 || scen_data.scen_ter_types[temp_terrain[0][1]].special == 30))) {
+						   !(temp_height[0][1] == height_to_draw - 1 && (scen_data.scen_terrains[temp_terrain[0][1]].special == 25 || scen_data.scen_terrains[temp_terrain[0][1]].special == 27 || scen_data.scen_terrains[temp_terrain[0][1]].special == 30))) {
 							neighbor_height = temp_height[0][1];
 							while(neighbor_height < height_to_draw) {
 								if (place_cliff_icon_into_ter_3D_large(sheet,center_of_current_square_x, center_of_current_square_y +
@@ -2282,7 +2284,7 @@ continue;*/
 						}
 					}
 					// draw floor if the terrain doesn't cover it up, but not solid stone
-					if(floor_to_draw != 255 && scen_data.scen_ter_types[t_to_draw].suppress_floor == FALSE && see_in) {
+					if(floor_to_draw != 255 && scen_data.scen_terrains[t_to_draw].suppress_floor == FALSE && see_in) {
 						a = scen_data.scen_floors[floor_to_draw].pic;
 						
 						// if graphic is undefined for floor, just draw white
@@ -2293,14 +2295,14 @@ continue;*/
 							cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 					}
 					
-					te_full_move_block = (scen_data.scen_ter_types[t_to_draw].move_block[0] == 1 && scen_data.scen_ter_types[t_to_draw].move_block[1] == 1 &&
-										  scen_data.scen_ter_types[t_to_draw].move_block[2] == 1 && scen_data.scen_ter_types[t_to_draw].move_block[3] == 1);
+					te_full_move_block = (scen_data.scen_terrains[t_to_draw].move_block[0] == 1 && scen_data.scen_terrains[t_to_draw].move_block[1] == 1 &&
+										  scen_data.scen_terrains[t_to_draw].move_block[2] == 1 && scen_data.scen_terrains[t_to_draw].move_block[3] == 1);
 					
-					te_partial_move_block = (!te_full_move_block && (scen_data.scen_ter_types[t_to_draw].move_block[0] == 1 || scen_data.scen_ter_types[t_to_draw].move_block[1] == 1 ||
-																	 scen_data.scen_ter_types[t_to_draw].move_block[2] == 1 || scen_data.scen_ter_types[t_to_draw].move_block[3] == 1));
+					te_partial_move_block = (!te_full_move_block && (scen_data.scen_terrains[t_to_draw].move_block[0] == 1 || scen_data.scen_terrains[t_to_draw].move_block[1] == 1 ||
+																	 scen_data.scen_terrains[t_to_draw].move_block[2] == 1 || scen_data.scen_terrains[t_to_draw].move_block[3] == 1));
 					
-					te_no_move_block = (scen_data.scen_ter_types[t_to_draw].move_block[0] == 0 && scen_data.scen_ter_types[t_to_draw].move_block[1] == 0 &&
-										scen_data.scen_ter_types[t_to_draw].move_block[2] == 0 && scen_data.scen_ter_types[t_to_draw].move_block[3] == 0);
+					te_no_move_block = (scen_data.scen_terrains[t_to_draw].move_block[0] == 0 && scen_data.scen_terrains[t_to_draw].move_block[1] == 0 &&
+										scen_data.scen_terrains[t_to_draw].move_block[2] == 0 && scen_data.scen_terrains[t_to_draw].move_block[3] == 0);
 					
 					//deal with putting extra wall piece in corner of other walls
 					nw_corner = get_nw_corner(sector_offset_x,sector_offset_y,x,y);
@@ -2465,8 +2467,8 @@ continue;*/
 						place_ter_icons_3D(which_outdoor_sector,drawing_terrain,x,y,t_to_draw,floor_to_draw,center_of_current_square_x,center_of_current_square_y,to_whole_area_rect);
 					}
 					if(cur_viewing_mode == 11 && see_to) {
-						terrain_in_front = (!scen_data.scen_ter_types[t_to_draw].blocks_view[0] && !scen_data.scen_ter_types[t_to_draw].blocks_view[1] &&
-											(scen_data.scen_ter_types[t_to_draw].blocks_view[2] || scen_data.scen_ter_types[t_to_draw].blocks_view[3]) );
+						terrain_in_front = (!scen_data.scen_terrains[t_to_draw].blocks_view[0] && !scen_data.scen_terrains[t_to_draw].blocks_view[1] &&
+											(scen_data.scen_terrains[t_to_draw].blocks_view[2] || scen_data.scen_terrains[t_to_draw].blocks_view[3]) );
 						
 						//determine whether extra corner wall pieces will be drawn cut away (regardless of whether they'll be drawn at all)
 						nw_corner_cutaway = see_in_neighbors[0][0];
@@ -2599,9 +2601,9 @@ continue;*/
 					//outdoor mode
 					if(!editing_town && see_in) {
 						//Hill terrains effectively modify the height of the square's corners, raising some of them by (almost) one elevation level.
-						hill_ability = scen_data.scen_ter_types[t_to_draw].special;
+						hill_ability = scen_data.scen_terrains[t_to_draw].special;
 						height_adjust_right = height_adjust_left = height_adjust_bottom = height_adjust_top = 
-							height_adjust_center = scen_data.scen_ter_types[t_to_draw].height_adj;
+							height_adjust_center = scen_data.scen_terrains[t_to_draw].height_adj;
 						//if it's actually a HILL ability...
 						if(hill_ability >= 19 && hill_ability <= 30) {
 							hill_ability -= 19;
@@ -2662,7 +2664,7 @@ continue;*/
 							a.which_sheet = 917;
 							a.which_icon = 0;
 							a.graphic_adjust = 0;
-							if(place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y - scen_data.scen_ter_types[t_to_draw].height_adj,to_whole_area_rect,lighting) == FALSE)
+							if(place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y - scen_data.scen_terrains[t_to_draw].height_adj,to_whole_area_rect,lighting) == FALSE)
 								cant_draw_graphics_error(a,"Make sure that the editor and the current version of 3D Editor Graphics are in the folder 'Blades of Avernum Files'.",0);
 						}
 					}
@@ -2875,9 +2877,9 @@ void draw_ter_large()
 			 */
 			// draw terrain
 			if (t_to_draw > 0) {
-				a = scen_data.scen_ter_types[t_to_draw].ed_pic;
-				if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_ter_types[t_to_draw].pic.graphic_adjust!=0)
-					a.graphic_adjust=scen_data.scen_ter_types[t_to_draw].pic.graphic_adjust;
+				a = scen_data.scen_terrains[t_to_draw].ed_pic;
+				if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_terrains[t_to_draw].pic.graphic_adjust!=0)
+					a.graphic_adjust=scen_data.scen_terrains[t_to_draw].pic.graphic_adjust;
 				if (a.not_legit() == FALSE)
 					if (place_terrain_icon_into_ter_large(a,q,r) == FALSE)
 						cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
@@ -2963,11 +2965,11 @@ void draw_ter_large()
 			// now place the tiny icons in the lower right corner
 			// first, stuff that is done for both town and outdoors
 			// signs
-			if (scen_data.scen_ter_types[t_to_draw].special == 39) {
+			if (scen_data.scen_terrains[t_to_draw].special == 39) {
 				place_ter_icon_on_tile(q,r,small_icon_position,20);
 				small_icon_position++;
 			}			
-			if (scen_data.scen_ter_types[t_to_draw].special == 40) {
+			if (scen_data.scen_terrains[t_to_draw].special == 40) {
 				place_ter_icon_on_tile(q,r,small_icon_position,21);
 				small_icon_position++;
 			}			
@@ -2977,23 +2979,23 @@ void draw_ter_large()
 				small_icon_position++;
 			}
 			// icons for floor damage
-			if ((scen_data.scen_ter_types[t_to_draw].special == 1) || 
+			if ((scen_data.scen_terrains[t_to_draw].special == 1) || 
 				(scen_data.scen_floors[floor_to_draw].special == 1)) {
 				place_ter_icon_on_tile(q,r,small_icon_position,37);
 				small_icon_position++;
 			}
-			if ((scen_data.scen_ter_types[t_to_draw].special == 2) || 
+			if ((scen_data.scen_terrains[t_to_draw].special == 2) || 
 				(scen_data.scen_floors[floor_to_draw].special == 2)) {
 				place_ter_icon_on_tile(q,r,small_icon_position,38);
 				small_icon_position++;
 			}
-			if ((scen_data.scen_ter_types[t_to_draw].special == 3) || 
+			if ((scen_data.scen_terrains[t_to_draw].special == 3) || 
 				(scen_data.scen_floors[floor_to_draw].special == 3)) {
 				place_ter_icon_on_tile(q,r,small_icon_position,39);
 				small_icon_position++;
 			}
 			
-			if ((scen_data.scen_ter_types[t_to_draw].special == 6) || 
+			if ((scen_data.scen_terrains[t_to_draw].special == 6) || 
 				(scen_data.scen_floors[floor_to_draw].special == 6)) {
 				place_ter_icon_on_tile(q,r,small_icon_position,22);
 				small_icon_position++;
@@ -3343,9 +3345,9 @@ void draw_ter_small()
 				
 				// draw terrain
 				if (t_to_draw > 0) {
-					a = scen_data.scen_ter_types[t_to_draw].ed_pic;
-					if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_ter_types[t_to_draw].pic.graphic_adjust!=0)
-						a.graphic_adjust=scen_data.scen_ter_types[t_to_draw].pic.graphic_adjust;
+					a = scen_data.scen_terrains[t_to_draw].ed_pic;
+					if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_terrains[t_to_draw].pic.graphic_adjust!=0)
+						a.graphic_adjust=scen_data.scen_terrains[t_to_draw].pic.graphic_adjust;
 					if (a.not_legit() == FALSE) 
 						if (place_terrain_icon_into_ter_small(a,q,r) == FALSE)
 							cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
@@ -3934,7 +3936,7 @@ Boolean container_there(location l)
 	terrain_type_type terrain;
 	if (editing_town == FALSE)
 		return FALSE;
-	terrain = scen_data.scen_ter_types[t_d.terrain[(int)l.x][(int)l.y]];
+	terrain = scen_data.scen_terrains[t_d.terrain[(int)l.x][(int)l.y]];
 	if (terrain.special == 40)
 		return TRUE;
 	if (is_barrel(l.x,l.y) == TRUE)
@@ -4134,7 +4136,7 @@ void get_str(Str255 str,short i, short j)
 	}
 	
 	if (i == -4) {
-		strcpy((char *) str,scen_data.scen_ter_types[j].ter_name);
+		strcpy((char *) str,scen_data.scen_terrains[j].ter_name);
 		return;
 	}
 	if (i == -6) {

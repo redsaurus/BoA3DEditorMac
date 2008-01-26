@@ -610,7 +610,7 @@ void scen_item_data_type::clear_scen_item_data_type()
 	for (short i = 0; i < 256; i++) 
 		scen_floors[i].clear_floor_values();
 	for (short i = 0; i < 512; i++) 
-		scen_ter_types[i].clear_terrain_values();
+		scen_terrains[i].clear_terrain_values();
 	for (short i = 0; i < 256; i++) 
 		scen_creatures[i].clear_creature_type();	
 }

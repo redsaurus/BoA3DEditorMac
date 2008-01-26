@@ -2032,7 +2032,7 @@ Boolean script_type::process_scenario_data()
 									return FALSE;
 									}
 								if (current_terrain_edited >= 0)
-									scen_data.scen_ter_types[token_list[next_token].what_sort] = scen_data.scen_ter_types[current_terrain_edited];
+									scen_data.scen_terrains[token_list[next_token].what_sort] = scen_data.scen_terrains[current_terrain_edited];
 								current_terrain_edited = token_list[next_token].what_sort;
 								break;
 							case 4:
@@ -2082,7 +2082,7 @@ Boolean script_type::process_scenario_data()
 							scen_data.scen_floors[current_floor_edited].clear_floor_values();
 							break;
 						case 3:
-							scen_data.scen_ter_types[current_terrain_edited].clear_terrain_values();
+							scen_data.scen_terrains[current_terrain_edited].clear_terrain_values();
 							break;
 						case 4:
 							scen_data.scen_items[current_item_edited].clear_item_record_type();
@@ -2122,8 +2122,8 @@ Boolean script_type::process_scenario_data()
 								scen_data.scen_floors[new_value];
 							break;
 						case 3:
-							scen_data.scen_ter_types[current_terrain_edited] =
-								scen_data.scen_ter_types[new_value];
+							scen_data.scen_terrains[current_terrain_edited] =
+								scen_data.scen_terrains[new_value];
 							break;
 						case 4:
 							scen_data.scen_items[current_item_edited] =
@@ -2802,10 +2802,10 @@ Boolean load_core_scenario_data()
 void patch_corescendata2( void )
 {
 	// equivalant of "te_blocks_view_e = 0;"
-	scen_data.scen_ter_types[6].blocks_view[3] = 0;
-	scen_data.scen_ter_types[7].blocks_view[3] = 0;
-	scen_data.scen_ter_types[42].blocks_view[3] = 0;
-	scen_data.scen_ter_types[43].blocks_view[3] = 0;
+	scen_data.scen_terrains[6].blocks_view[3] = 0;
+	scen_data.scen_terrains[7].blocks_view[3] = 0;
+	scen_data.scen_terrains[42].blocks_view[3] = 0;
+	scen_data.scen_terrains[43].blocks_view[3] = 0;
 }
 
 // Loads the indivudual scenario script, if it exists. Returns true
@@ -3024,76 +3024,76 @@ Boolean set_terrain_variable(short which_ter_type,short which_value,short new_va
 {
 	Boolean error = FALSE;
 	switch (which_value) {
-		case 25: scen_data.scen_ter_types[which_ter_type].pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
-		case 26: scen_data.scen_ter_types[which_ter_type].pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
-		case 27: scen_data.scen_ter_types[which_ter_type].pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
-		case 28: scen_data.scen_ter_types[which_ter_type].ed_pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
-		case 29: scen_data.scen_ter_types[which_ter_type].ed_pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
+		case 25: scen_data.scen_terrains[which_ter_type].pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
+		case 26: scen_data.scen_terrains[which_ter_type].pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
+		case 27: scen_data.scen_terrains[which_ter_type].pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
+		case 28: scen_data.scen_terrains[which_ter_type].ed_pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
+		case 29: scen_data.scen_terrains[which_ter_type].ed_pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
 
-		case 30: scen_data.scen_ter_types[which_ter_type].ed_pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
-		case 31: scen_data.scen_ter_types[which_ter_type].cut_away_pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
-		case 32: scen_data.scen_ter_types[which_ter_type].cut_away_pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
-		case 33: scen_data.scen_ter_types[which_ter_type].cut_away_pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
-		case 34: scen_data.scen_ter_types[which_ter_type].second_icon = value_limit(new_value,-30000,30000,&error); break;
+		case 30: scen_data.scen_terrains[which_ter_type].ed_pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
+		case 31: scen_data.scen_terrains[which_ter_type].cut_away_pic.which_sheet = value_limit(new_value,-30000,30000,&error); break;
+		case 32: scen_data.scen_terrains[which_ter_type].cut_away_pic.which_icon = value_limit(new_value,-30000,30000,&error); break;
+		case 33: scen_data.scen_terrains[which_ter_type].cut_away_pic.graphic_adjust = value_limit(new_value,-30000,30000,&error); break;
+		case 34: scen_data.scen_terrains[which_ter_type].second_icon = value_limit(new_value,-30000,30000,&error); break;
 
-		case 35: scen_data.scen_ter_types[which_ter_type].second_icon_offset_x = value_limit(new_value,-30000,30000,&error); break;
-		case 36: scen_data.scen_ter_types[which_ter_type].second_icon_offset_y = value_limit(new_value,-30000,30000,&error); break;
-		case 37: scen_data.scen_ter_types[which_ter_type].cut_away_second_icon = value_limit(new_value,-30000,30000,&error); break;
-		case 38: scen_data.scen_ter_types[which_ter_type].cut_away_offset_x = value_limit(new_value,-30000,30000,&error); break;
-		case 39: scen_data.scen_ter_types[which_ter_type].cut_away_offset_y = value_limit(new_value,-30000,30000,&error); break;
+		case 35: scen_data.scen_terrains[which_ter_type].second_icon_offset_x = value_limit(new_value,-30000,30000,&error); break;
+		case 36: scen_data.scen_terrains[which_ter_type].second_icon_offset_y = value_limit(new_value,-30000,30000,&error); break;
+		case 37: scen_data.scen_terrains[which_ter_type].cut_away_second_icon = value_limit(new_value,-30000,30000,&error); break;
+		case 38: scen_data.scen_terrains[which_ter_type].cut_away_offset_x = value_limit(new_value,-30000,30000,&error); break;
+		case 39: scen_data.scen_terrains[which_ter_type].cut_away_offset_y = value_limit(new_value,-30000,30000,&error); break;
 
-		case 40: scen_data.scen_ter_types[which_ter_type].anim_steps = value_limit(new_value,-30000,30000,&error); break;
-		case 41: scen_data.scen_ter_types[which_ter_type].move_block[0] = value_limit(new_value,-30000,30000,&error); break;
-		case 42: scen_data.scen_ter_types[which_ter_type].move_block[1] = value_limit(new_value,-30000,30000,&error); break;
-		case 43: scen_data.scen_ter_types[which_ter_type].move_block[2] = value_limit(new_value,-30000,30000,&error); break;
-		case 44: scen_data.scen_ter_types[which_ter_type].move_block[3] = value_limit(new_value,-30000,30000,&error); break;
+		case 40: scen_data.scen_terrains[which_ter_type].anim_steps = value_limit(new_value,-30000,30000,&error); break;
+		case 41: scen_data.scen_terrains[which_ter_type].move_block[0] = value_limit(new_value,-30000,30000,&error); break;
+		case 42: scen_data.scen_terrains[which_ter_type].move_block[1] = value_limit(new_value,-30000,30000,&error); break;
+		case 43: scen_data.scen_terrains[which_ter_type].move_block[2] = value_limit(new_value,-30000,30000,&error); break;
+		case 44: scen_data.scen_terrains[which_ter_type].move_block[3] = value_limit(new_value,-30000,30000,&error); break;
 
-		case 45: scen_data.scen_ter_types[which_ter_type].see_block[0] = value_limit(new_value,-30000,30000,&error); break;
-		case 46: scen_data.scen_ter_types[which_ter_type].see_block[1] = value_limit(new_value,-30000,30000,&error); break;
-		case 47: scen_data.scen_ter_types[which_ter_type].see_block[2] = value_limit(new_value,-30000,30000,&error); break;
-		case 48: scen_data.scen_ter_types[which_ter_type].see_block[3] = value_limit(new_value,-30000,30000,&error); break;
-		case 49: scen_data.scen_ter_types[which_ter_type].blocks_view[0] = value_limit(new_value,-30000,30000,&error); break;
+		case 45: scen_data.scen_terrains[which_ter_type].see_block[0] = value_limit(new_value,-30000,30000,&error); break;
+		case 46: scen_data.scen_terrains[which_ter_type].see_block[1] = value_limit(new_value,-30000,30000,&error); break;
+		case 47: scen_data.scen_terrains[which_ter_type].see_block[2] = value_limit(new_value,-30000,30000,&error); break;
+		case 48: scen_data.scen_terrains[which_ter_type].see_block[3] = value_limit(new_value,-30000,30000,&error); break;
+		case 49: scen_data.scen_terrains[which_ter_type].blocks_view[0] = value_limit(new_value,-30000,30000,&error); break;
 
-		case 50: scen_data.scen_ter_types[which_ter_type].blocks_view[1] = value_limit(new_value,-30000,30000,&error); break;
-		case 51: scen_data.scen_ter_types[which_ter_type].blocks_view[2] = value_limit(new_value,-30000,30000,&error); break;
-		case 52: scen_data.scen_ter_types[which_ter_type].blocks_view[3] = value_limit(new_value,-30000,30000,&error); break;
-		case 53: scen_data.scen_ter_types[which_ter_type].height_adj = value_limit(new_value,-30000,30000,&error); break;
-		case 54: scen_data.scen_ter_types[which_ter_type].suppress_floor = value_limit(new_value,-30000,30000,&error); break;
+		case 50: scen_data.scen_terrains[which_ter_type].blocks_view[1] = value_limit(new_value,-30000,30000,&error); break;
+		case 51: scen_data.scen_terrains[which_ter_type].blocks_view[2] = value_limit(new_value,-30000,30000,&error); break;
+		case 52: scen_data.scen_terrains[which_ter_type].blocks_view[3] = value_limit(new_value,-30000,30000,&error); break;
+		case 53: scen_data.scen_terrains[which_ter_type].height_adj = value_limit(new_value,-30000,30000,&error); break;
+		case 54: scen_data.scen_terrains[which_ter_type].suppress_floor = value_limit(new_value,-30000,30000,&error); break;
 
-		case 55: scen_data.scen_ter_types[which_ter_type].light_radius = value_limit(new_value,-30000,30000,&error); break;
-		case 56: scen_data.scen_ter_types[which_ter_type].step_sound = value_limit(new_value,-30000,30000,&error); break;
-		case 57: scen_data.scen_ter_types[which_ter_type].shortcut_key = value_limit(new_value,-30000,30000,&error); break;
-		case 58: scen_data.scen_ter_types[which_ter_type].crumble_type = value_limit(new_value,-30000,30000,&error); break;
-		case 59: scen_data.scen_ter_types[which_ter_type].beam_hit_type = value_limit(new_value,-30000,30000,&error); break;
+		case 55: scen_data.scen_terrains[which_ter_type].light_radius = value_limit(new_value,-30000,30000,&error); break;
+		case 56: scen_data.scen_terrains[which_ter_type].step_sound = value_limit(new_value,-30000,30000,&error); break;
+		case 57: scen_data.scen_terrains[which_ter_type].shortcut_key = value_limit(new_value,-30000,30000,&error); break;
+		case 58: scen_data.scen_terrains[which_ter_type].crumble_type = value_limit(new_value,-30000,30000,&error); break;
+		case 59: scen_data.scen_terrains[which_ter_type].beam_hit_type = value_limit(new_value,-30000,30000,&error); break;
 
-		case 60: scen_data.scen_ter_types[which_ter_type].terrain_to_crumble_to = value_limit(new_value,-30000,30000,&error); break;
-		case 61: scen_data.scen_ter_types[which_ter_type].hidden_town_terrain = value_limit(new_value,-30000,30000,&error); break;
-		case 62: scen_data.scen_ter_types[which_ter_type].swap_terrain = value_limit(new_value,-30000,30000,&error); break;
-		case 63: scen_data.scen_ter_types[which_ter_type].is_bridge = value_limit(new_value,-30000,30000,&error); break;
-		case 64: scen_data.scen_ter_types[which_ter_type].is_road = value_limit(new_value,-30000,30000,&error); break;
+		case 60: scen_data.scen_terrains[which_ter_type].terrain_to_crumble_to = value_limit(new_value,-30000,30000,&error); break;
+		case 61: scen_data.scen_terrains[which_ter_type].hidden_town_terrain = value_limit(new_value,-30000,30000,&error); break;
+		case 62: scen_data.scen_terrains[which_ter_type].swap_terrain = value_limit(new_value,-30000,30000,&error); break;
+		case 63: scen_data.scen_terrains[which_ter_type].is_bridge = value_limit(new_value,-30000,30000,&error); break;
+		case 64: scen_data.scen_terrains[which_ter_type].is_road = value_limit(new_value,-30000,30000,&error); break;
 
-		case 65: scen_data.scen_ter_types[which_ter_type].can_look_at = value_limit(new_value,-30000,30000,&error); break;
-		case 66: scen_data.scen_ter_types[which_ter_type].special = value_limit(new_value,-30000,30000,&error); break;
-		case 67: scen_data.scen_ter_types[which_ter_type].effect_adjust = value_limit(new_value,-30000,30000,&error); break;
-		case 68: scen_data.scen_ter_types[which_ter_type].draw_on_automap = value_limit(new_value,-30000,30000,&error); break;
-		case 69: scen_data.scen_ter_types[which_ter_type].icon_offset_x = value_limit(new_value,-30000,30000,&error); break;
+		case 65: scen_data.scen_terrains[which_ter_type].can_look_at = value_limit(new_value,-30000,30000,&error); break;
+		case 66: scen_data.scen_terrains[which_ter_type].special = value_limit(new_value,-30000,30000,&error); break;
+		case 67: scen_data.scen_terrains[which_ter_type].effect_adjust = value_limit(new_value,-30000,30000,&error); break;
+		case 68: scen_data.scen_terrains[which_ter_type].draw_on_automap = value_limit(new_value,-30000,30000,&error); break;
+		case 69: scen_data.scen_terrains[which_ter_type].icon_offset_x = value_limit(new_value,-30000,30000,&error); break;
 
-		case 70: scen_data.scen_ter_types[which_ter_type].icon_offset_y = value_limit(new_value,-30000,30000,&error); break;
+		case 70: scen_data.scen_terrains[which_ter_type].icon_offset_y = value_limit(new_value,-30000,30000,&error); break;
 
 		case 71: 
-			scen_data.scen_ter_types[which_ter_type].move_block[0] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].move_block[1] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].move_block[2] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].move_block[3] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].move_block[0] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].move_block[1] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].move_block[2] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].move_block[3] = value_limit(new_value,0,1,&error);
 			break;
 		case 72: 
-			scen_data.scen_ter_types[which_ter_type].see_block[0] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].see_block[1] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].see_block[2] = value_limit(new_value,0,1,&error);
-			scen_data.scen_ter_types[which_ter_type].see_block[3] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].see_block[0] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].see_block[1] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].see_block[2] = value_limit(new_value,0,1,&error);
+			scen_data.scen_terrains[which_ter_type].see_block[3] = value_limit(new_value,0,1,&error);
 			break;
-		case 73: scen_data.scen_ter_types[which_ter_type].shimmers = value_limit(new_value,0,8,&error); break;
-		case 74: scen_data.scen_ter_types[which_ter_type].outdoor_combat_town_used = new_value; break;
+		case 73: scen_data.scen_terrains[which_ter_type].shimmers = value_limit(new_value,0,8,&error); break;
+		case 74: scen_data.scen_terrains[which_ter_type].outdoor_combat_town_used = new_value; break;
 		default:
 			return FALSE;
 			break;
@@ -3112,14 +3112,14 @@ Boolean set_terrain_string(short which_ter_type,short which_value,char *new_str)
 				ASB_big("String error: ",new_str," is too long.","",-1,"");
 				return FALSE;
 				}
-			strcpy(scen_data.scen_ter_types[which_ter_type].ter_name,new_str); 
+			strcpy(scen_data.scen_terrains[which_ter_type].ter_name,new_str); 
 			break;
 		case 3: 
 			if (strlen(new_str) > SCRIPT_NAME_LEN - 1) {
 				ASB_big("String error: ",new_str," is too long.","",-1,"");
 				return FALSE;
 				}
-			strcpy(scen_data.scen_ter_types[which_ter_type].default_script,new_str); 		
+			strcpy(scen_data.scen_terrains[which_ter_type].default_script,new_str); 		
 			break;
 
 		default:

@@ -57,7 +57,7 @@ WindowPtr	mainPtr;
 Boolean mouse_button_held = FALSE;
 Boolean play_sounds = TRUE;
 short cen_x, cen_y;
-short ticks_to_wait = 60;
+short ticks_to_wait = SPARSE_TICKS;
 
 short mode_count = 0;
 short geneva_font_num;
@@ -371,7 +371,7 @@ Boolean Handle_One_Event()
 	EventRecord event;
 	Boolean All_Done = FALSE;
 	//if(mouse_button_held)
-	//	ticks_to_wait = 60;
+	//	ticks_to_wait = SPARSE_TICKS;
 	WaitNextEvent(everyEvent, &event, ticks_to_wait, MOUSE_REGION);	
 	//printf("%d\n",event.what);
 	//if(event.what == osEvt)
@@ -408,7 +408,7 @@ Boolean Handle_One_Event()
 			All_Done = Mouse_Pressed( &event );
 			break;
 		case mouseUp:
-			ticks_to_wait = 60;
+			ticks_to_wait = SPARSE_TICKS;
 			mouse_button_held = FALSE;
 			lockLatestStep();
 			break;
@@ -423,9 +423,9 @@ Boolean Handle_One_Event()
 			break;
 		case osEvt:
 			if(event.message & 1)
-				ticks_to_wait = 60;
+				ticks_to_wait = SPARSE_TICKS;
 			else
-				ticks_to_wait = 300;
+				ticks_to_wait = VERY_SPARSE_TICKS;
 			break;
 	}
 	return All_Done;
@@ -918,6 +918,7 @@ void handle_edit_menu(int item_hit)
 			use_strict_adjusts = !use_strict_adjusts;
 			CheckMenuItem (GetMenuHandle(570),10,use_strict_adjusts);
 			write_should_use_strict_adjusts(use_strict_adjusts);
+			set_up_terrain_buttons();
 			if (cur_viewing_mode == 1){
 				small_any_drawn=FALSE;
 				draw_ter_small();

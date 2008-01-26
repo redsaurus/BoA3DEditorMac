@@ -267,6 +267,6 @@ short a_v(short x)
 terrain_type_type get_ter(short which_ter)
 {
 	terrain_type_type ter;
-		ter = scen_data.scen_ter_types[which_ter];
+		ter = scen_data.scen_terrains[which_ter];
 	return ter;
 }

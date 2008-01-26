@@ -1846,8 +1846,8 @@ void start_data_dump()
 
 
 	for (i = 0; i < 511; i++) 
-		if (scen_data.scen_ter_types[i].ed_pic.not_legit() == FALSE) {
-			sprintf((char *)get_text,"  Terrain %d: %s\r",i,scen_data.scen_ter_types[i].ter_name);
+		if (scen_data.scen_terrains[i].ed_pic.not_legit() == FALSE) {
+			sprintf((char *)get_text,"  Terrain %d: %s\r",i,scen_data.scen_terrains[i].ter_name);
 			len = (long) (strlen((char *)get_text));
 			FSWrite(theData_dump_file_id, &len, (char *) get_text);
 			}	
