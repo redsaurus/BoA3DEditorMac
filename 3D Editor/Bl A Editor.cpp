@@ -53,7 +53,8 @@ extern Rect terrain_rects[516]; //was 264
 /* Globals */
 Rect	windRect;
 Boolean dialog_not_toast = FALSE;
-WindowPtr	mainPtr;	
+WindowPtr	mainPtr;
+EventHandlerRef scrollHandler;
 Boolean mouse_button_held = FALSE;
 Boolean play_sounds = TRUE;
 short cen_x, cen_y;
@@ -203,6 +204,8 @@ void set_up_apple_events();
 static pascal OSErr handle_open_app(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
 static pascal OSErr handle_open_doc(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
 static pascal OSErr handle_quit(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
+void doScroll(ControlHandle bar, short delta);
+OSStatus mainScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 
 //MW specified argument and return type.
 int main(void)
@@ -234,6 +237,15 @@ int main(void)
 	make_cursor_sword();
 	Set_Window_Drag_Bdry();
 	Set_up_win();
+	
+	const EventTypeSpec eventList3[] = {
+	//{ kEventClassMouse, kEventMouseDown }, 
+	{ kEventClassMouse, kEventMouseWheelMoved},
+	//{ kEventClassKeyboard, kEventRawKeyDown },
+	//{ kEventClassKeyboard, kEventRawKeyRepeat }
+	};
+	
+	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) mainScrollHandler),GetEventTypeCount(eventList3),eventList3,0,&scrollHandler);
 
 	init_warriors_grove();
 	
@@ -260,7 +272,7 @@ int main(void)
 	set_up_terrain_buttons();
 	
 	redraw_screen();
-
+	
 	while (Handle_One_Event() == FALSE);
 	
 	close_program();	
@@ -381,6 +393,7 @@ Boolean Handle_One_Event()
 		GlobalToLocal(&event.where);
 		handle_action(event.where,event);
 	}
+	//printf("%i\n",event.what);
 	switch (event.what)
 	{
 		case keyDown: case autoKey:
@@ -959,30 +972,42 @@ void handle_monst_menu(int item_hit)
 	set_new_creature(item_hit);
 }
 
-pascal void right_sbar_action(ControlHandle bar, short part)
-{
-	short old_setting,new_setting,max;
-	
+void doScroll(ControlHandle bar, short delta){
+	short old_setting,new_setting;
+	old_setting = GetControlValue(bar);
+	new_setting = minmax(0,GetControlMaximum(bar),old_setting+delta);
+	SetControlValue(bar,new_setting);
+	store_control_value = new_setting;
+	if (new_setting != old_setting)
+		place_right_buttons(0);
+}
+
+OSStatus mainScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
+	OSStatus result = eventNotHandledErr;
+	UInt32      eventKind, eventClass;
+	eventClass = GetEventClass(eventRef);
+	eventKind  = GetEventKind(eventRef);
+	if(eventKind==kEventMouseWheelMoved){ //scroll wheel events
+		SInt32 delta;
+		GetEventParameter(eventRef,kEventParamMouseWheelDelta,typeLongInteger,NULL,sizeof(delta),NULL,&delta);
+		doScroll(right_sbar,-1*delta);
+	}
+	return(result);
+}
+
+pascal void right_sbar_action(ControlHandle bar, short part){
 	if (part == 0)
 		return;
 	
-	old_setting = GetControlValue(bar);
-	new_setting = old_setting;
-	max = GetControlMaximum(bar);
+	int delta=0;
 	
 	switch (part) {
-		case inUpButton: new_setting--; break;
-		case inDownButton: new_setting++; break;
-		case inPageUp: new_setting -= 21; break;
-		case inPageDown: new_setting += 21; break;
+		case inUpButton: delta=-1; break;
+		case inDownButton: delta=1; break;
+		case inPageUp: delta=-21; break;
+		case inPageDown: delta=21; break;
 	}
-	new_setting = minmax(0,max,new_setting);
-	SetControlValue(bar,new_setting);
-	store_control_value = new_setting;
-	if (new_setting != old_setting) {
-		//set_up_terrain_buttons();
-		place_right_buttons(0);
-	}
+	doScroll(bar,delta);
 }
 
 Boolean Mouse_Pressed( EventRecord * event )
@@ -1011,6 +1036,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 			All_Done = TRUE;
 			break;
 		case inContent:
+			printf("Content\n");
 			SetPort(GetWindowPort(mainPtr));
 			GlobalToLocal(&(event->where));
 			content_part = FindControl(event->where,the_window,&control_hit); // hit sbar?
@@ -1026,6 +1052,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 						}
 						break;
 					case inUpButton: case inPageUp: case inDownButton: case inPageDown:
+						printf("up or down\n");
 						if (control_hit == right_sbar)
 							content_part = TrackControl(control_hit,event->where,(ControlActionUPP)right_sbar_action_UPP);
 						break;

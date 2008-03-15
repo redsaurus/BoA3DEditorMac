@@ -687,6 +687,14 @@ void close_current_scenario_resources()
 	}
 }
 
+int abortSave(short file1, short file2, int error)
+{
+	FSClose(file1);
+	FSClose(file2);
+	oops_error(error);
+	return(error);
+}
+
 // Here we go. this is going to hurt.
 // Note no save as is available for scenarios.
 // At this point, current_scenario_file_info MUST contain the FSSPEC for the currently edited scen.
@@ -730,7 +738,7 @@ void save_campaign()
 	// Now we need to set up a buffer for moving the data over to the dummy
 	buffer = (char *) NewPtr(buf_len);	
 	if (buffer == NULL) {
-		FSClose(scen_f); FSClose(dummy_f); oops_error(62);
+		abortSave(scen_f,dummy_f,62);
 		return;
 	}
 
@@ -760,13 +768,12 @@ void save_campaign()
 		scenario.port();
 
 	len = sizeof(scenario_data_type); // scenario data
-	if ((error = FSRead(scen_f, &len, (char *) &temp_scenario)) != 0){
-		FSClose(scen_f);  FSClose(dummy_f); oops_error(201); return;
-	}
-	if ((error = FSWrite(dummy_f, &len, (char *) &scenario)) != 0) {
-		EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(62);
+	if ((error = FSRead(scen_f, &len, (char *) &temp_scenario)) != 0)
+		abortSave(scen_f,dummy_f,201);
+	if ((error = FSWrite(dummy_f, &len, (char *) &scenario)) != 0){
+		abortSave(scen_f,dummy_f,62);
 		return;
-		}	
+	}	
 
 	if (currently_editing_windows_scenario)
 		scenario.port();
@@ -786,7 +793,9 @@ void save_campaign()
 			if (currently_editing_windows_scenario)
 				current_terrain.port();
 
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(63);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,63);
+			
 			
 			SetFPos(scen_f,3,save_out_size);
 		}
@@ -795,9 +804,10 @@ void save_campaign()
 			error = FSRead(scen_f, &len, buffer);
 			dummy_out_ptr = (outdoor_record_type *) buffer;
 			//port_out(dummy_out_ptr);
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(64);}
+			if (error != 0) 
+				abortSave(scen_f,dummy_f,64);
 			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
-				EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(65);
+				abortSave(scen_f,dummy_f,65);
 				return;
 			}			
 		}
@@ -813,7 +823,8 @@ void save_campaign()
 
 			if (currently_editing_windows_scenario)
 				town.port();
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(66);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,66);
 			if (currently_editing_windows_scenario)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
@@ -861,13 +872,13 @@ void save_campaign()
 
 			len = (long) (sizeof(town_record_type));
 			error = FSRead(scen_f, &len, buffer);
-			if (error != 0) {
-				FSClose(scen_f); 
-				FSClose(dummy_f);
-				oops_error(67);
-			}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,67);
 			//port_dummy_town();
-			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(68);return;}						
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,68);
+				return;
+			}
 			switch (scenario.town_size[k]) {
 				case 0: len = (long) ( sizeof(big_tr_type)); break;
 				case 1: len = (long) ( sizeof(ave_tr_type)); break;
@@ -875,20 +886,27 @@ void save_campaign()
 			}
 
 			error = FSRead(scen_f, &len, buffer);
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(69);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,69);
 			//port_dummy_t_d(scenario.town_size[k],buffer);
-			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(70);return;}						
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,70);
+				return;
+			}
 		}
 	
 	change_made_town = change_made_outdoors = FALSE;
 	// now, everything is moved over. Delete the original, and rename the dummy
 	error = FSClose(scen_f); 
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(71);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,71);
 	cur_scen_is_mac = TRUE;
 	error = FSClose(dummy_f);		
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(72);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,72);
 	error = FSpExchangeFiles(&to_load,&dummy_file);
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(73);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,73);
 	DisposePtr(buffer);
 	FSMakeFSSpec(current_scenario_file_info.vRefNum,current_scenario_file_info.parID,"\pBoA scenario temp",&dummy_file);
 	FSpDelete(&dummy_file);
@@ -936,24 +954,26 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 	FSpDelete(&dummy_file);
 	error = FSpCreate(&dummy_file,'BoA^','BoAX',smSystemScript);
 	if ((error != 0) && (error != dupFNErr)) {
-				if (error != 0) {oops_error(59);}
-				return;
-				}
+		if (error != 0) {
+			oops_error(59);
+		}
+		return;
+	}
 	if ((error = FSpOpenDF(&dummy_file,3,&dummy_f)) != 0) {
 		oops_error(60);
 		return;
-		}			
+	}			
 	if ((error = FSpOpenDF(&to_load,3,&scen_f)) != 0) {
 		oops_error(61);
 		return;
-		}			
+	}			
 
 	// Now we need to set up a buffer for moving the data over to the dummy
 	buffer = (char *) NewPtr(buf_len);	
 	if (buffer == NULL) {
-		FSClose(scen_f); FSClose(dummy_f); oops_error(62);
+		abortSave(scen_f,dummy_f,62);
 		return;
-		}
+	}
 
 	scenario.prog_make_ver[0] = 2;
 	scenario.prog_make_ver[1] = 0;
@@ -967,9 +987,10 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 	save_town_size = (long) (sizeof (town_record_type));
 	if (scenario.town_size[cur_town] == 0)
 		save_town_size += (long) (sizeof (big_tr_type));
-		else if (scenario.town_size[cur_town] == 1)
-			save_town_size += (long) (sizeof (ave_tr_type));
-			else save_town_size += (long) (sizeof (tiny_tr_type));
+	else if (scenario.town_size[cur_town] == 1)
+		save_town_size += (long) (sizeof (ave_tr_type));
+	else 
+		save_town_size += (long) (sizeof (tiny_tr_type));
 	scen_ptr_move = sizeof(scenario_data_type);
 
 	scenario.last_town_edited = cur_town;
@@ -982,9 +1003,9 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 
 	len = sizeof(scenario_data_type); // scenario data
 	if ((error = FSWrite(dummy_f, &len, (char *) &scenario)) != 0) {
-		EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(62);
+		abortSave(scen_f,dummy_f,62);
 		return;
-		}	
+	}	
 
 	if (currently_editing_windows_scenario)
 		scenario.port();
@@ -999,8 +1020,9 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 		empty_terrain.clear_outdoor_record_type();
 		if (on_surface) {
 			for (i = 0; i < 48; i++){
-				for (j = 0; j < 48; j++)
+				for (j = 0; j < 48; j++){
 					empty_terrain.floor[i][j] = 37;
+				}
 			}
 		}
 		empty_terrain.is_on_surface = on_surface;
@@ -1019,17 +1041,19 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 				len = (long) (sizeof (outdoor_record_type));
 				
 				if(j < plus_west || scenario.out_width - j <= plus_east ||
-				i < plus_north || scenario.out_height - i <= plus_south) {
+				   i < plus_north || scenario.out_height - i <= plus_south)
 					error = FSWrite(dummy_f, &len, (char *) &empty_terrain);
-				}
 				else {
 					error = FSRead(scen_f, &len, buffer);
-					if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(64);}
+					if (error != 0) {
+						abortSave(scen_f,dummy_f,64);
+						return;
+					}
 					error = FSWrite(dummy_f, &len, buffer);
 				}
 				
 				if (error != 0) {
-					EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(65);
+					abortSave(scen_f,dummy_f,65);
 					return;
 				}
 			}
@@ -1053,7 +1077,8 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 			error = FSWrite(dummy_f, &len, (char *) &town); 
 			if (currently_editing_windows_scenario)
 				town.port();
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(66);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,66);
 			if (currently_editing_windows_scenario)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
@@ -1075,7 +1100,6 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 					FSWrite(dummy_f, &len, (char *) &ave_t);
 				break;
 			
-			
 				case 2:
 					for (i = 0; i < 32; i++){
 						for (j = 0; j < 32; j++) {
@@ -1093,39 +1117,45 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 				t_d.port();
 			
 			SetFPos(scen_f,3,save_town_size);
+		}
+		else { /// load unedited town into buffer and save, doing translataions when necessary
+			len = (long) (sizeof(town_record_type));
+			error = FSRead(scen_f, &len, buffer);
+			if (error != 0)
+				abortSave(scen_f,dummy_f,67);
+			//port_dummy_town();
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,68);
+				return;
 			}
-			else { /// load unedited town into buffer and save, doing translataions when necessary
-
-				len = (long) (sizeof(town_record_type));
-				error = FSRead(scen_f, &len, buffer);
-				if (error != 0) {
-					FSClose(scen_f); 
-					FSClose(dummy_f);
-					oops_error(67);
-				}
-				//port_dummy_town();
-				if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(68);return;}						
-				switch (scenario.town_size[k]) {
-					case 0: len = (long) ( sizeof(big_tr_type)); break;
-					case 1: len = (long) ( sizeof(ave_tr_type)); break;
-					case 2: len = (long) ( sizeof(tiny_tr_type)); break;
-				}
-
-				error = FSRead(scen_f, &len, buffer);
-				if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(69);}
-				//port_dummy_t_d(scenario.town_size[k],buffer);
-				if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(70);return;}						
+			switch (scenario.town_size[k]) {
+				case 0: len = (long) ( sizeof(big_tr_type)); break;
+				case 1: len = (long) ( sizeof(ave_tr_type)); break;
+				case 2: len = (long) ( sizeof(tiny_tr_type)); break;
 			}
+
+			error = FSRead(scen_f, &len, buffer);
+			if (error != 0)
+				abortSave(scen_f,dummy_f,69);
+			//port_dummy_t_d(scenario.town_size[k],buffer);
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,70);
+				return;
+			}
+		}
 	
 	change_made_town = change_made_outdoors = FALSE;
 	// now, everything is moved over. Delete the original, and rename the dummy
 	error = FSClose(scen_f); 
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(71);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,71);
 	cur_scen_is_mac = TRUE;
 	error = FSClose(dummy_f);		
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(72);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,72);
 	error = FSpExchangeFiles(&to_load,&dummy_file);
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(73);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,73);
 	DisposePtr(buffer);
 	FSMakeFSSpec(current_scenario_file_info.vRefNum,current_scenario_file_info.parID,"\pBoA scenario temp",&dummy_file);
 	FSpDelete(&dummy_file);
@@ -1160,7 +1190,8 @@ void save_change_to_town_size(int old_town_size)
 	FSpDelete(&dummy_file);
 	error = FSpCreate(&dummy_file,'BoA^','BoAX',smSystemScript);
 	if ((error != 0) && (error != dupFNErr)) {
-		if (error != 0) {oops_error(59);}
+		if (error != 0)
+			oops_error(59);
 		return;
 	}
 	if ((error = FSpOpenDF(&dummy_file,3,&dummy_f)) != 0) {
@@ -1175,7 +1206,7 @@ void save_change_to_town_size(int old_town_size)
 	// Now we need to set up a buffer for moving the data over to the dummy
 	buffer = (char *) NewPtr(buf_len);	
 	if (buffer == NULL) {
-		FSClose(scen_f); FSClose(dummy_f); oops_error(62);
+		abortSave(scen_f,dummy_f,62);
 		return;
 	}
 	
@@ -1206,17 +1237,18 @@ void save_change_to_town_size(int old_town_size)
 	
 	len = (long)sizeof(scenario_data_type); // scenario data
 	if ((error = FSRead(scen_f, &len, (char *) &temp_scenario)) != 0){
-		FSClose(scen_f);  FSClose(dummy_f); oops_error(201); return;
+		abortSave(scen_f,dummy_f,201);
+		return;
 	}
 	if ((error = FSWrite(dummy_f, &len, (char *) &scenario)) != 0) {
-		EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(62);
+		abortSave(scen_f,dummy_f,62);
 		return;
 	}	
 	
 	if (currently_editing_windows_scenario)
 		scenario.port();
 	
-	SetFPos(scen_f,1,scen_ptr_move);
+	SetFPos(scen_f,fsFromStart,scen_ptr_move);
 	
 	// OK ... scenario written. Now outdoors.
 	num_outdoors = scenario.out_width * scenario.out_height;
@@ -1231,18 +1263,22 @@ void save_change_to_town_size(int old_town_size)
 			if (currently_editing_windows_scenario)
 				current_terrain.port();
 			
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(63);}
+			if (error != 0) {
+				abortSave(scen_f,dummy_f,63);
+			}
 			
-			SetFPos(scen_f,3,save_out_size);
+			SetFPos(scen_f,fsFromMark,save_out_size);
 		}
 		else {
 			len = (long) (sizeof (outdoor_record_type));
 			error = FSRead(scen_f, &len, buffer);
 			dummy_out_ptr = (outdoor_record_type *) buffer;
 			//port_out(dummy_out_ptr);
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(64);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,64);
 			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
-				EdSysBeep(2); FSClose(scen_f); FSClose(dummy_f);oops_error(65);
+				EdSysBeep(2);
+				abortSave(scen_f,dummy_f,65);
 				return;
 			}			
 		}
@@ -1258,7 +1294,8 @@ void save_change_to_town_size(int old_town_size)
 			
 			if (currently_editing_windows_scenario)
 				town.port();
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(66);}
+			if (error != 0) 
+				abortSave(scen_f,dummy_f,66);
 			if (currently_editing_windows_scenario)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
@@ -1301,19 +1338,18 @@ void save_change_to_town_size(int old_town_size)
 				case 2: len = (long) ( sizeof(tiny_tr_type)); break;
 			}
 			len+=(long) (sizeof (town_record_type));
-			SetFPos(scen_f,3,len);
+			SetFPos(scen_f,fsFromMark,len);
 		}
 		else { /// load unedited town into buffer and save, doing translataions when necessary
 			
 			len = (long) (sizeof(town_record_type));
 			error = FSRead(scen_f, &len, buffer);
-			if (error != 0) {
-				FSClose(scen_f); 
-				FSClose(dummy_f);
-				oops_error(67);
-			}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,67);
 			//port_dummy_town();
-			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(68);return;}						
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,68);
+				return;}						
 			switch (temp_scenario.town_size[k]) {
 				case 0: len = (long) ( sizeof(big_tr_type)); break;
 				case 1: len = (long) ( sizeof(ave_tr_type)); break;
@@ -1321,20 +1357,28 @@ void save_change_to_town_size(int old_town_size)
 			}
 			
 			error = FSRead(scen_f, &len, buffer);
-			if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(69);}
+			if (error != 0)
+				abortSave(scen_f,dummy_f,69);
 			//port_dummy_t_d(scenario.town_size[k],buffer);
-			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(70);return;}						
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,70);
+				return;
+			}
 		}
 		
 		change_made_town = change_made_outdoors = FALSE;
 	// now, everything is moved over. Delete the original, and rename the dummy
 	error = FSClose(scen_f); 
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(71);}
+	if (error != 0) {
+		abortSave(scen_f,dummy_f,71);
+	}
 	cur_scen_is_mac = TRUE;
 	error = FSClose(dummy_f);		
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(72);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,72);
 	error = FSpExchangeFiles(&to_load,&dummy_file);
-	if (error != 0) {FSClose(scen_f); FSClose(dummy_f);oops_error(73);}
+	if (error != 0)
+		abortSave(scen_f,dummy_f,73);
 	DisposePtr(buffer);
 	FSMakeFSSpec(current_scenario_file_info.vRefNum,current_scenario_file_info.parID,"\pBoA scenario temp",&dummy_file);
 	FSpDelete(&dummy_file);

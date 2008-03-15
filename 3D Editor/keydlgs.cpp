@@ -48,7 +48,7 @@ short fancy_choice_dialog(short which_dlog,short parent)
 //		ModalDialog((ModalFilterProcPtr) cd_event_filter, &item_hit);
 //#endif
 	if(which_dlog == 1062)//this is a hack to show the version number correctly
-		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.4 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
+		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.5.1 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
