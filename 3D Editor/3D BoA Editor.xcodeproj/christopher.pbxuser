@@ -763,6 +763,9 @@
 			9D99FCB50D8CACED00A16E89 /* PBXTextBookmark */ = 9D99FCB50D8CACED00A16E89 /* PBXTextBookmark */;
 			9D99FCB60D8CACED00A16E89 /* PBXTextBookmark */ = 9D99FCB60D8CACED00A16E89 /* PBXTextBookmark */;
 			9D99FCB70D8CACED00A16E89 /* PBXTextBookmark */ = 9D99FCB70D8CACED00A16E89 /* PBXTextBookmark */;
+			9D99FCBD0D8CAD7900A16E89 /* PBXTextBookmark */ = 9D99FCBD0D8CAD7900A16E89 /* PBXTextBookmark */;
+			9D99FCBE0D8CAD7900A16E89 /* PBXTextBookmark */ = 9D99FCBE0D8CAD7900A16E89 /* PBXTextBookmark */;
+			9D99FCBF0D8CAD7900A16E89 /* PBXTextBookmark */ = 9D99FCBF0D8CAD7900A16E89 /* PBXTextBookmark */;
 			9DCB31D70D4F9FE0002E9494 = 9DCB31D70D4F9FE0002E9494 /* PBXTextBookmark */;
 			9DCB32DA0D53B9BA002E9494 = 9DCB32DA0D53B9BA002E9494 /* PBXTextBookmark */;
 		};
@@ -845,8 +848,8 @@
 	6A66C40A06771A6F0030138E /* keydlgs.cpp */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {1241, 5530}}";
-			sepNavSelRange = "{4695, 7}";
-			sepNavVisRect = "{{0, 2305}, {1241, 613}}";
+			sepNavSelRange = "{1342, 0}";
+			sepNavVisRect = "{{0, 257}, {1241, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1280, 742}}";
 		};
 	};
@@ -2075,6 +2078,36 @@
 		vrLoc = 18539;
 	};
 	9D99FCB70D8CACED00A16E89 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 6A66C40806771A6F0030138E /* global.h */;
+		name = last_town_edited;
+		rLen = 16;
+		rLoc = 23397;
+		rType = 0;
+		vrLen = 1042;
+		vrLoc = 22450;
+	};
+	9D99FCBD0D8CAD7900A16E89 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 6A66C40206771A6F0030138E /* Bl A Fileio.cpp */;
+		name = "Bl A Fileio.cpp: 1226";
+		rLen = 0;
+		rLoc = 39105;
+		rType = 0;
+		vrLen = 1450;
+		vrLoc = 38278;
+	};
+	9D99FCBE0D8CAD7900A16E89 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 6A66C40006771A6E0030138E /* Bl A Editor.cpp */;
+		name = "Bl A Editor.cpp: 698";
+		rLen = 0;
+		rLoc = 19243;
+		rType = 0;
+		vrLen = 1398;
+		vrLoc = 18539;
+	};
+	9D99FCBF0D8CAD7900A16E89 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 6A66C40806771A6F0030138E /* global.h */;
 		name = last_town_edited;

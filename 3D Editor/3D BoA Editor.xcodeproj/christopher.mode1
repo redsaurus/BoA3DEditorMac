@@ -204,7 +204,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>9D99FCB50D8CACED00A16E89</string>
+						<string>9D99FCBD0D8CAD7900A16E89</string>
 						<key>history</key>
 						<array>
 							<string>9D99FBBC0D8C6AC100A16E89</string>
@@ -244,7 +244,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>9D99FCB60D8CACED00A16E89</string>
+						<string>9D99FCBE0D8CAD7900A16E89</string>
 						<key>history</key>
 						<array>
 							<string>9D99FC6E0D8CA93200A16E89</string>
@@ -284,7 +284,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>9D99FCB70D8CACED00A16E89</string>
+						<string>9D99FCBF0D8CAD7900A16E89</string>
 						<key>history</key>
 						<array>
 							<string>9D99FCA60D8CABD300A16E89</string>
@@ -388,8 +388,8 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>3</integer>
-									<integer>1</integer>
+									<integer>14</integer>
+									<integer>5</integer>
 									<integer>0</integer>
 								</array>
 							</array>
@@ -633,10 +633,10 @@
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1C0AD2B3069F1EA900FABCE6</string>
 		<string>9DFCBAD80CC06E4F00DD1669</string>
-		<string>/Users/christopher/Projects/3D Editor Workspace/3D BoA Editor.xcodeproj</string>
 		<string>9D99FCAB0D8CAC8700A16E89</string>
 		<string>9D99FB5A0D8C5D8000A16E89</string>
 		<string>9D99FB8C0D8C65A600A16E89</string>
+		<string>/Users/christopher/Projects/3D Editor Workspace/3D BoA Editor.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 59 1024 687 0 0 1024 746 </string>
