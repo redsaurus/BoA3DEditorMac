@@ -275,11 +275,11 @@ void change_ter_event_filter (short item_hit)
 			if (current_drawing_mode == 0) {
 				if (cre(tn_a,0,255,"Both floor types must be from 0 to 255.","",857) == TRUE) break;
 				if (cre(tn_b,0,255,"Both floor types must be from 0 to 255.","",857) == TRUE) break;
-				}
-				else {
-					if (cre(tn_a,0,511,"Both terrain types must be from 0 to 511.","",857) == TRUE) break;
-					if (cre(tn_b,0,511,"Both terrain types must be from 0 to 511.","",857) == TRUE) break;
-					}
+			}
+			else {
+				if (cre(tn_a,0,511,"Both terrain types must be from 0 to 511.","",857) == TRUE) break;
+				if (cre(tn_b,0,511,"Both terrain types must be from 0 to 511.","",857) == TRUE) break;
+			}
 			if (cre(tn_c,0,100,"The Chance must be from 0 to 100.","",857) == TRUE) break;
 
 			 dialog_not_toast = FALSE; 
@@ -1032,10 +1032,17 @@ Boolean new_town()
 }
 
 // before calling this, be sure to do all checks to make sure it's safe.
-void delete_last_town()
+void delete_town()
 {
+	for(int i=cur_town; i<scenario.num_towns; i++){
+		scenario.town_size[i]=scenario.town_size[i+1];
+		scenario.town_starts_hidden[i]=scenario.town_starts_hidden[i+1];
+	}
+	if(scenario.start_in_what_town == cur_town){
+		scenario.start_in_what_town=0;
+	}
 	scenario.num_towns--;
-	save_campaign();
+	save_remove_town();
 }
 
 void pick_import_town_event_filter (short item_hit)

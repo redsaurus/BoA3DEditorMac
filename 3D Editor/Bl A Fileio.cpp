@@ -1168,6 +1168,168 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 	load_all_outdoor_names(NULL);
 }
 
+void save_remove_town()
+{
+	short i,k,num_outdoors;
+	FSSpec to_load,dummy_file;
+	short dummy_f,scen_f;
+	char *buffer = NULL;
+	Size buf_len = 100000;
+	OSErr error;
+	short out_num;
+	long len,scen_ptr_move = 0,save_out_size = 0;
+	outdoor_record_type *dummy_out_ptr;
+	
+	// before saving, do all the final processing that needs to be done (like readjusting lights)
+	set_up_lights();
+	
+	//OK. FIrst find out what file name we're working with, and make the dummy file 
+	// which we'll build the new scenario in
+	to_load = current_scenario_file_info;
+	FSMakeFSSpec(current_scenario_file_info.vRefNum,current_scenario_file_info.parID,"\pBoA scenario temp",&dummy_file);
+	FSpDelete(&dummy_file);
+	error = FSpCreate(&dummy_file,'BoA^','BoAX',smSystemScript);
+	if ((error != 0) && (error != dupFNErr)) {
+		if (error != 0)
+			oops_error(59);
+		return;
+	}
+	if ((error = FSpOpenDF(&dummy_file,3,&dummy_f)) != 0) {
+		oops_error(60);
+		return;
+	}			
+	if ((error = FSpOpenDF(&to_load,3,&scen_f)) != 0) {
+		oops_error(61);
+		return;
+	}			
+	
+	// Now we need to set up a buffer for moving the data over to the dummy
+	buffer = (char *) NewPtr(buf_len);	
+	if (buffer == NULL) {
+		abortSave(scen_f,dummy_f,62);
+		return;
+	}
+	
+	scenario.prog_make_ver[0] = 2;
+	scenario.prog_make_ver[1] = 0;
+	scenario.prog_make_ver[2] = 0;
+	
+	// Now, the pointer in scen_f needs to move along, so that the correct towns are sucked in.
+	// To do so, we'll remember the size of the saved town and out now.
+	// this is much simple than it was in Blades of Exile, since chunks have a constant length now
+	out_num = cur_out.y * scenario.out_width + cur_out.x;
+	save_out_size = (long) (sizeof (outdoor_record_type));
+	scen_ptr_move = sizeof(scenario_data_type);
+	
+	scenario.last_town_edited = cur_town;
+	while(scenario.last_town_edited >= scenario.num_towns)
+		scenario.last_town_edited--;
+	scenario.last_out_edited = cur_out;
+	
+	// now, if editing windows scenario, we need to write it in a windows friendly way.
+	if (currently_editing_windows_scenario)
+		scenario.port();
+	
+	len = (long)sizeof(scenario_data_type); // scenario data
+	if ((error = FSRead(scen_f, &len, (char *) &temp_scenario)) != 0){
+		abortSave(scen_f,dummy_f,201);
+		return;
+	}
+	if ((error = FSWrite(dummy_f, &len, (char *) &scenario)) != 0) {
+		abortSave(scen_f,dummy_f,62);
+		return;
+	}
+	
+	if (currently_editing_windows_scenario)
+		scenario.port();
+	
+	SetFPos(scen_f,fsFromStart,scen_ptr_move);
+	
+	// OK ... scenario written. Now outdoors.
+	num_outdoors = scenario.out_width * scenario.out_height;
+	for (i = 0; i < num_outdoors; i++){
+		if (i == out_num) {
+			if (currently_editing_windows_scenario)
+				current_terrain.port();
+			
+			len = sizeof(outdoor_record_type);
+			error = FSWrite(dummy_f, &len, (char *) &current_terrain); 
+			
+			if (currently_editing_windows_scenario)
+				current_terrain.port();
+			
+			if (error != 0) {
+				abortSave(scen_f,dummy_f,63);
+			}
+			
+			SetFPos(scen_f,fsFromMark,save_out_size);
+		}
+		else {
+			len = (long) (sizeof (outdoor_record_type));
+			error = FSRead(scen_f, &len, buffer);
+			dummy_out_ptr = (outdoor_record_type *) buffer;
+			//port_out(dummy_out_ptr);
+			if (error != 0)
+				abortSave(scen_f,dummy_f,64);
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				EdSysBeep(2);
+				abortSave(scen_f,dummy_f,65);
+				return;
+			}			
+		}
+	}		
+	// now, finally, write towns.
+	for (k = 0; k < temp_scenario.num_towns; k++){
+		// load unedited town into buffer and save, doing translataions when necessary
+			
+		len = (long) (sizeof(town_record_type));
+		error = FSRead(scen_f, &len, buffer);
+		if (error != 0)
+			abortSave(scen_f,dummy_f,67);
+		//port_dummy_town();
+		if (k != cur_town) {
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,68);
+				return;
+			}
+		}
+		switch (temp_scenario.town_size[k]) {
+			case 0: len = (long) ( sizeof(big_tr_type)); break;
+			case 1: len = (long) ( sizeof(ave_tr_type)); break;
+			case 2: len = (long) ( sizeof(tiny_tr_type)); break;
+		}
+		
+		error = FSRead(scen_f, &len, buffer);
+		if (error != 0)
+			abortSave(scen_f,dummy_f,69);
+		//port_dummy_t_d(scenario.town_size[k],buffer);
+		if (k != cur_town) {
+			if ((error = FSWrite(dummy_f, &len, buffer)) != 0) {
+				abortSave(scen_f,dummy_f,70);
+				return;
+			}
+		}
+	}
+	if(cur_town == temp_scenario.num_towns-1)
+		cur_town--;
+	change_made_town = change_made_outdoors = FALSE;
+	// now, everything is moved over. Delete the original, and rename the dummy
+	error = FSClose(scen_f); 
+	if (error != 0) {
+		abortSave(scen_f,dummy_f,71);
+	}
+	cur_scen_is_mac = TRUE;
+	error = FSClose(dummy_f);		
+	if (error != 0)
+		abortSave(scen_f,dummy_f,72);
+	error = FSpExchangeFiles(&to_load,&dummy_file);
+	if (error != 0)
+		abortSave(scen_f,dummy_f,73);
+	DisposePtr(buffer);
+	FSMakeFSSpec(current_scenario_file_info.vRefNum,current_scenario_file_info.parID,"\pBoA scenario temp",&dummy_file);
+	FSpDelete(&dummy_file);
+}
+
 void save_change_to_town_size(int old_town_size)
 {
 	short i,j,k,num_outdoors;

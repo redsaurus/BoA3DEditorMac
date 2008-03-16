@@ -691,18 +691,22 @@ void handle_campaign_menu(int item_hit)
 				return;
 			}
 			if (scenario.num_towns == 1) {
-				give_error("You can't delete the last town in a scenario. All scenarios must have at least 1 town.","",0);
-				return;
-			}
-			if (scenario.num_towns - 1 == cur_town) {
-				give_error("You can't delete the last town in a scenario while you're working on it. Load a different town, and try this again.","",0);
+				give_error("You can't delete the only town in a scenario. All scenarios must have at least 1 town.","",0);
 				return;
 			}
 			if (fancy_choice_dialog(865,0) == 1) {
-				delete_last_town();
+				delete_town();
+				load_all_town_names(NULL);
+				load_town(cur_town);
 				clear_selected_copied_objects();
+				set_up_terrain_buttons();
+				change_made_town = FALSE;
+				cen_x = max_zone_dim[town_type] / 2; cen_y = max_zone_dim[town_type] / 2;
+				reset_drawing_mode();
+				reset_small_drawn();
+				purgeUndo();
+				purgeRedo();
 				redraw_screen();
-				change_made_town = TRUE;
 			}
 			break;
 		case 19: //   Write Scenario Data to Text File
@@ -1036,7 +1040,6 @@ Boolean Mouse_Pressed( EventRecord * event )
 			All_Done = TRUE;
 			break;
 		case inContent:
-			printf("Content\n");
 			SetPort(GetWindowPort(mainPtr));
 			GlobalToLocal(&(event->where));
 			content_part = FindControl(event->where,the_window,&control_hit); // hit sbar?
@@ -1052,7 +1055,6 @@ Boolean Mouse_Pressed( EventRecord * event )
 						}
 						break;
 					case inUpButton: case inPageUp: case inDownButton: case inPageDown:
-						printf("up or down\n");
 						if (control_hit == right_sbar)
 							content_part = TrackControl(control_hit,event->where,(ControlActionUPP)right_sbar_action_UPP);
 						break;
