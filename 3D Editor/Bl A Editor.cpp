@@ -1167,15 +1167,18 @@ void set_pixel_depth() {
 
 	cur_device = GetGDevice();	
 	
-	if ((diff_depth_ok == FALSE) && ((HasDepth(cur_device,16,1,1)) == 0)) {
-		choice_dialog(0,1070);
-		ExitToShell();
-	}
-	
 	screen_pixmap_handle = (**(cur_device)).gdPMap;
 	pixel_depth = (**(screen_pixmap_handle)).pixelSize;
 	
-	if ((pixel_depth <= 16) && (diff_depth_ok == TRUE))
+	if ((diff_depth_ok == FALSE) && ((pixel_depth <= 16) && (HasDepth(cur_device,16,1,1)) == 0)) {
+		choice = choice_dialog(0,1070);
+		if (choice == 1)
+			ExitToShell();
+		if (choice == 2)
+			diff_depth_ok = TRUE;
+	}
+	
+	if ((pixel_depth != 16) && (diff_depth_ok == TRUE))
 		return;
 	
 	if (pixel_depth < 16) {
