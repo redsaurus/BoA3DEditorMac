@@ -754,8 +754,8 @@ Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_poin
 	if(cur_viewing_mode != 11){
 		add_border_to_graphic(&src_gworld,&from_rect,r,g,b);
 		if(selected){
-			add_border_to_graphic(&src_gworld,&from_rect,215,0,255);
-			add_border_to_graphic(&src_gworld,&from_rect,255,0,255);
+			add_border_to_graphic(&src_gworld,&from_rect,27,0,31);
+			add_border_to_graphic(&src_gworld,&from_rect,31,0,31);
 		}
 	}
 	
@@ -836,8 +836,8 @@ Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_ce
 	apply_lighting_to_graphic(&src_gworld,&from_rect,lighting);
 	if(cur_viewing_mode != 11){
 		if(selected){
-			add_border_to_graphic(&src_gworld,&from_rect,215,0,255);
-			add_border_to_graphic(&src_gworld,&from_rect,255,0,255);
+			add_border_to_graphic(&src_gworld,&from_rect,27,0,31);
+			add_border_to_graphic(&src_gworld,&from_rect,31,0,31);
 		}
 	}
 	
@@ -4653,6 +4653,11 @@ void add_border_to_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short
 	}
 	
 	Rect rect_to_fill = get_graphic_rect(tint_area);
+	SetRect(&rect_to_fill,
+	 (rect_to_fill.left>from_rect_ptr->left?rect_to_fill.left:from_rect_ptr->left), 
+	 (rect_to_fill.top>from_rect_ptr->top?rect_to_fill.top:from_rect_ptr->top), 
+	 (rect_to_fill.right<from_rect_ptr->right?rect_to_fill.right:from_rect_ptr->right), 
+	 (rect_to_fill.bottom<from_rect_ptr->bottom?rect_to_fill.bottom:from_rect_ptr->bottom));
 	UInt32	destRowBytes;
 	UInt16	*destBits, *destBitsStore;
 	short height,width;
@@ -4660,7 +4665,7 @@ void add_border_to_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short
 	short dest_shift_width,v,h;
 	short dest_width;
 	UInt16 border_color;
-	UInt16 white = 31 + (31 << 5) + (31 << 10);
+	UInt16 white = RGB16BIT(31,31,31);
 	
 	PixMapHandle destmap;
 	
@@ -4688,12 +4693,13 @@ void add_border_to_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short
 		for (h = 0; h < width; h++)
 		{
 			if((*destBits == white) && (
-										(v + 1 < height && (*(destBits + dest_width) & 0x7FFF) != white) ||
-										(h + 1 < width && (*(destBits + 1) & 0x7FFF) != white) ||
-										(v > 0 && (*(destBits - dest_width) & 0x7FFF) != white) ||
-										(h > 0 && (*(destBits - 1) & 0x7FFF) != white)
-									   ))
+										(v + 1 < height && (*(destBits + dest_width) & 0x7FFF) != white) || //below is non-white
+										(h + 1 < width && (*(destBits + 1) & 0x7FFF) != white) ||			//right is non-white
+										(v > 0 && (*(destBits - dest_width) & 0x7FFF) != white) ||			//above is non-white
+										(h > 0 && (*(destBits - 1) & 0x7FFF) != white)						//left is non-white
+										)){
 				*destBits |= 0x8000;
+			}
 			else
 				*destBits &= 0x7FFF;
 			
