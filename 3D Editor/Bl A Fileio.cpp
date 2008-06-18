@@ -2224,8 +2224,9 @@ Boolean import_boa_town()
 	OSErr error;
 	Boolean this_is_windows_scenario;
 	
-	//which_town = pick_import_town(841,0);
-				
+	if (SelectSaveFileToOpen(&default_directory,&path,true) == FALSE)
+		return FALSE;
+	
 	if ( open_scenario_save_file( &file_id, NULL, &path, 200, 0 ) == FALSE )
 		return(FALSE);
 	load_all_town_names(&path);
@@ -2344,6 +2345,9 @@ Boolean import_boa_outdoors()
 	Boolean this_is_windows_scenario;
 	OSErr error;
 
+	if (SelectSaveFileToOpen(&default_directory,&path,true) == FALSE)
+		return FALSE;
+	
 	if ( open_scenario_save_file( &file_id, NULL, &path, 300, 0 ) == FALSE )
 		return(FALSE);
 	len = (long) sizeof(scenario_data_type);
