@@ -46,6 +46,7 @@ extern short current_height_mode ;
 extern Boolean editing_town;
 extern short cur_viewing_mode;
 extern short overall_mode;
+bool object_sticky_draw;
 
 extern Boolean file_is_loaded,mouse_button_held;
 extern short cen_x, cen_y;
@@ -522,6 +523,7 @@ void handle_action(Point the_point,EventRecord event)
 				for (i = 0; i < 264; i++){
 					if (sbar_pos * 12 + i < 256) {
 						if (PtInRect(cur_point,&terrain_rects_3D[i])) {
+							object_sticky_draw = shftKey;
 							set_new_creature(sbar_pos * 12 + i);
 							place_right_buttons(0);
 							break;
@@ -535,6 +537,7 @@ void handle_action(Point the_point,EventRecord event)
 				for (i = 0; i < 264; i++){
 					if (sbar_pos * 12 + i < 500) {
 						if (PtInRect(cur_point,&terrain_rects[i])) {
+							object_sticky_draw = shftKey;
 							set_new_item(sbar_pos * 12 + i);
 							place_right_buttons(0);
 							break;
@@ -555,10 +558,14 @@ void handle_action(Point the_point,EventRecord event)
 				play_sound(34);
 				switch (i + 100 * j) {
 					case 0: // regular drawing mode (pencil)
-						if(current_drawing_mode==3)
+						if(current_drawing_mode==3){
 							overall_mode = 46;
-						else if(current_drawing_mode==4)
+							object_sticky_draw = shftKey;
+						}
+						else if(current_drawing_mode==4){
 							overall_mode = 47;
+							object_sticky_draw = shftKey;
+						}
 						else
 							reset_drawing_mode();
 						break;					
@@ -1259,9 +1266,11 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 		case 46: // 46 - placing creature
 			create_new_creature(mode_count,spot_hit,NULL);
 			if(current_drawing_mode==3){
-				set_string("Select/edit placed object","Select object to edit");
-				set_cursor(7);
-				overall_mode = 40;
+				if(!object_sticky_draw){
+					set_string("Select/edit placed object","Select object to edit");
+					set_cursor(7);
+					overall_mode = 40;
+				}
 			}
 			else
 				reset_drawing_mode();
@@ -1269,12 +1278,14 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 		case 47: // 47 - placing item
 			create_new_item(mode_count,spot_hit,FALSE,NULL);
 			if(current_drawing_mode==4){
-				set_string("Select/edit placed object","Select object to edit");
-				set_cursor(7);
-				overall_mode = 40;
+				if(!object_sticky_draw){
+					set_string("Select/edit placed object","Select object to edit");
+					set_cursor(7);
+					overall_mode = 40;
+				}
 			}
-				else
-					reset_drawing_mode(); 
+			else
+				reset_drawing_mode(); 
 			break;		
 		case 48: // 48 - pasting instance
 			paste_selected_instance(spot_hit);
