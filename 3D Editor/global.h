@@ -1783,10 +1783,10 @@ Boolean place_terrain_icon_into_ter_large(graphic_id_type icon,short in_square_x
 void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect);
 Boolean place_icon_into_3D_sidebar(graphic_id_type icon, Rect to_rect, short unscaled_offset_x, short unscaled_offset_y);
 Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
-Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b);
+Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b,bool selected);
 Boolean place_cliff_icon_into_ter_3D_large(short sheet,short at_point_center_x,short at_point_center_y,
 	short direction,Rect *to_whole_area_rect,short lighting);//direction:   0: east/west 1: NW/SE 2:north/south
-Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
+Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,bool selected);
 Boolean place_outdoor_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
 Boolean place_corner_wall_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Boolean left_side_of_template,Rect *to_whole_area_rect,short lighting);
 void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect);
@@ -1794,8 +1794,8 @@ void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to
 void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *drawing_terrain, short square_x, short square_y, short t_to_draw, short floor_to_draw, short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect);
 void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height);
 void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_point_center_x, short at_point_center_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting);
-void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting);
-void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting);
+void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected=false);
+void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected=false);
 void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *drawing_terrain,short at_point_center_3D_x,short at_point_center_3D_y,
 	short square_2D_x, short square_2D_y, short line_on_2D_x_side, short line_on_2D_y_side, Boolean corner_label_x,
 	Boolean corner_label_y, short inset_3D_y, short offset_3D_y,short r,short g, short b,Rect *to_whole_area_rect);
@@ -1805,8 +1805,8 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 void draw_ter_3D_large();
 void draw_ter_large();
 Rect get_template_from_rect(short x,short y);
-void draw_creature(short creature_num,location loc_drawn,short in_square_x,short in_square_y);
-void draw_item(short item_num,location loc_drawn,short in_square_x,short in_square_y);
+void draw_creature(short creature_num,location loc_drawn,short in_square_x,short in_square_y,bool selected=false);
+void draw_item(short item_num,location loc_drawn,short in_square_x,short in_square_y,bool selected=false);
 Boolean place_terrain_icon_into_ter_small(graphic_id_type icon,short in_square_x,short in_square_y);
 void draw_ter_small();
 void draw_terrain();

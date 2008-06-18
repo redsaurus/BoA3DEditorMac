@@ -722,7 +722,7 @@ Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_
 	return TRUE;
 }
 
-Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b)
+Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b,bool selected)
 {
 	Rect to_rect;
 	Rect from_rect;
@@ -751,8 +751,13 @@ Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_poin
 	GWorldPtr src_gworld = graphics_library[index];
 	adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 	apply_lighting_to_graphic(&src_gworld,&from_rect,lighting);
-	if(cur_viewing_mode != 11)
+	if(cur_viewing_mode != 11){
 		add_border_to_graphic(&src_gworld,&from_rect,r,g,b);
+		if(selected){
+			add_border_to_graphic(&src_gworld,&from_rect,215,0,255);
+			add_border_to_graphic(&src_gworld,&from_rect,255,0,255);
+		}
+	}
 	
 	rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);
 	return TRUE;
@@ -804,7 +809,7 @@ Boolean place_cliff_icon_into_ter_3D_large(short sheet,short at_point_center_x,s
 	return TRUE;
 }
 
-Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting)
+Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,bool selected)
 {
 	Rect to_rect;
 	Rect from_rect;
@@ -829,6 +834,12 @@ Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_ce
 	GWorldPtr src_gworld = graphics_library[index];
 	adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 	apply_lighting_to_graphic(&src_gworld,&from_rect,lighting);
+	if(cur_viewing_mode != 11){
+		if(selected){
+			add_border_to_graphic(&src_gworld,&from_rect,215,0,255);
+			add_border_to_graphic(&src_gworld,&from_rect,255,0,255);
+		}
+	}
 	
 	rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);
 	return TRUE;
@@ -1298,7 +1309,7 @@ else {
 }
 }
 
-void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting)
+void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected)
 {
 	graphic_id_type a;
 	short r = 0, g = 0, b = 0;
@@ -1355,7 +1366,7 @@ g = 31;*/
 	if (a.not_legit() == FALSE)
 		if(place_creature_icon_into_ter_3D_large(a, at_point_center_x,
 												 at_point_center_y
-												 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect,lighting,r,g,b) == FALSE)
+												 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect,lighting,r,g,b,selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for creature type",town.creatures[creature_num].number);
 	
 	//draw second (top) icon if it exists (tall creatures like giants)
@@ -1366,7 +1377,7 @@ g = 31;*/
 		a.which_icon = t_d.terrain[square_x][square_y] - 225 + 30;
 	}
 	if (a.not_legit() == FALSE)
-		if(place_creature_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y - PICT_BOX_HEIGHT_3D,to_whole_area_rect,lighting,r,g,b) == FALSE)
+		if(place_creature_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y - PICT_BOX_HEIGHT_3D,to_whole_area_rect,lighting,r,g,b,selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for creature type",town.creatures[creature_num].number);
 	
 	/*
@@ -1413,7 +1424,7 @@ g = 31;*/
 	
 }
 
-void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting)
+void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected)
 {
 	graphic_id_type a;
 	if (town.preset_items[item_num].exists() == FALSE)
@@ -1427,7 +1438,7 @@ void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y
 	if (a.not_legit() == FALSE)
 		if(place_item_icon_into_ter_3D_large(a, at_point_center_x + town.preset_items[item_num].item_shift.x,
 											 at_point_center_y + town.preset_items[item_num].item_shift.y
-											 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect, lighting) == FALSE)
+											 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect, lighting, selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for item type",town.preset_items[item_num].which_item);
 	
 	/*if (same_point(town.preset_items[item_num].item_loc,loc_drawn)) {
@@ -1531,7 +1542,7 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		 It's really more stretched out horizontally but I can't draw that in ASCII art.
 		 Converted to a 2D view:
 		 
-		 Rotate everything 45¡ counterclockwise (approximately - the proportions are distorted):
+		 Rotate everything 45Â° counterclockwise (approximately - the proportions are distorted):
 		 
 		 ------------------------------------------------------------------------------------------------
 		 **2D**
@@ -1639,7 +1650,7 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		right = (line_on_2D_x_side == 1 || line_on_2D_y_side == -1);
 		bottom = (line_on_2D_x_side == 1 || line_on_2D_y_side == 1);
 		
-		//Since the 3D lines aren't really at a 45¡ angle, the inset must be converted for use on 3D_x so that the line is continuous
+		//Since the 3D lines aren't really at a 45Â° angle, the inset must be converted for use on 3D_x so that the line is continuous
 		//(between multiple calls of this function for the same rectangle), and at the correct angle
 		//The reason x is derived but y is given is:  y is smaller.  If x were given, rounding error would be more of a problem when getting y.
 		short inset_3D_x = (inset_3D_y * SPACE_X_DISPLACEMENT_3D) / SPACE_Y_DISPLACEMENT_3D;
@@ -1901,11 +1912,11 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 	// draw selected instance 
 	if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS &&
 											town.preset_items[selected_item_number - 11000].item_loc.x == x && town.preset_items[selected_item_number - 11000].item_loc.y == y)) {
-		draw_item_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting);
+		draw_item_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
 	}
 	if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES &&
 										   town.creatures[selected_item_number - 7000].start_loc.x == x && town.creatures[selected_item_number - 7000].start_loc.y == y)) {
-		draw_creature_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting);
+		draw_creature_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
 	}
 }
 
@@ -2937,10 +2948,10 @@ void draw_ter_large()
 					}
 					// draw selected instance
 					if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
-						draw_creature(selected_item_number % 1000,loc_drawn,q,r);
+						draw_creature(selected_item_number % 1000,loc_drawn,q,r,true);
 					}
 					if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
-						draw_item(selected_item_number % 1000,loc_drawn,q,r);
+						draw_item(selected_item_number % 1000,loc_drawn,q,r,true);
 					}
 				}
 			}
@@ -3163,7 +3174,7 @@ Rect get_template_from_rect(short x,short y)
 
 // obj_num is num of object to drawn (in zone's list of objects)
 // loc_game_rect is rect on screen of object being drawn
-void draw_creature(short creature_num,location loc_drawn,short in_square_x,short in_square_y)
+void draw_creature(short creature_num,location loc_drawn,short in_square_x,short in_square_y,bool selected)
 {
 	graphic_id_type a;
 	Rect from_rect;
@@ -3199,6 +3210,14 @@ void draw_creature(short creature_num,location loc_drawn,short in_square_x,short
 		if (town.creatures[creature_num].hidden_class > 0) 
 			g = 255;
 		put_rect_in_gworld(ter_draw_gworld,to_rect,r,g,b);
+		if(selected){
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,215,0,255);
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,255,0,255);
+			InsetRect(&to_rect,1,1);
+			InsetRect(&to_rect,1,1);
+		}
 		
 		// do facing
 		Rect facing_to_rect = to_rect;
@@ -3218,7 +3237,7 @@ void draw_creature(short creature_num,location loc_drawn,short in_square_x,short
 	}
 }
 
-void draw_item(short item_num,location loc_drawn,short in_square_x,short in_square_y)
+void draw_item(short item_num,location loc_drawn,short in_square_x,short in_square_y,bool selected)
 {
 	graphic_id_type a;
 	short icon_to_use;
@@ -3249,6 +3268,14 @@ void draw_item(short item_num,location loc_drawn,short in_square_x,short in_squa
 		adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 		rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,0,0);
 		put_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
+		if(selected){
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,215,0,255);
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,255,0,255);
+			InsetRect(&to_rect,1,1);
+			InsetRect(&to_rect,1,1);
+		}
 	}
 }
 
@@ -4417,9 +4444,9 @@ void put_clipped_rect_in_gworld(GWorldPtr line_gworld,Rect to_rect,Rect clip_rec
 //+16 - Darken the graphic. 
 //+32 - Lighten the graphic. 
 //+64 - Invert all of the pixels. 
-//+128 Ð Tint the  graphic red 
-//+256 Ð Tint the  graphic  green 
-//+512 Ð Tint the  graphic  blue 
+//+128 â€“ Tint the  graphic red 
+//+256 â€“ Tint the  graphic  green 
+//+512 â€“ Tint the  graphic  blue 
 void adjust_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short graphic_adjust/*,
 short light_level, Boolean has_border, short border_r, short border_g, short border_b*/)
 {
@@ -4510,21 +4537,21 @@ short light_level, Boolean has_border, short border_r, short border_g, short bor
 						g1 = 31 - g1;
 						b1 = 31 - b1;
 					}
-					//+128 Ð Tint the  graphic red 
+					//+128 â€“ Tint the  graphic red 
 					if(graphic_adjust & 128) {
 						r1 = r1 + 7;
 						r1 = minmax(1,31,r1);
 						g1 = minmax(1,31,g1);
 						b1 = minmax(1,31,b1);
 					}
-					//+256 Ð Tint the  graphic  green 
+					//+256 â€“ Tint the  graphic  green 
 					if(graphic_adjust & 256) {
 						g1 = g1 + 7;
 						r1 = minmax(1,31,r1);
 						g1 = minmax(1,31,g1);
 						b1 = minmax(1,31,b1);
 					}
-					//+512 Ð Tint the  graphic  blue 
+					//+512 â€“ Tint the  graphic  blue 
 					if(graphic_adjust & 512) {
 						b1 = b1 + 7;
 						r1 = minmax(1,31,r1);
@@ -4665,7 +4692,7 @@ void add_border_to_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short
 										(h + 1 < width && (*(destBits + 1) & 0x7FFF) != white) ||
 										(v > 0 && (*(destBits - dest_width) & 0x7FFF) != white) ||
 										(h > 0 && (*(destBits - 1) & 0x7FFF) != white)
-										))
+									   ))
 				*destBits |= 0x8000;
 			else
 				*destBits &= 0x7FFF;
