@@ -47,6 +47,7 @@ extern Boolean editing_town;
 extern short cur_viewing_mode;
 extern short overall_mode;
 bool object_sticky_draw;
+extern Boolean small_any_drawn;
 
 extern Boolean file_is_loaded,mouse_button_held;
 extern short cen_x, cen_y;
@@ -1836,6 +1837,7 @@ void handle_keystroke(char chr,char chr2,EventRecord event)
 	{
 		case 'M':
 			hintbook_mode = !hintbook_mode;
+			small_any_drawn = FALSE;
 			draw_terrain();
 			break;
 		case '1': case '2': case '3': case '4': case '5': 
