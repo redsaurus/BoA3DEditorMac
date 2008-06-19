@@ -11,15 +11,6 @@
 
 #define	MAX_RECURSION_DEPTH	200
 
-// bit definition of scroll direction
-enum {
-	eSCRL_NoScrl	= 0,
-	eSCRL_Top		= 0x08,
-	eSCRL_Left		= 0x04,
-	eSCRL_Bottom	= 0x02,
-	eSCRL_Right		= 0x01,
-};
-
 // Edit screen coordinate
 /*const Rect kRect3DEditScrn = {
 	TERRAIN_BORDER_WIDTH + TER_RECT_UL_X - 15,
@@ -132,7 +123,6 @@ int check_scroller( Point the_point );
 int check_scroller_2D( Point the_point );
 int check_scroller_3D( Point the_point );
 bool process_scroll_click( int map_size, Point the_point, bool ctrlKey, bool shftKey );
-bool handle_scroll( int map_size, int scrl, bool ctrlKey, bool shftKey );
 bool handle_tenKey( char *chr, char chr2, EventRecord event );
 
 void init_screen_locs()

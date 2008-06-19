@@ -34,6 +34,7 @@
 #define	RIGHT_TEXT_LINE_ULY	105
 #define	RIGHT_BUTTONS_X_SHIFT 540
 #define RIGHT_BUTTONS_Y_SHIFT 382
+#define RIGHT_SCROLLBAR_WIDTH 16
 
 #define	PALETTE_BUT_UL_X	0
 #define	PALETTE_BUT_UL_Y	382
@@ -95,6 +96,15 @@ enum EDLGBtnRes {
 	eDLGBtnResCompatible,	// change graphics of the button - sound and delay - recover graphics
 	eDLGBtnResChange,		// change graphics of the button - sound (no delay)
 	eDLGBtnResRecover,		// recover graphics of the button
+};
+
+// bit definition of scroll direction
+enum {
+	eSCRL_NoScrl	= 0,
+	eSCRL_Top		= 0x08,
+	eSCRL_Left		= 0x04,
+	eSCRL_Bottom	= 0x02,
+	eSCRL_Right		= 0x01,
 };
 
 #define	inUpButton	kControlUpButtonPart
@@ -1605,6 +1615,7 @@ void set_new_floor(short selected_terrain);
 void set_new_creature(short selected_creature);
 void set_new_item(short selected_item);
 void handle_keystroke(char chr,char chr2,EventRecord event);
+bool handle_scroll( int map_size, int scrl, bool ctrlKey, bool shftKey );
 Boolean is_hill(short i,short j);
 Boolean is_rocks(short i,short j);
 Boolean is_water(short i,short j);

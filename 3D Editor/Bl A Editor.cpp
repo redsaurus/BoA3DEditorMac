@@ -55,6 +55,7 @@ Rect	windRect;
 Boolean dialog_not_toast = FALSE;
 WindowPtr	mainPtr;
 EventHandlerRef scrollHandler;
+EventHandlerRef scrollHandler2;
 Boolean mouse_button_held = FALSE;
 Boolean play_sounds = TRUE;
 short cen_x, cen_y;
@@ -175,6 +176,10 @@ FSSpec default_directory;
 
 extern bool setUpCreaturePalette;
 extern bool setUpItemPalette;
+extern const Rect terrain_buttons_rect;
+extern const Rect terrain_viewport_3d;
+extern Rect large_edit_ter_rects[9][9];
+extern Rect small_edit_ter_rects[MAX_TOWN_SIZE][MAX_TOWN_SIZE];
 
 /* Prototypes */
 int main(void);
@@ -205,7 +210,8 @@ static pascal OSErr handle_open_app(const AppleEvent *theAppleEvent,AppleEvent *
 static pascal OSErr handle_open_doc(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
 static pascal OSErr handle_quit(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
 void doScroll(ControlHandle bar, short delta);
-OSStatus mainScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
+OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
+OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 
 //MW specified argument and return type.
 int main(void)
@@ -244,8 +250,12 @@ int main(void)
 	//{ kEventClassKeyboard, kEventRawKeyDown },
 	//{ kEventClassKeyboard, kEventRawKeyRepeat }
 	};
+	const EventTypeSpec eventList4[] = {
+		{ kEventClassMouse, kEventMouseScroll}
+	};
 	
-	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) mainScrollHandler),GetEventTypeCount(eventList3),eventList3,0,&scrollHandler);
+	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) paletteScrollHandler),GetEventTypeCount(eventList3),eventList3,0,&scrollHandler);
+	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) viewScrollHandler),GetEventTypeCount(eventList4),eventList4,0,&scrollHandler2);
 
 	init_warriors_grove();
 	
@@ -304,7 +314,7 @@ void Initialize(void)
 	//	To make the Random sequences truly random, we need to make the seed start
 	//	at a different number.  An easy way to do this is to put the current time
 	//	and date into the seed.  Since it is always incrementing the starting seed
-	//	will always be different.  Don�t for each call of Random, or the sequence
+	//	will always be different.  Don‚Äôt for each call of Random, or the sequence
 	//	will no longer be random.  Only needed once, here in the init.
 	//
 	//GetDateTime((unsigned long*) &qd.randSeed);
@@ -986,15 +996,148 @@ void doScroll(ControlHandle bar, short delta){
 		place_right_buttons(0);
 }
 
-OSStatus mainScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
+OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
 	OSStatus result = eventNotHandledErr;
+	if(!file_is_loaded)
+		return(result);
 	UInt32      eventKind, eventClass;
 	eventClass = GetEventClass(eventRef);
 	eventKind  = GetEventKind(eventRef);
 	if(eventKind==kEventMouseWheelMoved){ //scroll wheel events
 		SInt32 delta;
 		GetEventParameter(eventRef,kEventParamMouseWheelDelta,typeLongInteger,NULL,sizeof(delta),NULL,&delta);
-		doScroll(right_sbar,-1*delta);
+		HIPoint pos;
+		GetEventParameter(eventRef,kEventParamWindowMouseLocation,typeHIPoint,NULL,sizeof(pos),NULL,&pos);
+		Point ppos = {(short)pos.y,(short)pos.x};
+		Rect paletteRect = terrain_buttons_rect;
+		paletteRect.left+=RIGHT_BUTTONS_X_SHIFT;
+		paletteRect.right+=RIGHT_BUTTONS_X_SHIFT+RIGHT_SCROLLBAR_WIDTH;
+		//test if the event was in the right palette
+		if(PtInRect(ppos, &paletteRect))
+		   doScroll(right_sbar,-1*delta);
+		else{ //check to see if it fell in the terrian view
+			Rect whole_area_rect = terrain_viewport_3d;
+			if(cur_viewing_mode==0) //large icon 2D
+				SetRect(&whole_area_rect, large_edit_ter_rects[0][0].left, large_edit_ter_rects[0][0].top, large_edit_ter_rects[8][8].right, large_edit_ter_rects[8][8].bottom);
+			else if(cur_viewing_mode==1) //small icon 2D
+				SetRect(&whole_area_rect,small_edit_ter_rects[0][0].left,small_edit_ter_rects[0][0].top,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].right,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].bottom);
+			if(PtInRect(ppos, &whole_area_rect)){
+				//it was inside the viewport. Now we have to figure out exactly what scroll to do
+				//find out which axis it was
+				UInt32 modifiers=0;
+				GetEventParameter(eventRef, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(modifiers), NULL, &modifiers);
+				int axis = ((modifiers & shiftKey) != 0);
+				int altaxis = ((modifiers & optionKey) != 0);
+				int scrl = eSCRL_NoScrl;
+				if(!axis){
+					if(delta>0)
+						scrl|=eSCRL_Top;
+					else if(delta<0)
+						scrl|=eSCRL_Bottom;
+					if(altaxis){
+						if(delta>0)
+							scrl|=eSCRL_Left;
+						else if(delta<0)
+							scrl|=eSCRL_Right;
+					}
+				}
+				else{
+					if(delta>0)
+						scrl|=eSCRL_Left;
+					else if(delta<0)
+						scrl|=eSCRL_Right;
+					if(altaxis){
+						if(delta>0)
+							scrl|=eSCRL_Bottom;
+						else if(delta<0)
+							scrl|=eSCRL_Top;
+					}
+				}
+				handle_scroll( (editing_town) ? max_zone_dim[town_type] : 48, scrl, false, false );
+			}
+		}
+	}
+	return(result);
+}
+
+OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
+	OSStatus result = eventNotHandledErr;
+	if(!file_is_loaded)
+		return(result);
+	UInt32      eventKind, eventClass;
+	eventClass = GetEventClass(eventRef);
+	eventKind  = GetEventKind(eventRef);
+	if(eventKind==kEventMouseScroll){ //scroll wheel events
+		HIPoint pos;
+		GetEventParameter(eventRef,kEventParamWindowMouseLocation,typeHIPoint,NULL,sizeof(pos),NULL,&pos);
+		Point ppos = {(short)pos.y,(short)pos.x};
+		Rect whole_area_rect = terrain_viewport_3d;
+		if(cur_viewing_mode==0) //large icon 2D
+			SetRect(&whole_area_rect, large_edit_ter_rects[0][0].left, large_edit_ter_rects[0][0].top, large_edit_ter_rects[8][8].right, large_edit_ter_rects[8][8].bottom);
+		else if(cur_viewing_mode==1) //small icon 2D
+			SetRect(&whole_area_rect,small_edit_ter_rects[0][0].left,small_edit_ter_rects[0][0].top,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].right,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].bottom);
+		if(PtInRect(ppos, &whole_area_rect)){
+			SInt32 dx=0,dy=0;
+			GetEventParameter(eventRef,kEventParamMouseWheelSmoothHorizontalDelta,typeSInt32,NULL,sizeof(dx),NULL,&dx);
+			GetEventParameter(eventRef,kEventParamMouseWheelSmoothVerticalDelta,typeSInt32,NULL,sizeof(dy),NULL,&dy);
+			UInt32 modifiers=0;
+			GetEventParameter(eventRef, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(modifiers), NULL, &modifiers);
+			dx*=-1;//flip coordinates
+			//printf("dx=%li,dy=%li ",dx,dy);
+			if(abs(dx)>1000)
+				dx=pow(-1,dx<0);
+			if(abs(dy)>1000)
+				dy=pow(-1,dy<0);
+			//printf("dx=%li,dy=%li ",dx,dy);
+			float dir=pi/2;
+			if(dx!=0){
+				dir = atan(float(abs(dy))/abs(dx));
+			}
+			//printf("%f ",(180.0*dir)/pi);
+			if(dx<0)
+				dir=pi-dir;
+			//printf("%f ",(180.0*dir)/pi);
+			if(dy<0)
+				dir=(2*pi)-dir;
+			//printf("%f\n",(180.0*dir)/pi);
+			float smallAngle=.2694;
+			float largeAngle=1.0147;
+			if(modifiers&shiftKey){
+				smallAngle=pi/8;
+				largeAngle=(3*pi)/8;
+			}
+			int scrl = eSCRL_NoScrl;
+			if (cur_viewing_mode == 10 || cur_viewing_mode == 11){ //3D
+				if(dir>((2*pi)-smallAngle) || dir<(pi-largeAngle)){
+					scrl|=eSCRL_Top;
+					//printf("North ");
+				}
+				else if(dir>(pi-smallAngle) && dir<((2*pi)-largeAngle)){
+					scrl|=eSCRL_Bottom;
+					//printf("South ");
+				}
+				if(dir>largeAngle && dir<(pi+smallAngle)){
+					scrl|=eSCRL_Left;
+					//printf("West");
+				}
+				else if(dir<smallAngle || dir>(pi+largeAngle)){
+					scrl|=eSCRL_Right;
+					//printf("East");
+				}
+				//printf("\n");
+			}
+			else{ //2D
+				if(dir>(.125*pi) && dir<(.875*pi))
+					scrl|=eSCRL_Top;
+				else if(dir>(1.125*pi) && dir<(1.875*pi))
+					scrl|=eSCRL_Bottom;
+				if(dir>(.625*pi) && dir<(1.375*pi))
+					scrl|=eSCRL_Left;
+				else if(dir<(.375*pi) || dir>(1.625*pi))
+					scrl|=eSCRL_Right;
+			}
+			handle_scroll( (editing_town) ? max_zone_dim[town_type] : 48, scrl, false, false );
+		}
 	}
 	return(result);
 }

@@ -92,12 +92,13 @@ PixPatHandle bg[14];
 // PixPatHandle map_pat[29];
 
 // Other game rectangles
-const Rect terrain_buttons_rect = {0,0,382,210};
+extern const Rect terrain_buttons_rect = {0,0,382,210};
 const Rect function_buttons_rect = {0,0,168,227};
 const Rect terrain_rect_gr_size = {0,0,512,512};
 const Rect base_small_button_from = {0,0,10,10};
 const Rect base_small_3D_button_from = {40,0,51,16};
 const Rect palette_button_base = {0,0,18,25};
+extern const Rect terrain_viewport_3d = {5,5,420,501};
 
 Rect creature_buttons_size;
 Rect item_buttons_size;
@@ -137,7 +138,7 @@ void Get_right_sbar_rect( Rect * rect )
 	rect->top = 0;
 	rect->left = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT;
 	rect->bottom = 382;//22 * (TER_BUTTON_SIZE + 1) + 1;
-	rect->right = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT + 16;
+	rect->right = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT + RIGHT_SCROLLBAR_WIDTH;
 }
 
 void Set_up_win ()
@@ -1542,7 +1543,7 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		 It's really more stretched out horizontally but I can't draw that in ASCII art.
 		 Converted to a 2D view:
 		 
-		 Rotate everything 45° counterclockwise (approximately - the proportions are distorted):
+		 Rotate everything 45¬∞ counterclockwise (approximately - the proportions are distorted):
 		 
 		 ------------------------------------------------------------------------------------------------
 		 **2D**
@@ -1550,25 +1551,25 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		 
 		 '3D y' axis   '3D x' axis (aka NE-SW)
 		 (aka NW-SE)\ /				
-		 X 
+		  X 
 		 / \			
 		 
 		 
 		 '2D y' axis (aka north-south)
-		 |
+		  |
 		 -+-'2D x' axis (aka east-west)
-		 |
+		  |
 		 
 		 
 		 'label x' corners (on '3D x', which is NE-SW)
-		 N   /
+		 N     /
 		 \----/
 		 |\  /|
-		 W | \/ | E
+	   W | \/ | E
 		 | /\ |
 		 |/  \|
 		 /----\
-		 S   \
+		 S     \
 		 'label y' corners (on '3D y', which is NW-SE)
 		 
 		 ------------------------------------------------------------------------------------------------
@@ -1650,7 +1651,7 @@ void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *dr
 		right = (line_on_2D_x_side == 1 || line_on_2D_y_side == -1);
 		bottom = (line_on_2D_x_side == 1 || line_on_2D_y_side == 1);
 		
-		//Since the 3D lines aren't really at a 45° angle, the inset must be converted for use on 3D_x so that the line is continuous
+		//Since the 3D lines aren't really at a 45¬∞ angle, the inset must be converted for use on 3D_x so that the line is continuous
 		//(between multiple calls of this function for the same rectangle), and at the correct angle
 		//The reason x is derived but y is given is:  y is smaller.  If x were given, rounding error would be more of a problem when getting y.
 		short inset_3D_x = (inset_3D_y * SPACE_X_DISPLACEMENT_3D) / SPACE_Y_DISPLACEMENT_3D;
@@ -1968,7 +1969,7 @@ void draw_ter_3D_large()
 	//InsetRect(&whole_area_rect,-15,-15);
 	
 	//printf("%i %i %i %i\n",large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right);
-	Rect whole_area_rect = {5,5,420,501};
+	Rect whole_area_rect = terrain_viewport_3d;
 	
 	ZeroRectCorner(&whole_area_rect);
 	FrameRect(&whole_area_rect);
@@ -4444,9 +4445,9 @@ void put_clipped_rect_in_gworld(GWorldPtr line_gworld,Rect to_rect,Rect clip_rec
 //+16 - Darken the graphic. 
 //+32 - Lighten the graphic. 
 //+64 - Invert all of the pixels. 
-//+128 – Tint the  graphic red 
-//+256 – Tint the  graphic  green 
-//+512 – Tint the  graphic  blue 
+//+128 ‚Äì Tint the  graphic red 
+//+256 ‚Äì Tint the  graphic  green 
+//+512 ‚Äì Tint the  graphic  blue 
 void adjust_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short graphic_adjust/*,
 short light_level, Boolean has_border, short border_r, short border_g, short border_b*/)
 {
@@ -4537,21 +4538,21 @@ short light_level, Boolean has_border, short border_r, short border_g, short bor
 						g1 = 31 - g1;
 						b1 = 31 - b1;
 					}
-					//+128 – Tint the  graphic red 
+					//+128 ‚Äì Tint the  graphic red 
 					if(graphic_adjust & 128) {
 						r1 = r1 + 7;
 						r1 = minmax(1,31,r1);
 						g1 = minmax(1,31,g1);
 						b1 = minmax(1,31,b1);
 					}
-					//+256 – Tint the  graphic  green 
+					//+256 ‚Äì Tint the  graphic  green 
 					if(graphic_adjust & 256) {
 						g1 = g1 + 7;
 						r1 = minmax(1,31,r1);
 						g1 = minmax(1,31,g1);
 						b1 = minmax(1,31,b1);
 					}
-					//+512 – Tint the  graphic  blue 
+					//+512 ‚Äì Tint the  graphic  blue 
 					if(graphic_adjust & 512) {
 						b1 = b1 + 7;
 						r1 = minmax(1,31,r1);
