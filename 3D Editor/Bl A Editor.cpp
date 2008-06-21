@@ -76,6 +76,7 @@ pascal void right_sbar_action(ControlHandle bar, short part);
 short store_control_value = 0;
 bool use_strict_adjusts;
 bool always_draw_heights;
+bool allow_arrow_key_navigation;
 ModalFilterUPP main_dialog_UPP;
 
 // DATA TO EDIT
@@ -368,6 +369,8 @@ void init_user_prefs()
 	CheckMenuItem (GetMenuHandle(570),10,use_strict_adjusts);
 	always_draw_heights = get_always_show_heights();
 	CheckMenuItem (GetMenuHandle(570),11,always_draw_heights);
+	allow_arrow_key_navigation = get_allow_arrow_key_navigation();
+	CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
 }
 
 void Set_Window_Drag_Bdry()
@@ -958,6 +961,10 @@ void handle_edit_menu(int item_hit)
 			CheckMenuItem (GetMenuHandle(570),11,always_draw_heights);
 			write_always_show_heights(always_draw_heights);
 			break;
+		case 12: //toggle arrow key handling
+			allow_arrow_key_navigation = !allow_arrow_key_navigation;
+			CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
+			write_always_show_heights(allow_arrow_key_navigation);
 	}
 	draw_main_screen();		
 }

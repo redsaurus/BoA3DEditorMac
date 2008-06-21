@@ -58,6 +58,7 @@ extern in_town_on_ter_script_type copied_ter_script;
 
 extern short current_cursor;
 extern short ticks_to_wait;
+extern bool allow_arrow_key_navigation;
 big_tr_type t_d;
 big_tr_type clipboard;
 Rect clipboardSize;
@@ -1780,6 +1781,15 @@ bool handle_tenKey( char *chr, char chr2, EventRecord event )
 	return false;
 }
 
+//returns true if loc is not conveniently visible from the current 3D viewport
+bool out_of_view_3D(location loc){
+	if(cen_x-loc.x>10 || loc.x-cen_x>9 || cen_y-loc.y>10 || loc.y-cen_y>9)
+		return(true);
+	int x = loc.x-cen_x;
+	int y = loc.y-cen_y;
+	return((y<x-9) || (y<-12-x) || (y>x+9) || (y>11-x));
+}
+
 // "Outdoor: drawing mode failure after moving section" fix
 // handle ten key on a separate subroutine
 void handle_keystroke(char chr,char chr2,EventRecord event)
@@ -1796,23 +1806,105 @@ void handle_keystroke(char chr,char chr2,EventRecord event)
 			return;
 	}
 	
+	//handle arrow keys
+	//this is a little complicated:
+	//in the case that new navigation by arrow keys is allowed:
+	//without modifiers, the arrow keys move the viewport in the specified directions
+	//	with just the shift key the viewport is moved in large steps (7 units)
+	//	with just the control key the viewport is moved to the edge of the current zone
+	//	with the option key the keystroke applies to the selected object, if any
+	//		with the option key only the selected object is shifted in the specified direction
+	//		with the option key and shift key the selected object is rotated
+	//if the new navigation system is not allowed, the old style is used
+	//	without modifiers, the arrow keys move the selected object
+	//	with the shift key the selected object is rotated instead
 	if ((chr2 >= 123) && (chr2 <= 126) && (cur_viewing_mode == 0 || cur_viewing_mode == 10 || cur_viewing_mode == 11)) {
-		if ((chr2 == 126) && (selected_item_number >= 0))
-			shift_selected_instance(0, -1);
-		if ((chr2 == 124) && (selected_item_number >= 0)){
-			if(event.modifiers & shiftKey)
-				rotate_selected_instance(-1);
-			else
-				shift_selected_instance(1,0);
+		if(allow_arrow_key_navigation){ //use new style controls
+			if(!((event.modifiers & optionKey) || (event.modifiers & cmdKey))){ //move the view
+				switch(chr2){
+					case 126: //up
+						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Top, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
+						break;
+					case 124: //right
+						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Right, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
+						break;
+					case 123: //left
+						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Left, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
+						break;
+					case 125: //down
+						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Bottom, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
+						break;
+				}
+			}
+			else if(editing_town && (event.modifiers & optionKey) && (selected_item_number >= 0)){ 
+				if(!(event.modifiers & shiftKey)){ //move the selected instance
+					switch(chr2){
+						case 126: //up
+							shift_selected_instance(0, -1);
+							
+							break;
+						case 124: //right
+							shift_selected_instance(1,0);
+							break;
+						case 123: //left
+							shift_selected_instance(-1,0);
+							break;
+						case 125: //down
+							shift_selected_instance(0, 1);
+							break;
+					}
+					location new_loc = selected_instance_location();
+					if(new_loc.x>-1){
+						if((cur_viewing_mode == 0 && (abs(new_loc.x-cen_x)>4 || abs(new_loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(new_loc))){
+							cen_x = new_loc.x;
+							cen_y = new_loc.y;
+							draw_terrain();
+							draw_function_buttons(1);
+						}
+					}
+				}
+				else{ //rotate the selected instance
+					switch(chr2){
+						case 126: //up
+						case 125: //down
+							rotate_selected_instance(2);
+							break;
+						case 124: //right
+							rotate_selected_instance(-1);
+							break;
+						case 123: //left
+							rotate_selected_instance(1);
+							break;
+					}
+				}
+			}
 		}
-		if ((chr2 == 123) && (selected_item_number >= 0)){
-			if(event.modifiers & shiftKey)
-				rotate_selected_instance(1);
-			else
-				shift_selected_instance(-1,0);
+		else{ //fall back on old functionality
+			if ((chr2 == 126) && (selected_item_number >= 0)){
+				if(event.modifiers & shiftKey)
+					rotate_selected_instance(2);
+				else
+					shift_selected_instance(0, -1);
+			}
+			if ((chr2 == 124) && (selected_item_number >= 0)){
+				if(event.modifiers & shiftKey)
+					rotate_selected_instance(-1);
+				else
+					shift_selected_instance(1,0);
+			}
+			if ((chr2 == 123) && (selected_item_number >= 0)){
+				if(event.modifiers & shiftKey)
+					rotate_selected_instance(1);
+				else
+					shift_selected_instance(-1,0);
+			}
+			if ((chr2 == 125) && (selected_item_number >= 0)){
+				if(event.modifiers & shiftKey)
+					rotate_selected_instance(2);
+				else
+					shift_selected_instance(0, 1);
+			}
 		}
-		if ((chr2 == 125) && (selected_item_number >= 0))
-			shift_selected_instance(0, 1);
 		draw_terrain();
 		return;
 	}
@@ -3558,9 +3650,20 @@ void check_selected_item_number()
 void clear_selected_copied_objects()
 {
 	selected_item_number = -1;
-	copied_creature.number = -1;			
+	copied_creature.number = -1;
 	copied_item.which_item = -1;
-	copied_ter_script.exists = FALSE;	
+	copied_ter_script.exists = FALSE;
+}
+
+location selected_instance_location(){
+	location loc={-1,-1};
+	if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES) && (town.creatures[selected_item_number % 1000].exists()))
+		loc = town.creatures[selected_item_number % 1000].start_loc;
+	else if ((selected_item_number >= 9000) && (selected_item_number < 9000 + NUM_TER_SCRIPTS) && (town.ter_scripts[selected_item_number % 1000].exists))
+		loc = town.ter_scripts[selected_item_number % 1000].loc;
+	else if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS) && (town.preset_items[selected_item_number % 1000].exists()))
+		loc = town.preset_items[selected_item_number % 1000].item_loc;
+	return(loc);
 }
 
 void shift_selected_instance(short dx,short dy)
@@ -5597,7 +5700,7 @@ drawingUndoStep* popRedoStep()
 //same spot. Then, if the redo steps are not purged, there will be one undo step, to remove the wall again, 
 //and the redo step to re-place the tree will still remain. If the user then selects Redo, the wall will be 
 //replaced with the tree, which makes no sense. Instead, as soon as the wall is added, the redo steps should
-//be purged to eliminate nonsensical redo operations. Howver, if the user undoes one or more operations 
+//be purged to eliminate nonsensical redo operations. However, if the user undoes one or more operations 
 //without doing anything else, the redo steps must not be purged, in order to allow the user to move freely
 //back and forth through the recorded states. 
 void purgeRedo()

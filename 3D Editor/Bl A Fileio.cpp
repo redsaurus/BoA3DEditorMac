@@ -461,9 +461,9 @@ bool check_BoAFilesFolder( void )
 //these functions store and retrieve values to and from 
 //the application's preferences for the user's settings
 
-#define NUM_BOOL_KEYS 3
-char* BOOL_PREF_KEYS[NUM_BOOL_KEYS] = {"PlaySounds", "UseStrictAdjustsIn2D", "AlwaysShowHeightsIn2D"};
-bool BOOL_PREF_DEFAULT_VALUES[NUM_BOOL_KEYS] = {FALSE,FALSE,FALSE};
+#define NUM_BOOL_KEYS 4
+char* BOOL_PREF_KEYS[NUM_BOOL_KEYS] = {"PlaySounds", "UseStrictAdjustsIn2D", "AlwaysShowHeightsIn2D", "AllowArrowKeyNavigation"};
+bool BOOL_PREF_DEFAULT_VALUES[NUM_BOOL_KEYS] = {FALSE,FALSE,FALSE,TRUE};
 
 bool get_user_pref_bool_value(int which)
 {
@@ -474,7 +474,7 @@ bool get_user_pref_bool_value(int which)
 
 	if(use==NULL){
 		write_user_pref_bool_value(which,BOOL_PREF_DEFAULT_VALUES[which]);
-		return(false);
+		return(BOOL_PREF_DEFAULT_VALUES[which]);
 	}
 	else{
 		SInt16 val=0;
@@ -529,6 +529,16 @@ bool get_always_show_heights()
 void write_always_show_heights(bool show)
 {
 	write_user_pref_bool_value(2,show);
+}
+
+bool get_allow_arrow_key_navigation()
+{
+	return(get_user_pref_bool_value(3));
+}
+
+void write_allow_arrow_key_navigation(bool allow)
+{
+	write_user_pref_bool_value(3,allow);
 }
 //end user preference settings functions
 

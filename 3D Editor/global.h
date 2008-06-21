@@ -1544,6 +1544,8 @@ bool get_should_use_strict_adjusts();
 void write_should_use_strict_adjusts(bool use);
 bool get_always_show_heights();
 void write_always_show_heights(bool show);
+bool get_allow_arrow_key_navigation();
+void write_allow_arrow_key_navigation(bool allow);
 bool find_app();
 
 // dlogtool
@@ -1647,6 +1649,7 @@ void copy_selected_instance();
 void cut_selected_instance();
 void paste_selected_instance(location create_loc);
 void check_selected_item_number();
+location selected_instance_location();
 void shift_selected_instance(short dx,short dy);
 void rotate_selected_instance(int dir);
 void create_navpoint(location spot_hit);
