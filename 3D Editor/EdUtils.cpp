@@ -16,12 +16,6 @@ extern scen_item_data_type scen_data;
 
 // DBUG UTILITIES
 
-// Used to stop game when an error happens
-void debug_stop(short which_error)
-{
-//	short i = which_error;
-}
-
 void RedAlert_c (char *theStr)
 {
 	Str255 new_str;
@@ -218,17 +212,6 @@ void CenterRectInRect (Rect *rectA, Rect *rectB)
 	rectA->bottom = rectA->top + tallA;
 }
 
-Boolean same_string(char *str1,char *str2)
-{
-	short i = 0;
-	
-	while ((str1[i] == str2[i]) && (str1[i] != 0) && (str2[i] != 0))
-		i++;
-	if ((str1[i] == 0) && (str2[i] == 0))
-		return TRUE;
-	return FALSE;
-}
-
 // Returns TRUE is this location is in the active region of the zone
 Boolean loc_in_active_area(location loc)
 {
@@ -248,20 +231,6 @@ Boolean loc_touches_rect(location loc,Rect r)
 	if ((loc.x >= r.left) && (loc.x <= r.right) && (loc.y >= r.top) && (loc.y <= r.bottom))
 		return TRUE;
 	return FALSE;
-}
-
-Boolean loc_touch_rect(location loc,Rect r)
-{
-	if ((loc.x >= r.left) && (loc.x <= r.right) && (loc.y >= r.top) && (loc.y <= r.bottom))
-		return TRUE;
-	return FALSE;
-}
-
-short a_v(short x)
-{
-	if (x < 0)
-		return (-1 * x);
-		else return x;
 }
 
 terrain_type_type get_ter(short which_ter)

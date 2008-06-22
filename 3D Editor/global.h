@@ -1473,10 +1473,8 @@ short dist(location p1,location p2);
 short max(short a,short b);
 short min(short a,short b);
 short minmax(short min,short max,short k);
-short n_abs(short x);
 Boolean same_point(location l1,location l2);
 void EdSysBeep();
-void debug_stop();
 
 // Bl A Fileio
 void open_Appl_resource( char * rsrc_file );
@@ -1660,7 +1658,6 @@ void create_new_creature(short c_to_create,location create_loc,creature_start_ty
 Boolean create_new_item(short item_to_create,location create_loc,Boolean property,item_type *i_to_make);
 void shift_item_locs(location spot_hit);
 void place_items_in_town();
-void set_all_items_contained();
 void create_town_entry(Rect rect_hit);
 void edit_town_entry(location spot_hit);
 void set_rect_height(Rect r);
@@ -1731,7 +1728,6 @@ short dist(location p1,location p2);
 short max(short a,short b);
 short min(short a,short b);
 short minmax(short min,short max,short k);
-short n_abs(short x);
 Boolean same_point(location l1,location l2);
 
 // EDParser
@@ -1756,7 +1752,6 @@ Boolean load_core_scenario_data();
 Boolean check_script_exists(char *check_file_name,short file_location);
 
 // EDUtils.c
-void debug_stop(short which_error);
 void RedAlert_c (char *theStr);
 void RedAlert (char *theStr);
 void RedAlert_big_color (char *str1,char *str2,char *str3,char *str4,short num,char *str5,short color);
@@ -1772,12 +1767,9 @@ Rect rect_union(Rect *r1,Rect *r2);
 Rect rect_sect(Rect *r1,Rect *r2);
 Boolean r1_in_r2(Rect r1,Rect r2);
 Rect rect_centered_around_point(Rect r, location l);
-Boolean same_string(char *str1,char *str2);
 Boolean loc_in_active_area(location loc);
 Boolean loc_in_rect(location loc,Rect r);
 Boolean loc_touches_rect(location loc,Rect r);
-Boolean loc_touch_rect(location loc,Rect r);
-short a_v(short x);
 terrain_type_type get_ter(short which_ter);
 void ASB (char *theStr);
 void ASB_big (char *str1,char *str2,char *str3,char *str4,short num,char *str5);

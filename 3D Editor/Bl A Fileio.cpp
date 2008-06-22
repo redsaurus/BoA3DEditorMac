@@ -2723,7 +2723,6 @@ void init_warriors_grove()
 //porting functions
 void import_blades_of_exile_scenario()
 {
-	printf("import_blades_of_exile_scenario\n");
 	short i,j,file_id,new_scen_id;
 	long len;
 	//StandardFileReply s_reply;
@@ -3934,7 +3933,7 @@ void port_scenario_script(Str255 script_name,long directory_id)
 	add_string(file_id,"// This state called whenever this scenario is loaded, including when");
 	add_string(file_id,"// a save file is loaded.");
 	for (short i = 0; i < 50; i++)
-		if (same_string( boe_scen_text.scen_strs[60 + i * 2],"Unused Special Item") == FALSE) {
+		if (strcmp( boe_scen_text.scen_strs[60 + i * 2],"Unused Special Item")!=0) {
 			sprintf(new_line,"\tinit_special_item(%d,\"%s\",\"%s\");",i,
 				boe_scen_text.scen_strs[60 + i * 2],
 				boe_scen_text.scen_strs[60 + i * 2 + 1]);
@@ -4088,7 +4087,7 @@ void port_town_dialogue_script(Str255 script_name,long directory_id,short which_
 	// first, we have dialogue at all?
 	Boolean have_dialogue = FALSE;
 	for (short i = 0; i < 10; i++)
-		if (same_string(boe_scen_text.talk_strs[i],"Unused") == FALSE) 
+		if (strcmp(boe_scen_text.talk_strs[i],"Unused")!=0) 
 			have_dialogue = TRUE;
 	if (have_dialogue == FALSE)
 		return;
@@ -4123,7 +4122,7 @@ void port_town_dialogue_script(Str255 script_name,long directory_id,short which_
 	short current_dialogue_node = 1;
 	
 	for (short i = 0; i < 10; i++){
-		if (same_string(boe_scen_text.talk_strs[i],"Unused") == FALSE) {
+		if (strcmp(boe_scen_text.talk_strs[i],"Unused")!=0) {
 			port_dialogue_intro_text(&current_dialogue_node,i,file_id,which_town);
 			
 			for (short j = 0; j < 60 ; j++) {
@@ -5139,7 +5138,7 @@ void port_a_special_node(old_blades_special_node_type *node,short node_num,short
 /*
 	
 	for (short i = 0; i < 10; i++)
-		if (same_string(boe_scen_text.talk_strs[i],"Unused" == FALSE)) {
+		if (strcmp(boe_scen_text.talk_strs[i],"Unused")!=0) {
 			port_dialogue_intro_text(&current_dialogue_node,i);
 			
 			for (j = 0; j < 60 ; j++) {

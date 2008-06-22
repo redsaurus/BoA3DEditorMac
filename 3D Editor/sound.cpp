@@ -133,21 +133,23 @@ void force_play_sound(short which)
 //	if (play_sounds == TRUE) {
 	
 	channel++;
-	if (channel > numchannel) channel = 0;
+	if (channel > numchannel)
+		channel = 0;
 		
 	if (load_when_play[((which < 0) ? -1 * which : which)] == TRUE) 
 		sndhandle = GetResource('snd ',20000 + ((which < 0) ? -1 * which : which));
-	else sndhandle = sound_handles[((which < 0) ? -1 * which : which)];
+	else
+		sndhandle = sound_handles[((which < 0) ? -1 * which : which)];
  
 	if (which > 0)
 		if (always_asynch[which] == TRUE)
 			which = which * -1;
 
-	if (sndhandle != NIL)
-	{
+	if (sndhandle != NIL){
 		HLock(sndhandle);
 
-		if (which < 0) err = SndPlay(chan[channel],(SndListHandle) sndhandle,TRUE);/****** Normal SndPlay *****/
+		if (which < 0) 
+			err = SndPlay(chan[channel],(SndListHandle) sndhandle,TRUE);/****** Normal SndPlay *****/
 		else {
 			err = SndPlay(chan[channel],(SndListHandle) sndhandle,FALSE);
 		}
@@ -178,4 +180,3 @@ void flip_sound()
 {
 	play_sounds = (play_sounds) ? FALSE : TRUE;
 }
-

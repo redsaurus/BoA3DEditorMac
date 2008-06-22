@@ -404,7 +404,6 @@ short script_type::IsConstant (char * string, int length, short *value)
 short script_type::IsOperator (char * string, int length, short *value)
 {
 	for (short i = 0; i < NUM_OPERATORS; i++){
-		//if (same_string(string,(char *) operator_definers[i].token_text)) {
 		if (((int)strlen(operator_definers[i].token_text) == length) && 
 		  (strncmp(string,operator_definers[i].token_text,length) == 0)) { 
 		  	*value = i;
@@ -417,7 +416,6 @@ short script_type::IsOperator (char * string, int length, short *value)
 short script_type::IsNoParameterFunction (char * string, int length, short *value)
 {
 	for (short i = 0; i < NUM_NO_PARAM_FUNCTIONS; i++){
-		//if (same_string(string,(char *) no_parameter_function_definers[i].token_text)) {
 		if (((int)strlen(no_parameter_function_definers[i].token_text) == length) && 
 		  (strncmp(string,no_parameter_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
@@ -435,7 +433,6 @@ short script_type::IsFunction (char * string, int length, short *value)
 		return -1;
 		
 	for (short i = 0; i < NUM_UNARY_FUNCTIONS; i++){
-		//if (same_string(string,(char *) unary_function_definers[i].token_text)) {
 		if (((int)strlen(unary_function_definers[i].token_text) == length) && 
 		  (strncmp(string,unary_function_definers[i].token_text,length) == 0)) { 
 		  	*value = i;
@@ -453,7 +450,6 @@ short script_type::IsProcedure (char * string, int length, short *value)
 		return -1;
 
 	for (short i = 0; i < NUM_PROCEDURES; i++){
-		//if (same_string(string,(char *) procedure_definers[i].token_text)) {
 		if ((strlen(procedure_definers[i].token_text) > 0) && 
 		  (strncmp(string,procedure_definers[i].token_text,length) == 0) &&
 		  ((int)strlen(procedure_definers[i].token_text) == length)) {
@@ -483,7 +479,6 @@ short script_type::IsBinaryFunction (char * string, int length, short *value)
 		return -1;
 
 	for (short i = 0; i < NUM_BINARY_FUNCTIONS; i++){
-		//if (same_string(string,(char *) binary_function_definers[i].token_text)) {
 		if (((int)strlen(binary_function_definers[i].token_text) == length) && 
 		  (strncmp(string,binary_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
@@ -500,7 +495,6 @@ short script_type::IsTrinaryFunction (char * string, int length, short *value)
 		return -1;
 
 	for (short i = 0; i < NUM_TRINARY_FUNCTIONS; i++){
-		//if (same_string(string,(char *) trinary_function_definers[i].token_text)) {
 		if (((int)strlen(trinary_function_definers[i].token_text)  == length) && 
 		 (strncmp(string,trinary_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
@@ -516,7 +510,6 @@ short script_type::IsLocationFunction (char * string, int length, short *value)
 		return -1;
 
 	for (short i = 0; i < NUM_LOCATION_FUNCTIONS; i++){
-		//if (same_string(string,(char *) location_returning_function_definers[i].token_text)) {
 		if (((int)strlen(location_returning_function_definers[i].token_text) == length) && 
 		  (strncmp(string,location_returning_function_definers[i].token_text,length) == 0)) {
 		  	*value = i;
@@ -2305,7 +2298,7 @@ void load_town_script()
 	//if ((strlen(zone.zone_script) == 10) &&
 	  //(strncmp("NullZoneSc",zone.zone_script,10)))
 		//return;
-	if (same_string(zone.zone_script,"NullZoneSc"))
+	if (!strcmp(zone.zone_script,"NullZoneSc"))
 		return;
 		
 	zone_script = new script_type;
@@ -2475,7 +2468,7 @@ void load_dialogue_script()
 		}
 	if (strlen(zone.zone_name) == 0)
 		return;
-	if (same_string("NullZoneSc",zone.zone_script))
+	if (!strcmp("NullZoneSc",zone.zone_script))
 		return;
 					
 	zone_dialogue_script = new script_type;

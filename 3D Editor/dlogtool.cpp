@@ -173,13 +173,13 @@ void cd_init_dialogs()
 		dlg_types[i] = 0;
 		dlgs[i] = NULL;
 		dlg_highest_item[i] = 0;
-		}
+	}
 	for (i = 0; i < NI; i++) {
 		item_dlg[i] = -1;
-		}
+	}
 	for (i = 0; i < NL; i++) {
 		label_taken[i] = FALSE;
-		}
+	}
 }
 
 short cd_create_dialog_parent_num(short dlog_num,short parent)
@@ -192,7 +192,6 @@ short cd_create_dialog_parent_num(short dlog_num,short parent)
 	if (i < 0)
 		return -1;
 	return cd_create_dialog(dlog_num,dlgs[i]);
-
 }
 
 short cd_create_dialog(short dlog_num,WindowPtr parent)
@@ -230,7 +229,7 @@ short cd_create_dialog(short dlog_num,WindowPtr parent)
 	if (dlgs[free_slot] == NULL) {
 		play_sound(3);
 		return -3;
-		}
+	}
 	//center_window(dlgs[free_slot]);
 
 	dlg_parent[free_slot] = parent;
@@ -288,40 +287,40 @@ void process_new_window (WindowPtr hDlg) {
 				type = 3;
 				flag = 1;
 	            str_stored = TRUE;
-				}
+			}
 			else if (item_str[0] == '*') {
 				type = 3;
 				flag = 0;
 				str_stored = TRUE;
-				}
+			}
 			else if (item_str[0] == '~') {
 				type = 7;
 				flag = 0;
 				str_stored = TRUE;
-				}
+			}
 			else if (item_str[0] == '!') {
 				type = 4;
 				flag = 0;
 				str_stored = TRUE;
-				}
+			}
 			else if (item_str[0] == '=') {
 				type = 9;
 				flag = 1;
 				str_stored = TRUE;
-				}
+			}
 			else if (((item_str[0] >= 65) && (item_str[0] <= 122)) || (item_str[0] == '"')) {
 				type = 9;
 				flag = 0;
 				str_offset = 0;
 				str_stored = TRUE;
-				}
+			}
 			else if ((item_str[0] == '^') || (item_str[0] == '&')) {
 				type = (item_str[0] == '^') ? 10 : 11;
 				flag = 1;
 				if (string_length((char *) item_str) > 55)
 					flag = 2;
 				str_stored = TRUE;
-				}
+			}
 			else {
 #ifndef EXILE_BIG_GUNS
 				sscanf((char *) item_str,"%d_%d",&type,&flag);
@@ -330,7 +329,7 @@ void process_new_window (WindowPtr hDlg) {
 				sscanf((char *) item_str,"%hd_%hd",&type,&flag);
 				//type = typel; flag = flagl;
 #endif		
-				}
+			}
 
 			free_item = -1;
 			// find free item
@@ -340,7 +339,7 @@ void process_new_window (WindowPtr hDlg) {
 						if (item_dlg[j] < 0) {
 							free_item = j;
 							j = NI + 1;
-							}
+						}
 					break;
 				default:
 					if ((type == 9) || 
@@ -349,17 +348,17 @@ void process_new_window (WindowPtr hDlg) {
 							if (item_dlg[j] < 0) {
 								free_item = j;
 								j = NI + 1;
-								}
-						}
-						else {
-							for (j = 10; j < 140; j++)
-								if (item_dlg[j] < 0) {
-									free_item = j;
-									j = NI + 1;
-									}
 							}
+					}
+					else {
+						for (j = 10; j < 140; j++)
+							if (item_dlg[j] < 0) {
+								free_item = j;
+								j = NI + 1;
+							}
+					}
 					break;
-				}
+			}
 
 			if (free_item >= 0) {
 					item_dlg[free_item] = store_dlog_num;
@@ -400,7 +399,7 @@ void process_new_window (WindowPtr hDlg) {
 								else
 								sprintf(text_short_str[free_item - 10],"%-39.39s",
 								  (char *) (item_str + str_offset));
-								}
+							}
 							item_key[free_item] = 255; 
 							if (type >= 10) {
 								store_rect = get_graphic_rect(dlg_buttons_gworld[1][0]);
@@ -408,9 +407,9 @@ void process_new_window (WindowPtr hDlg) {
 								item_rect[free_item].bottom = item_rect[free_item].top + store_rect.bottom;
 								if (type == 11)
 									item_key[free_item] = 31;
-								}
+							}
 							break;
-						}
+					}
 					win_height = max(win_height, item_rect[free_item].bottom + 5);
 					win_width = max(win_width, item_rect[free_item].right + 6);
 
@@ -427,7 +426,7 @@ void process_new_window (WindowPtr hDlg) {
 		SizeWindow(GetDialogWindow((DialogPtr)hDlg),win_width + 13 + DIALOG_PIXEL_ADJUST,win_height + 13 + DIALOG_PIXEL_ADJUST,FALSE);
 		else SizeWindow(hDlg,win_width - 5 + DIALOG_PIXEL_ADJUST,win_height - 5 + DIALOG_PIXEL_ADJUST,FALSE);
 	dlg_highest_item[free_slot] = num_items;
-	}
+}
 
 
 short cd_kill_dialog(short dlog_num,short parent_message)
@@ -445,7 +444,7 @@ short cd_kill_dialog(short dlog_num,short parent_message)
 			if (item_label[i] > 0)
 				label_taken[item_label_loc[i]] = FALSE;
 			item_dlg[i] = -1;
-			}
+		}
 
 /*	if (dlg_parent[which_dlg] != NULL) {
 		EnableWindow(dlg_parent[which_dlg],TRUE);
@@ -497,8 +496,8 @@ short cd_process_click(WindowPtr window,Point the_point, short mods,short *item)
 					if (dlg_item_type[item_id] != 8)
 						dlg_num = cd_process_mousetrack( dlg_num, i, item_rect[item_id] );
 					return dlg_num;
-					}
 			}
+		}
 	return -1;
 }
 
@@ -562,7 +561,7 @@ short cd_process_keystroke(WindowPtr window,char char_hit,short *item)
 						cd_press_button(dlg_num,i, eDLGBtnResCompatible);
 					return dlg_num;
 			}
-			}
+		}
 			
 	// kludgy. If you get an escape and is isn't processed, make it an enter
 	if (char_hit == 24) {
@@ -576,8 +575,8 @@ short cd_process_keystroke(WindowPtr window,char char_hit,short *item)
 							cd_press_button(dlg_num,i, eDLGBtnResCompatible);
 						return dlg_num;
 				}
-				}
-		}
+			}
+	}
 	return -1;
 }
 
@@ -611,7 +610,7 @@ void cd_attach_key(short dlog_num,short item_num,char key)
 	if ((dlg_item_type[item_index] > 2) && (dlg_item_type[item_index] != 8)) {
 		beep();
 		return;
-		}
+	}
 	item_key[item_index] = key;
 }
 
@@ -628,7 +627,7 @@ void cd_set_pict(short dlog_num, short item_num, short pict_num)
 	if (dlg_item_type[item_index] != 5) {
 		beep();
 		return;
-		}
+	}
 	item_flag[item_index] = pict_num;
 	if (pict_num == -1)
 		cd_erase_item(dlog_num,item_num);
@@ -663,7 +662,7 @@ void cd_get_item_text(short dlog_num, short item_num, char *str)
 	if (item_index >= 150) {
 		beep();
 		return;
-		}
+	}
 	if (item_index < 10)
 		sprintf(str,"%s",text_long_str[item_index]);
 		else sprintf(str,"%s",text_short_str[item_index - 10]);
@@ -682,11 +681,10 @@ void cd_retrieve_text_edit_str(short dlog_num, short item_num, char *str)
 	Rect the_rect;
 	Str255 store_ptr;
 	
-//	sprintf(str,"");
 	*str = '\0';
 	if ((dlg_index = cd_get_dlg_index(dlog_num)) < 0) {
 		SysBeep(50); return ;
-		}
+	}
 	GetDialogItem((DialogPtr)  dlgs[dlg_index], item_num, &the_type, &the_handle, &the_rect);
 	GetDialogItemText(the_handle,store_ptr);
 	p2c(store_ptr);
@@ -703,8 +701,9 @@ short cd_retrieve_text_edit_num(short dlog_num, short item_num)
 	long num_given;
 	
 	if ((dlg_index = cd_get_dlg_index(dlog_num)) < 0) {
-		SysBeep(50); return -1;
-		}
+		SysBeep(50);
+		return -1;
+	}
 	GetDialogItem((DialogPtr) dlgs[dlg_index], item_num, &the_type, &the_handle, &the_rect);
 	GetDialogItemText(the_handle,store_ptr);
 	StringToNum (store_ptr,&num_given);
@@ -722,8 +721,9 @@ void cd_set_text_edit_str(short dlog_num, short item_num, char *str)
 	Str255 store_ptr;
 	
 	if ((dlg_index = cd_get_dlg_index(dlog_num)) < 0) {
-		SysBeep(50); return ;
-		}
+		SysBeep(50);
+		return ;
+	}
 	strcpy((char *) store_ptr,str);
 	c2p(store_ptr);
 	GetDialogItem( (DialogPtr) dlgs[dlg_index], item_num, &the_type, &the_handle, &the_rect );
@@ -741,8 +741,9 @@ void cd_set_text_edit_num(short dlog_num, short item_num, short num)
 	Str255 store_ptr;
 	
 	if ((dlg_index = cd_get_dlg_index(dlog_num)) < 0) {
-		SysBeep(50); return ;
-		}
+		SysBeep(50);
+		return ;
+	}
 		
 	sprintf((char *) store_ptr,"%d",num);
 	c2p(store_ptr);
@@ -759,10 +760,11 @@ void cd_set_item_text(short dlog_num, short item_num, char *str)
 	if (item_index >= 150) {
 		beep();
 		return;
-		}
+	}
 	if (item_index < 10)
 		sprintf(text_long_str[item_index],"%s",str);
-		else sprintf(text_short_str[item_index - 10],"%-39.39s",str);
+	else
+		sprintf(text_short_str[item_index - 10],"%-39.39s",str);
 	cd_draw_item( dlog_num,item_num);
 }
 
@@ -780,10 +782,11 @@ void cd_set_item_num(short dlog_num, short item_num, short num)
 	if (item_index >= 150) {
 		beep();
 		return;
-		}
+	}
 	if (item_index < 10)
 		sprintf(text_long_str[item_index],"%d",num);
-		else sprintf(text_short_str[item_index - 10],"%d",num);
+	else
+		sprintf(text_short_str[item_index - 10],"%d",num);
 	cd_draw_item( dlog_num,item_num);
 }
 
@@ -797,7 +800,7 @@ void cd_set_led(short dlog_num,short item_num,short state)
 	if (dlg_item_type[item_index] != 2) {
 		beep();
 		return;
-		}
+	}
 	item_flag[item_index] = state;
 	cd_draw_item(dlog_num,item_num);
 }
@@ -821,8 +824,9 @@ void cd_set_led_range(short dlog_num,short first_led,short last_led,short which_
 	for (i = first_led; i <= last_led; i++) {
 		if (i - first_led == which_to_set)
 			cd_set_led(dlog_num,i,1);
-			else cd_set_led(dlog_num,i,0);
-		}
+		else
+			cd_set_led(dlog_num,i,0);
+	}
 }
 
 // Use when someone presses something in the range, to light up the right button
@@ -836,8 +840,9 @@ void cd_hit_led_range(short dlog_num,short first_led,short last_led,short which_
 	for (i = first_led; i <= last_led; i++) {
 		if (i == which_to_set)
 			cd_set_led(dlog_num,i,1);
-			else cd_set_led(dlog_num,i,0);
-		}
+		else
+			cd_set_led(dlog_num,i,0);
+	}
 }
 short cd_get_led_range(short dlog_num,short first_led,short last_led)
 {
@@ -846,7 +851,7 @@ short cd_get_led_range(short dlog_num,short first_led,short last_led)
 	for (i = first_led; i <= last_led; i++) {
 		if (cd_get_led(dlog_num,i) == 1)
 			return i - first_led;
-		}
+	}
 	return 0;
 }
 
@@ -872,7 +877,7 @@ short cd_get_led(short dlog_num,short item_num)
 	if (dlg_item_type[item_index] != 2) {
 		beep();
 		return 0;
-		}
+	}
 	return item_flag[item_index];
 }
 
@@ -887,7 +892,7 @@ void cd_text_frame(short dlog_num,short item_num,short frame)
 	if (item_index >= 150) {
 		beep();
 		return;
-		}
+	}
 	item_flag[item_index] = frame;
 	cd_draw_item(dlog_num,item_num);
 }
@@ -907,14 +912,15 @@ void cd_add_label(short dlog_num, short item_num, char *label, short label_flag)
 				label_loc = i;
 				label_taken[i] = TRUE;
 				i = 100;
-				}
+			}
 		if (label_loc < 0) {
 			beep();
 			return;
-			}
-		item_label_loc[item_index] = label_loc;
 		}
-      else cd_erase_item(dlog_num,item_num + 100);
+		item_label_loc[item_index] = label_loc;
+	}
+	else 
+		cd_erase_item(dlog_num,item_num + 100);
 	label_loc = item_label_loc[item_index];
 	sprintf((char *) labels[label_loc],"%-24s",label);
 	if (item_active[item_index] > 0)
@@ -949,8 +955,6 @@ void cd_draw_item(short dlog_num,short item_num)
 	Rect from_rect,to_rect;
 	GrafPtr old_port;
 
-
-
 	if (cd_get_indices(dlog_num,item_num,&dlg_index,&item_index) < 0)
 		return;
 	if (dlg_draw_ready[dlg_index] == FALSE)
@@ -965,134 +969,133 @@ void cd_draw_item(short dlog_num,short item_num)
 	if (item_active[item_index] == 0) {
 		cd_erase_item(dlog_num,item_num);
 		cd_erase_item(dlog_num,item_num + 100);
-		}
-		else {
-			switch (dlg_item_type[item_index]) {
-				case 0: case 1: case 10: case 11:
-					from_rect = get_graphic_rect(dlg_buttons_gworld[button_type[item_flag[item_index]]][0]);
-					rect_draw_some_item(dlg_buttons_gworld[button_type[item_flag[item_index]]][0],from_rect,
-					 dlg_buttons_gworld[button_type[item_flag[item_index]]][0],item_rect[item_index],0,2);
-					RGBForeColor(&c[2]);
-					TextSize(12);
-					if (dlg_item_type[item_index] == 10){
-						ForeColor(whiteColor);
-						TextSize(8);
-					}
-					if (dlg_item_type[item_index] < 2)
-						OffsetRect(&item_rect[item_index],-1 * button_left_adj[item_flag[item_index]],0);
-					if (dlg_item_type[item_index] < 2) {
-						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-						 (char *) (button_strs[item_flag[item_index]]),1,8);
-					}
-					else {
-						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-							 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-						text_short_str[item_index - 10]),1,8);
-					}
-					if (dlg_item_type[item_index] < 2)
-						OffsetRect(&item_rect[item_index],button_left_adj[item_flag[item_index]],0);
-					TextSize(10);
-					ForeColor(blackColor);
-					break;
-
-				case 2:
-					from_rect = get_graphic_rect(dlg_buttons_gworld[9][0]);
-					switch (item_flag[item_index]) {
-						case 0: rect_draw_some_item( dlg_buttons_gworld[10][0],from_rect, dlg_buttons_gworld[10][0],item_rect[item_index],0,2); break;
-						case 1: rect_draw_some_item( dlg_buttons_gworld[9][1],from_rect, dlg_buttons_gworld[9][1],item_rect[item_index],0,2); break;
-						case 2: rect_draw_some_item( dlg_buttons_gworld[9][0],from_rect, dlg_buttons_gworld[9][0],item_rect[item_index],0,2); break;
-						}
-					break;
-
-				case 3: case 4: case 7: case 8: case 9: 
-					cd_erase_item(dlog_num,item_num);
-					if (dlg_item_type[item_index] == 4)
-						TextFace(0);
-					if (dlg_item_type[item_index] == 7)
-						TextSize(12); 
-					ForeColor(blackColor);
-					if (item_flag[item_index] % 10 == 1)
-						cd_frame_item(dlog_num,item_num,2);
-
-					if (item_flag[item_index] >= 10) {
-						RGBForeColor(&c[1]);
-						}
-					if (item_rect[item_index].bottom - item_rect[item_index].top < 20) {
-						item_rect[item_index].left += 3;
-							char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-							 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-							  text_short_str[item_index - 10]),3,12);
-						item_rect[item_index].left -= 3;
-						}
-						else {
-							InsetRect(&item_rect[item_index],4,4);
-							char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-							 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-							  text_short_str[item_index - 10]),0,(dlg_item_type[item_index] == 7) ? 14 : 12);
-							InsetRect(&item_rect[item_index],-4,-4);
-							}
-					if ((dlg_item_type[item_index] == 8) && (dlog_num == 989)) {
-						item_rect[item_index].bottom -= 12;
-						undo_clip();
-						}
-					TextFont(geneva_font_num);
-					TextFace(0);
-					TextFace(bold);
-					TextSize(10); 
-					ForeColor(blackColor);
-					break;
-
-				case 5:
-					if (item_flag[item_index] == -1)
-						cd_erase_item(dlog_num,item_num);
-						else draw_dialog_graphic(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])), item_rect[item_index], item_flag[item_index],
-						  (item_flag[item_index] >= 2000) ? FALSE : TRUE,0);
-					break;
+	}
+	else {
+		switch (dlg_item_type[item_index]) {
+			case 0: case 1: case 10: case 11:
+				from_rect = get_graphic_rect(dlg_buttons_gworld[button_type[item_flag[item_index]]][0]);
+				rect_draw_some_item(dlg_buttons_gworld[button_type[item_flag[item_index]]][0],from_rect,
+				 dlg_buttons_gworld[button_type[item_flag[item_index]]][0],item_rect[item_index],0,2);
+				RGBForeColor(&c[2]);
+				TextSize(12);
+				if (dlg_item_type[item_index] == 10){
+					ForeColor(whiteColor);
+					TextSize(8);
 				}
+				if (dlg_item_type[item_index] < 2)
+					OffsetRect(&item_rect[item_index],-1 * button_left_adj[item_flag[item_index]],0);
+				if (dlg_item_type[item_index] < 2) {
+					char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+					 (char *) (button_strs[item_flag[item_index]]),1,8);
+				}
+				else {
+					char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+						 (char *) ((item_index < 10) ? text_long_str[item_index] : 
+					text_short_str[item_index - 10]),1,8);
+				}
+				if (dlg_item_type[item_index] < 2)
+					OffsetRect(&item_rect[item_index],button_left_adj[item_flag[item_index]],0);
+				TextSize(10);
+				ForeColor(blackColor);
+				break;
+
+			case 2:
+				from_rect = get_graphic_rect(dlg_buttons_gworld[9][0]);
+				switch (item_flag[item_index]) {
+					case 0: rect_draw_some_item( dlg_buttons_gworld[10][0],from_rect, dlg_buttons_gworld[10][0],item_rect[item_index],0,2); break;
+					case 1: rect_draw_some_item( dlg_buttons_gworld[9][1],from_rect, dlg_buttons_gworld[9][1],item_rect[item_index],0,2); break;
+					case 2: rect_draw_some_item( dlg_buttons_gworld[9][0],from_rect, dlg_buttons_gworld[9][0],item_rect[item_index],0,2); break;
+				}
+				break;
+
+			case 3: case 4: case 7: case 8: case 9: 
+				cd_erase_item(dlog_num,item_num);
+				if (dlg_item_type[item_index] == 4)
+					TextFace(0);
+				if (dlg_item_type[item_index] == 7)
+					TextSize(12); 
+				ForeColor(blackColor);
+				if (item_flag[item_index] % 10 == 1)
+					cd_frame_item(dlog_num,item_num,2);
+
+				if (item_flag[item_index] >= 10) {
+					RGBForeColor(&c[1]);
+				}
+				if (item_rect[item_index].bottom - item_rect[item_index].top < 20) {
+					item_rect[item_index].left += 3;
+						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+						 (char *) ((item_index < 10) ? text_long_str[item_index] : 
+						  text_short_str[item_index - 10]),3,12);
+					item_rect[item_index].left -= 3;
+				}
+				else {
+					InsetRect(&item_rect[item_index],4,4);
+					char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+					 (char *) ((item_index < 10) ? text_long_str[item_index] : 
+					  text_short_str[item_index - 10]),0,(dlg_item_type[item_index] == 7) ? 14 : 12);
+					InsetRect(&item_rect[item_index],-4,-4);
+				}
+				if ((dlg_item_type[item_index] == 8) && (dlog_num == 989)) {
+					item_rect[item_index].bottom -= 12;
+					undo_clip();
+				}
+				TextFont(geneva_font_num);
+				TextFace(0);
+				TextFace(bold);
+				TextSize(10); 
+				ForeColor(blackColor);
+				break;
+
+			case 5:
+				if (item_flag[item_index] == -1)
+					cd_erase_item(dlog_num,item_num);
+				else
+					draw_dialog_graphic(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])), item_rect[item_index], item_flag[item_index],(item_flag[item_index] >= 2000) ? FALSE : TRUE,0);
+				break;
+			}
+		}
+
+		if (item_label[item_index] != 0) {
+			store_label = item_label[item_index];
+			if (store_label >= 1000) {
+				store_label -= 1000;
+			}
+			else {
+				TextFace(0);
+			}
+			to_rect = item_rect[item_index];
+			switch (store_label / 100) {
+				case 0:
+					to_rect.right = to_rect.left;
+					to_rect.left -= 2 * (store_label % 100);
+					break;
+				case 1:
+					to_rect.bottom = to_rect.top;
+					to_rect.top -= 2 * (store_label % 100);
+					break;
+				case 2:
+					to_rect.left = to_rect.right;
+					to_rect.right += 2 * (store_label % 100);
+					break;
+				case 3:
+					to_rect.top = to_rect.bottom;
+					to_rect.bottom += 2 * (store_label % 100);
+					break;
 			}
 
-			if (item_label[item_index] != 0) {
-				store_label = item_label[item_index];
-				if (store_label >= 1000) {
-					store_label -= 1000;
-					}
-					else {
-						TextFace(0);
-						}
-				to_rect = item_rect[item_index];
-				switch (store_label / 100) {
-					case 0:
-						to_rect.right = to_rect.left;
-						to_rect.left -= 2 * (store_label % 100);
-						break;
-					case 1:
-						to_rect.bottom = to_rect.top;
-						to_rect.top -= 2 * (store_label % 100);
-						break;
-					case 2:
-						to_rect.left = to_rect.right;
-						to_rect.right += 2 * (store_label % 100);
-						break;
-					case 3:
-						to_rect.top = to_rect.bottom;
-						to_rect.bottom += 2 * (store_label % 100);
-						break;
-					}
-
-				if (to_rect.bottom - to_rect.top < 14) {
-					to_rect.bottom += (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
-					to_rect.top -= (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
-					}
-					else OffsetRect(&to_rect, 0,(to_rect.bottom - to_rect.top) / 6);
-				//cd_erase_rect(dlog_num,to_rect);
-				if (item_active[item_index] != 0) {
-
-					char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),to_rect,
-						labels[item_label_loc[item_index]],2,12);
-
-					}
-				TextFace(bold);
+			if (to_rect.bottom - to_rect.top < 14) {
+				to_rect.bottom += (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
+				to_rect.top -= (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
 				}
+				else OffsetRect(&to_rect, 0,(to_rect.bottom - to_rect.top) / 6);
+			//cd_erase_rect(dlog_num,to_rect);
+			if (item_active[item_index] != 0) {
+				char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),to_rect,
+					labels[item_label_loc[item_index]],2,12);
+
+			}
+			TextFace(bold);
+		}
 
 	
 	TextFont(0);
@@ -1159,21 +1162,19 @@ void cd_erase_item(short dlog_num, short item_num)
 	Boolean just_label = FALSE;
 	GrafPtr old_port;
 
-	
-
 	if (item_num >= 100) {
 		item_num -= 100;
 		just_label = TRUE;
-		}
+	}
 
 	if (item_num == 0) {
 		for (i = 0; i < ND; i++)
-				if ((dlg_keys[i] >= 0) && (dlg_types[i] == dlog_num))
-					dlg_index = i;
-		//GetWindowRect(dlgs[dlg_index],&to_fry);
-		GetWindowPortBounds (GetDialogWindow((DialogPtr) dlgs[dlg_index]), &to_fry);
-		//OffsetRect(&to_fry,-1 * to_fry.left,-1 * to_fry.top);
-		}
+			if ((dlg_keys[i] >= 0) && (dlg_types[i] == dlog_num))
+				dlg_index = i;
+			//GetWindowRect(dlgs[dlg_index],&to_fry);
+			GetWindowPortBounds (GetDialogWindow((DialogPtr) dlgs[dlg_index]), &to_fry);
+			//OffsetRect(&to_fry,-1 * to_fry.left,-1 * to_fry.top);
+	}
 	else {
 		if (cd_get_indices(dlog_num,item_num,&dlg_index,&item_index) < 0)
 			return;
@@ -1201,21 +1202,21 @@ void cd_erase_item(short dlog_num, short item_num)
 						to_fry.top = to_fry.bottom;
 						to_fry.bottom += 2 * (store_label % 100);
 						break;
-					}
+				}
 				if ((i = 12 - (to_fry.bottom - to_fry.top)) > 0) {
 					// adjust rect ... but doesn't work for bold letters
 					to_fry.bottom += i / 2;
-               to_fry.bottom++; // extra pixel to get dangly letters
+					to_fry.bottom++; // extra pixel to get dangly letters
 					to_fry.top -= i / 2;
-					}
 				}
 			}
+		}
 		InsetRect(&to_fry,-1,-1);
 
-		}
+	}
 	if (dlg_draw_ready[dlg_index] == FALSE) {
 		return;
-		}
+	}
 	//GetPort(&old_port);
 	//SetPort((GrafPtr) dlgs[dlg_index]);
 	//FillCRect(&to_fry,bg[5]);
@@ -1229,11 +1230,9 @@ void cd_erase_item(short dlog_num, short item_num)
 	// Now 2nd part of frame processing
 	if (item_num == 0) {
 		place_dlog_borders_around_rect(NULL,dlgs[dlg_index],to_fry);
-		}
+	}
 		
 	SetPort(old_port);
-	
-	
 }
 
 void cd_erase_rect(short dlog_num,Rect to_fry)
@@ -1274,7 +1273,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	if ((dlg_item_type[item_index] == 2) && (mode == eDLGBtnResCompatible) ) {
 		play_sound(34);
 		return;
-		}	
+	}	
 
 	GetPort(&old_port);
 	SetPort(GetWindowPort( GetDialogWindow((DialogPtr)dlgs[dlg_index])));
@@ -1296,12 +1295,12 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 			char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
 			 (char *) (button_strs[item_flag[item_index]]),1,8);
 			OffsetRect(&item_rect[item_index],button_left_adj[item_flag[item_index]],0);
-			}
-			else {
-				char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-				 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-				  text_short_str[item_index - 10]),1,8);
-				}
+		}
+		else {
+			char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+			 (char *) ((item_index < 10) ? text_long_str[item_index] : 
+			  text_short_str[item_index - 10]),1,8);
+		}
 
 
 		// refresh graphis for this dialog
@@ -1310,7 +1309,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 			QDFlushPortBuffer(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])), 
 			  GetPortVisibleRegion(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])), rgnHandle));
 			DisposeRgn(rgnHandle);	
-			}
+		}
 	}
 	
 	// sound
@@ -1329,8 +1328,9 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	if ( mode == eDLGBtnResCompatible ) {
 		if (play_sounds == TRUE) {
 			Delay(6,&dummy);
-			}
-			else Delay(14,&dummy);
+		}
+		else
+			Delay(14,&dummy);
 	}
 
 	// recover graphics of the button
@@ -1346,12 +1346,12 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 					char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
 					 (char *) (button_strs[item_flag[item_index]]),1,8);
 			OffsetRect(&item_rect[item_index],button_left_adj[item_flag[item_index]],0);
-			}
-			else {
-						char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
-						 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-						  text_short_str[item_index - 10]),1,8);
-				}
+		}
+		else {
+			char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
+			 (char *) ((item_index < 10) ? text_long_str[item_index] : 
+			  text_short_str[item_index - 10]),1,8);
+		}
 
 		// refresh graphis for this dialog
 		if (using_osx) {
@@ -1379,12 +1379,12 @@ short cd_get_indices(short dlg_num, short item_num, short *dlg_index, short *ite
 {
 	if ((*dlg_index = cd_get_dlg_index(dlg_num)) < 0) {
 		return -1;
-		}
+	}
 	if ((*item_index = cd_get_item_id(dlg_num,item_num)) < 0) {
 		return -1;
-		}
+	}
 	return 0;
-		}
+}
 
 short cd_get_dlg_index(short dlog_num)
 {
@@ -1404,7 +1404,7 @@ short cd_find_dlog(WindowPtr window, short *dlg_num, short *dlg_key)
 			*dlg_num = dlg_types[i];
 			*dlg_key = dlg_keys[i];
 			return i;
-			}
+	}
 	return -1;
 }
 
@@ -1417,8 +1417,6 @@ short cd_get_item_id(short dlg_num, short item_num)
 			return i;
 	return -1;
 }
-
-// External graphics tools (huh huh huh ... tool ... huh huh huh)
 
 void center_window(WindowPtr window)
 {

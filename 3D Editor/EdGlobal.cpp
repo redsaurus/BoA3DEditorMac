@@ -30,14 +30,16 @@ short max(short a,short b)
 {
 	if (a > b)
 		return a;
-		else return b;
+	else
+		return b;
 }
 
 short min(short a,short b)
 {
 	if (a < b)
 		return a;
-		else return b;
+	else
+		return b;
 }
 
 short minmax(short min,short max,short k)
@@ -49,16 +51,7 @@ short minmax(short min,short max,short k)
 	return k;
 }
 
-short n_abs(short x)
-{
-	if (x < 0)
-		return x * -1;
-	return x;
-}
-
 Boolean same_point(location l1,location l2)
 {
-	if ((l1.x == l2.x) && (l1.y == l2.y))
-		return TRUE;
-		else return FALSE;
+	return((l1.x == l2.x) && (l1.y == l2.y));
 }

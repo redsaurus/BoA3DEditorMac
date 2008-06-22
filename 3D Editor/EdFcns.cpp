@@ -1684,8 +1684,7 @@ void set_new_floor(short selected_terrain)
 //sets a new creature to be placed
 void set_new_creature(short selected_creature)
 {
-	if (same_string("Unused",scen_data.scen_creatures[selected_creature].name) 
-		|| same_string("Placeholder",scen_data.scen_creatures[selected_creature].name))
+	if(!strcmp("Unused",scen_data.scen_creatures[selected_creature].name) || !strcmp("Placeholder",scen_data.scen_creatures[selected_creature].name))
 		return;
 	overall_mode = 46;
 	mode_count = selected_creature;
@@ -1694,7 +1693,7 @@ void set_new_creature(short selected_creature)
 
 void set_new_item(short selected_item)
 {
-	if (same_string("Unused",scen_data.scen_items[selected_item].full_name))
+	if (!strcmp("Unused",scen_data.scen_items[selected_item].full_name))
 		return;
 	overall_mode = 47;
 	mode_count = selected_item;
@@ -3506,7 +3505,7 @@ void update_item_menu()
 			DeleteMenuItem(mon_menu[j],1); 
 		}
 		for (i = 0; i < 64; i++) {
-			if (same_string(scen_data.scen_creatures[i + j * 64].name,"Unused") == FALSE)
+			if (strcmp(scen_data.scen_creatures[i + j * 64].name,"Unused")!=0)
 				sprintf((char *) item_name, "%d - %s, L%d",
 						i + j * 64,scen_data.scen_creatures[i + j * 64].name,
 						scen_data.scen_creatures[i + j * 64].level);
@@ -3861,7 +3860,7 @@ void create_new_creature(short c_to_create,location create_loc,creature_start_ty
 {
 	short i;
 	
-	//if (same_string(scen_data.scen_creatures[c_to_create].name,"Unused"))
+	//if (!strcmp(scen_data.scen_creatures[c_to_create].name,"Unused"))
 	//	return;
 	if (c_to_create < 0)	
 		return;
@@ -3909,7 +3908,7 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 {
 	short i;
 	
-	//if (same_string(scen_data.scen_items[item_to_create].name,"Unused"))
+	//if (!strcmp(scen_data.scen_items[item_to_create].name,"Unused"))
 	//	return TRUE;
 	if (item_to_create < 0)	
 		return TRUE;
@@ -4033,20 +4032,6 @@ void place_items_in_town()
 	if (place_failed == TRUE)
 		give_error("Not all of the random items could be placed. The preset item per town limit of 144 was reached.","",0);
 	draw_terrain();
-}
-
-void set_all_items_contained()
-{
-	for (int i = 0; i < 144; i++){
-		/*printf("Item %i: %s at (%i,%i) on terrain %s with special %i\n",i,
-			   scen_data.scen_items[town.preset_items[i].which_item].name,
-			   (int)town.preset_items[i].item_loc.x,(int)town.preset_items[i].item_loc.y,
-			   scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].ter_name,
-			   (int)scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special);*/
-		town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-											(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-											(scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
-	}
 }
 
 void create_town_entry(Rect rect_hit)
@@ -4396,7 +4381,6 @@ void set_all_items_containment()
 	for (short i = 0; i < NUM_TOWN_PLACED_ITEMS; i++)
 		if (town.preset_items[i].which_item >= 0) {
 			short ter = t_d.terrain[ (short) town.preset_items[i].item_loc.x][ (short) town.preset_items[i].item_loc.y];
-			//			town.preset_items[i].properties = town.preset_items[i].properties & 251;
 			
 			if (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) 
 				|| (is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y))
@@ -4418,7 +4402,7 @@ void set_up_lights()
 	store_edit =  editing_town;
 	editing_town = TRUE;
 	
-	// Find bonfires, braziers, etc.
+	// Find light sources
 	for (i = 0; i < 64; i++)
 		for (j = 0; j < 64; j++)
 			where_lit[i][j] = 0;
@@ -4473,8 +4457,8 @@ void old_can_see(location p1,location p2,short check_light,short check_travel,Bo
 	*see_in = TRUE;
 	if (same_point(p1,p2))
 		return;
-	dx = n_abs(p2.x - p1.x);
-	dy = n_abs(p2.y - p1.y);
+	dx = abs(p2.x - p1.x);
+	dy = abs(p2.y - p1.y);
 	shift_dir.x = (p2.x > p1.x) ? 1 : -1;
 	shift_dir.y = (p2.y > p1.y) ? 1 : -1;
 	if (p2.x > p1.x) {
@@ -4625,8 +4609,8 @@ void can_see(location p1,location p2,short check_light,short check_travel,Boolea
 	*see_in = TRUE;
 	if (same_point(p1,p2))
 		return;
-	dx = n_abs(p2.x - p1.x);
-	dy = n_abs(p2.y - p1.y);
+	dx = abs(p2.x - p1.x);
+	dy = abs(p2.y - p1.y);
 	shift_dir.x = (p2.x > p1.x) ? 1 : -1;
 	shift_dir.y = (p2.y > p1.y) ? 1 : -1;
 	if (p2.x > p1.x) {
@@ -5140,9 +5124,9 @@ void set_up_corner_and_sight_map()
 						
 						//in the game, things a certain distance away aren't drawn.  Also, 
 						//that helps here by reducing the number of line-of-sight calculations needed
-						if(editing_town && (n_abs(temp_x - cen_x) > 10 || n_abs(temp_y - cen_y) > 10))
+						if(editing_town && (abs(temp_x - cen_x) > 10 || abs(temp_y - cen_y) > 10))
 							continue;
-						if(!editing_town && (n_abs(temp_x - cen_x) + n_abs(temp_y - cen_y) > 14))
+						if(!editing_town && (abs(temp_x - cen_x) + abs(temp_y - cen_y) > 14))
 							continue;
 					}
 					
@@ -5201,9 +5185,9 @@ void set_up_corner_and_sight_map()
 						}
 						//in the game, things a certain distance away aren't drawn.  Also, 
 						//that helps here by reducing the number of line-of-sight calculations needed
-						if(editing_town && (n_abs(temp_x - cen_x) > 10 || n_abs(temp_y - cen_y) > 10))
+						if(editing_town && (abs(temp_x - cen_x) > 10 || abs(temp_y - cen_y) > 10))
 							continue;
-						if(!editing_town && (n_abs(temp_x - cen_x) + n_abs(temp_y - cen_y) > 14))
+						if(!editing_town && (abs(temp_x - cen_x) + abs(temp_y - cen_y) > 14))
 							continue;
 						
 						view_to.x = temp_x;
@@ -5270,9 +5254,9 @@ void set_up_corner_and_sight_map()
 						
 						//in the game, things a certain distance away aren't drawn.  Also, 
 						//that helps here by reducing the number of line-of-sight calculations needed
-						if(editing_town && (n_abs(temp_x - cen_x) > 10 || n_abs(temp_y - cen_y) > 10))
+						if(editing_town && (abs(temp_x - cen_x) > 10 || abs(temp_y - cen_y) > 10))
 							continue;
-						if(!editing_town && (n_abs(temp_x - cen_x) + n_abs(temp_y - cen_y) > 14))
+						if(!editing_town && (abs(temp_x - cen_x) + abs(temp_y - cen_y) > 14))
 							continue;
 						
 						for(view_tox = 0; view_tox < 3; view_tox++) {

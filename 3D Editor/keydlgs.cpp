@@ -48,7 +48,7 @@ short fancy_choice_dialog(short which_dlog,short parent)
 //		ModalDialog((ModalFilterProcPtr) cd_event_filter, &item_hit);
 //#endif
 	if(which_dlog == 1062)//this is a hack to show the version number correctly
-		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.6 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
+		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.7 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
@@ -168,7 +168,7 @@ void choose_text_res_event_filter (short item_hit)
 				store_cur_t = 40 * which_page + (item_hit - 8) / 2 + store_first_t;
 				for (i = 8; i <= 86; i += 2) 
 					cd_set_led(820,i,(i == item_hit) ? 1 : 0);
-				}
+			}
 			break;
 	}
 }
@@ -348,22 +348,17 @@ void set_cursor(short which_c)
 		if(which_c == 6)
 			which_c = 9;
 	}
-	//printf("Trying to set cursor %i\n",which_c);
 	if (cursors[0] == NULL) {
-		//printf("First cursor is NULL, initializing all cursors\n");
 		for (i = 0; i < 11; i++){
 			cursors[i] = GetCursor(130 + i);
 		}
 		InitCursor();
 	}
 	if(cursors[which_c]==NULL){
-		//printf("Cursor %i is still NULL. Attempting to reload.\n",which_c);
 		cursors[which_c] = GetCursor(130 + which_c);
 		if(cursors[which_c]==NULL){
-			//printf("STILL NULL. Bailing out\n");
 			return;//something's wrong
 		}
-		//printf("Cursor seems to have loaded; proceeding\n");
 	}
 	current_cursor = which_c;
 	HLock ((Handle) cursors[current_cursor]);

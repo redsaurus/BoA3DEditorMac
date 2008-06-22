@@ -2078,9 +2078,9 @@ void draw_ter_3D_large()
 						view_to.y = temp_y;
 						//in the game, things a certain distance away aren't drawn.  Also, 
 						//that helps here by reducing the number of line-of-sight calculations needed
-						if(editing_town && (n_abs(view_to.x - cen_x) > 10 || n_abs(view_to.y - cen_y) > 10))
+						if(editing_town && (abs(view_to.x - cen_x) > 10 || abs(view_to.y - cen_y) > 10))
 							continue;
-						if(!editing_town && (n_abs(view_to.x - cen_x) + n_abs(view_to.y - cen_y) > 14))
+						if(!editing_town && (abs(view_to.x - cen_x) + abs(view_to.y - cen_y) > 14))
 							continue;
 						see_in = get_see_in(sector_offset_x,sector_offset_y,x,y);
 						see_to = get_see_to(sector_offset_x,sector_offset_y,x,y);
@@ -2877,11 +2877,7 @@ void draw_ter_large()
 			else if (place_terrain_icon_into_ter_large(a,q,r) == FALSE)
 				cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 			/*
-				index = safe_get_index_of_sheet(&a);
-			 if (index < 0) {
-				 debug_stop(1);
-				 return;	
-			 }		
+				index = safe_get_index_of_sheet(&a);	
 			 SetRect(&from_rect,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10),1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10),
 					 1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10) + TER_BUTTON_SIZE,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10) + TER_BUTTON_SIZE);
 			 rect_draw_some_item(graphics_library[index],

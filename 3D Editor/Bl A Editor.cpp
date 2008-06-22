@@ -196,8 +196,6 @@ void handle_file_menu(int item_hit);
 void handle_campaign_menu(int item_hit);
 void handle_town_menu(int item_hit);
 void handle_outdoor_menu(int item_hit);
-void handle_item_menu(int item_hit);
-void handle_monst_menu(int item_hit);
 void handle_edit_menu(int item_hit);
 Boolean Mouse_Pressed( EventRecord * event );
 void close_program();
@@ -509,10 +507,10 @@ void handle_menu_choice(long choice)
 				handle_outdoor_menu(menu_item);
 				break;
 			case 700: case 701: case 702: case 703: case 704:
-				handle_item_menu(menu_item + 100 * (menu - 700) - 1);
+				set_new_item(menu_item + 100 * (menu - 700) - 1);
 				break;
 			case 750: case 751: case 752: case 753: 
-				handle_monst_menu(menu_item + 64 * (menu - 750) - 1);
+				set_new_creature(menu_item + 64 * (menu - 750) - 1);
 				break;
 		}
 	}
@@ -802,7 +800,7 @@ void handle_town_menu(int item_hit)
 			redraw_screen();
 			break;
 		case 12:
-			set_all_items_contained();
+			set_all_items_containment();
 			draw_terrain();
 			change_made_town = TRUE; 
 			break;
@@ -969,30 +967,6 @@ void handle_edit_menu(int item_hit)
 	draw_main_screen();		
 }
 
-void handle_item_menu(int item_hit)
-{
-	//if (same_string("Unused",scen_data.scen_items[item_hit].full_name)) {
-	//	give_error("You can't place an item named 'Unused'.","",0);
-	//	return;
-	//	}
-	//overall_mode = 47;
-	//mode_count = item_hit;
-	//set_string("Place New Item","Select location to place");
-	set_new_item(item_hit);
-}
-
-void handle_monst_menu(int item_hit)
-{
-	/*if (same_string("Unused",scen_data.scen_creatures[item_hit].name)) {
-		give_error("You can't place an creature named 'Unused'.","",0);
-		return;
-	}
-	overall_mode = 46;
-	mode_count = item_hit;
-	set_string("Place New Creature","Select location to place");*/
-	set_new_creature(item_hit);
-}
-
 void doScroll(ControlHandle bar, short delta){
 	short old_setting,new_setting;
 	old_setting = GetControlValue(bar);
@@ -1090,7 +1064,6 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 			UInt32 modifiers=0;
 			GetEventParameter(eventRef, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(modifiers), NULL, &modifiers);
 			dx*=-1;//flip coordinates
-			//printf("dx=%li,dy=%li ",dx,dy);
 			if(abs(dx)>1000)
 				dx=pow(-1,dx<0);
 			if(abs(dy)>1000)
@@ -1100,13 +1073,11 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 			if(dx!=0){
 				dir = atan(float(abs(dy))/abs(dx));
 			}
-			//printf("%f ",(180.0*dir)/pi);
 			if(dx<0)
 				dir=pi-dir;
-			//printf("%f ",(180.0*dir)/pi);
 			if(dy<0)
 				dir=(2*pi)-dir;
-			//printf("%f\n",(180.0*dir)/pi);
+			//printf("%f deg.\n",(180.0*dir)/pi);
 			float smallAngle=.2694;
 			float largeAngle=1.0147;
 			if(modifiers&shiftKey){
@@ -1117,21 +1088,16 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 			if (cur_viewing_mode == 10 || cur_viewing_mode == 11){ //3D
 				if(dir>((2*pi)-smallAngle) || dir<(pi-largeAngle)){
 					scrl|=eSCRL_Top;
-					//printf("North ");
 				}
 				else if(dir>(pi-smallAngle) && dir<((2*pi)-largeAngle)){
 					scrl|=eSCRL_Bottom;
-					//printf("South ");
 				}
 				if(dir>largeAngle && dir<(pi+smallAngle)){
 					scrl|=eSCRL_Left;
-					//printf("West");
 				}
 				else if(dir<smallAngle || dir>(pi+largeAngle)){
 					scrl|=eSCRL_Right;
-					//printf("East");
 				}
-				//printf("\n");
 			}
 			else{ //2D
 				if(dir>(.125*pi) && dir<(.875*pi))
