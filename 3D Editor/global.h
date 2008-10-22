@@ -247,7 +247,7 @@ public:
 		// 0 - 
 	
 	// special properties of terrain
-	short special; // floor special property
+	short special; // terrain special property
 	short effect_adjust; // intensity of special effect
 	// below may be out of date. full info inj editor docs
 	// special		effect			effect_adjust
@@ -259,7 +259,7 @@ public:
 	// 5			disease			amt. of damage
 	// 6			blocks monsts
 	
-	// Hill abilities
+	// Hill properties
 	// 19			hill, up to west
 	// 20			hill, up to southwest
 	// 21			hill, up to south

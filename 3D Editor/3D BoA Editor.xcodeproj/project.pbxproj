@@ -22,7 +22,7 @@
 			name = "Isaacs - BoA Editor";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */;
+			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 <plist version=\"1.0\">
@@ -115,11 +115,11 @@
 		6A66C40C06771A6F0030138E /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
 		6A66C40D06771A6F0030138E /* tokntype.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tokntype.h; sourceTree = "<group>"; };
 		6A66C40E06771A6F0030138E /* townout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = townout.cpp; sourceTree = "<group>"; };
-		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D4864980CDCDAD100444D09 /* BoAScen.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAScen.icns; sourceTree = "<group>"; };
 		9DD2E4670CC079810078A447 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
 		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
-		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor."; sourceTree = BUILT_PRODUCTS_DIR; };
 		C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAEdAPPL.icns; sourceTree = "<group>"; };
 		C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "3D BoA Editor_Prefix.pch"; sourceTree = "<group>"; };
 		C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "3D Editor Graphics.r"; sourceTree = "<group>"; };
@@ -150,8 +150,8 @@
 		195DF8CFFE9D517E11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */,
-				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */,
+				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */,
+				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -270,7 +270,7 @@
 			name = "Isaacs - BoA Editor (Upgraded)";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */;
+			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

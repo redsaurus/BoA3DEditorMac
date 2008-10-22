@@ -2494,9 +2494,8 @@ void set_terrain(location l,short terrain_type)
 	}
 	
 	l2 = l;
-	
 	appendChangeToLatestStep(new drawingChange(i,j,terrain_type,old_terrain,current_drawing_mode==0?1:2));
-	//if (editing_town == FALSE) {
+	
 	adjust_space(l);
 	l.x--;
 	adjust_space(l);
@@ -2515,8 +2514,7 @@ void set_terrain(location l,short terrain_type)
 	l.x--;
 	adjust_space(l);
 	l.x++;
-	l.y--;	
-	//}
+	l.y--;
 	
 	// now handle placing signs
 	if(current_drawing_mode>0){//if we just placed a floor, it can't be a sign
@@ -2594,7 +2592,7 @@ void set_terrain(location l,short terrain_type)
 		}
 	}
 	
-	// now do placing scripts if placing terrain
+	// now do placing scripts if placing terrain in a town
 	if ((editing_town) && (current_drawing_mode > 0)) {
 		for (i = 0; i < NUM_TER_SCRIPTS; i++){
 			if ((town.ter_scripts[i].exists) && (same_point(l,town.ter_scripts[i].loc))) {
@@ -2968,22 +2966,25 @@ Boolean town_fix_hills(location l)
 		corner_heights[0] = 1;
 	}
 	
-	if ((corner_heights[0] != 0) || (corner_heights[1] != 0) ||
-		(corner_heights[2] != 0) || (corner_heights[3] != 0)) {
-		short hill_adjust = 0;
-		if (town.is_on_surface == FALSE)
-			hill_adjust = 32;
-		else if (scen_data.scen_floors[t_d.floor[lx][ly]].is_rough)
-			hill_adjust = 16;
-		t_d.terrain[lx][ly] = 0;
+	if(corner_heights[0] || corner_heights[1] || corner_heights[2] || corner_heights[3]){
+		//find out what type of hill this requires:
 		for (i = 0; i < 12; i++){
 			if ((hill_c_heights[i][0] == corner_heights[0]) && 
 				(hill_c_heights[i][1] == corner_heights[1]) &&
 				(hill_c_heights[i][2] == corner_heights[2]) &&
 				(hill_c_heights[i][3] == corner_heights[3]))
-				t_d.terrain[lx][ly] = i + 74 + hill_adjust;
+				break;
 		}
-	}
+		//if the require hill type doesn't match the type presently there, replace it
+		if(i+19!=scen_data.scen_terrains[t_d.terrain[lx][ly]].special){
+			short hill_adjust = 0;
+			if (town.is_on_surface == FALSE)
+				hill_adjust = 32;
+			else if (scen_data.scen_floors[t_d.floor[lx][ly]].is_rough)
+				hill_adjust = 16;
+			t_d.terrain[lx][ly] = i + 74 + hill_adjust;
+		}
+	} //handle the case where there is a slope where none is now needed:
 	else if ((t_d.terrain[lx][ly] >= 74) && (t_d.terrain[lx][ly] <= 121))
 		t_d.terrain[lx][ly] = 0;
 	if(store_ter != t_d.terrain[lx][ly])
@@ -3044,24 +3045,28 @@ Boolean out_fix_hills(location l)
 		corner_heights[0] = 1;
 	}
 	
-	if ((corner_heights[0] != 0) || (corner_heights[1] != 0) ||
-		(corner_heights[2] != 0) || (corner_heights[3] != 0)) {
-		short hill_adjust = 0;
-		if (current_terrain.is_on_surface == FALSE)
-			hill_adjust = 32;
-		else if (scen_data.scen_floors[current_terrain.floor[lx][ly]].is_rough)
-			hill_adjust = 16;
-		current_terrain.terrain[lx][ly] = 0;
+	if(corner_heights[0] || corner_heights[1] || corner_heights[2] || corner_heights[3]){
+		//find out what type of hill this requires:
 		for (i = 0; i < 12; i++){
 			if ((hill_c_heights[i][0] == corner_heights[0]) && 
 				(hill_c_heights[i][1] == corner_heights[1]) &&
 				(hill_c_heights[i][2] == corner_heights[2]) &&
 				(hill_c_heights[i][3] == corner_heights[3]))
-				current_terrain.terrain[lx][ly] = i + 74 + hill_adjust;
+				break;
 		}
-	} 
+		//if the require hill type doesn't match the type presently there, replace it
+		if(i+19!=scen_data.scen_terrains[current_terrain.terrain[lx][ly]].special){
+			short hill_adjust = 0;
+			if (current_terrain.is_on_surface == FALSE)
+				hill_adjust = 32;
+			else if (scen_data.scen_floors[current_terrain.floor[lx][ly]].is_rough)
+				hill_adjust = 16;
+			current_terrain.terrain[lx][ly] = i + 74 + hill_adjust;
+		}
+	} //handle the case where there is a slope where none is now needed:
 	else if ((current_terrain.terrain[lx][ly] >= 74) && (current_terrain.terrain[lx][ly] <= 121))
 		current_terrain.terrain[lx][ly] = 0;
+	//record any change made to the undo list
 	if(store_ter != current_terrain.terrain[lx][ly])
 		appendChangeToLatestStep(new drawingChange(lx,ly,current_terrain.terrain[lx][ly],store_ter,2));
 	return(store_ter != current_terrain.terrain[lx][ly]);
