@@ -22,7 +22,7 @@
 			name = "Isaacs - BoA Editor";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */;
+			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 <plist version=\"1.0\">
@@ -115,11 +115,11 @@
 		6A66C40C06771A6F0030138E /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
 		6A66C40D06771A6F0030138E /* tokntype.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tokntype.h; sourceTree = "<group>"; };
 		6A66C40E06771A6F0030138E /* townout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = townout.cpp; sourceTree = "<group>"; };
-		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D4864980CDCDAD100444D09 /* BoAScen.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAScen.icns; sourceTree = "<group>"; };
 		9DD2E4670CC079810078A447 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
 		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
-		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor."; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAEdAPPL.icns; sourceTree = "<group>"; };
 		C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "3D BoA Editor_Prefix.pch"; sourceTree = "<group>"; };
 		C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "3D Editor Graphics.r"; sourceTree = "<group>"; };
@@ -150,8 +150,8 @@
 		195DF8CFFE9D517E11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */,
-				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */,
+				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */,
+				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -262,6 +262,7 @@
 				9DFCBBDA0CC0728000DD1669 /* Frameworks */,
 				9DFCBBDC0CC0728000DD1669 /* Rez */,
 				9DFCBBDF0CC0728000DD1669 /* Resources */,
+				9DDB402E0EAFA4EA00404636 /* Set Bundle Version String */,
 			);
 			buildRules = (
 			);
@@ -270,7 +271,7 @@
 			name = "Isaacs - BoA Editor (Upgraded)";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */;
+			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -331,6 +332,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXRezBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9DDB402E0EAFA4EA00404636 /* Set Bundle Version String */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Set Bundle Version String";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/usr/bin/perl -w";
+			shellScript = "# Xcode auto-versioning script for Subversion\n# by Axel Andersson, modified by Daniel Jalkut to add\n# Sets the BundleVersion and BundlegetInfoString\n# from the BundleShortVersionString and the current \n# Subversion revision number\n\nuse strict;\n\ndie \"$0: Must be run from Xcode\" unless $ENV{\"BUILT_PRODUCTS_DIR\"};\n\n# Get the current subversion revision number and use it to set the CFBundleVersion value\nmy $REV = `/usr/bin/svnversion -n ./`;\nmy $INFO = \"$ENV{BUILT_PRODUCTS_DIR}/$ENV{WRAPPER_NAME}/Contents/Info.plist\";\n\nmy $version = $REV;\n\n# (Match the last group of digits and optional letter M/S):\n\n# ugly yet functional (barely) regex by Daniel Jalkut:\n#$version =~ s/([\\d]*:)(\\d+[M|S]*).*/$2/;\n\n# better yet still functional regex via Kevin \"Regex Nerd\" Ballard\n($version =~ m/\\d+[MS]*$/) && ($version = $&);\n\ndie \"$0: No Subversion revision found\" unless $version;\n\n#human readable release number\nmy $hver = \"\";\n\nopen(FH, \"$INFO\") or die \"$0: $INFO: $!\";\nmy $info = join(\"\", <FH>);\nclose(FH);\n\nif($info =~ m/[\\t ]+<key>CFBundleShortVersionString<\\/key>\\n[\\t ]+<string>(.*?)<\\/string>/){\n\t$hver = $1;\n}\n$info =~ s/([\\t ]+<key>CFBundleVersion<\\/key>\\n[\\t ]+<string>).*?(<\\/string>)/$1$hver($version)$2/;\n$info =~ s/([\\t ]+<key>CFBundleGetInfoString<\\/key>\\n[\\t ]+<string>).*?(<\\/string>)/$1$hver; build $version$2/;\n\nopen(FH, \">$INFO\") or die \"$0: $INFO: $!\";\nprint FH $info;\nclose(FH);";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6A86A27C0688BD08009593BC /* Sources */ = {

@@ -47,8 +47,31 @@ short fancy_choice_dialog(short which_dlog,short parent)
 //	while (dialog_not_toast)
 //		ModalDialog((ModalFilterProcPtr) cd_event_filter, &item_hit);
 //#endif
-	if(which_dlog == 1062)//this is a hack to show the version number correctly
-		cd_set_item_text(1062, 7, "3D Blades of Avernum Editor v1.0.7 | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
+	if(which_dlog == 1062){//this is a hack to show the version number correctly
+		char buffer[256];
+		//find our own Info.plist file
+		CFURLRef infoURL = CFURLCreateCopyAppendingPathExtension(NULL,CFURLCreateCopyAppendingPathComponent(NULL,CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle()),CFSTR("../Info"),false),CFSTR("plist"));
+		CFDataRef plistData;
+		SInt32 err;
+		//read in the data
+		CFURLCreateDataAndPropertiesFromResource(NULL, infoURL, &plistData, NULL, NULL, &err);
+		if(err){ //in case of an error
+			printf("Error opening bundle info property list file: %li\n",err);
+			sprintf(buffer,"3D Blades of Avernum Editor unknown version | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
+		}
+		else{
+			CFRelease(infoURL);
+			CFStringRef errorString;
+			//convert the data into dictionary form
+			CFDictionaryRef properties=(CFDictionaryRef)CFPropertyListCreateFromXMLData(NULL, plistData, kCFPropertyListImmutable, &errorString);
+			CFRelease(plistData);
+			//pull out the string we actually want
+			CFStringRef infoStr = (CFStringRef)CFDictionaryGetValue((CFDictionaryRef)properties, CFSTR("CFBundleGetInfoString"));
+			sprintf(buffer,"3D Blades of Avernum Editor version %s | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.",
+					CFStringGetCStringPtr(infoStr, kCFStringEncodingMacRoman));
+		}
+		cd_set_item_text(1062, 7, buffer);
+	}
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
