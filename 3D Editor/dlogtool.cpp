@@ -614,11 +614,6 @@ void cd_attach_key(short dlog_num,short item_num,char key)
 	item_key[item_index] = key;
 }
 
-void csp(short dlog_num, short item_num, short pict_num)
-{
-	cd_set_pict( dlog_num,  item_num,  pict_num);
-}
-
 void cd_set_pict(short dlog_num, short item_num, short pict_num)
 {
 	short dlg_index,item_index;
@@ -666,11 +661,6 @@ void cd_get_item_text(short dlog_num, short item_num, char *str)
 	if (item_index < 10)
 		sprintf(str,"%s",text_long_str[item_index]);
 		else sprintf(str,"%s",text_short_str[item_index - 10]);
-}
-
-void csit(short dlog_num, short item_num, char *str)
-{
-	cd_set_item_text( dlog_num,  item_num, str);
 }
 
 void cd_retrieve_text_edit_str(short dlog_num, short item_num, char *str)
@@ -767,12 +757,6 @@ void cd_set_item_text(short dlog_num, short item_num, char *str)
 		sprintf(text_short_str[item_index - 10],"%-39.39s",str);
 	cd_draw_item( dlog_num,item_num);
 }
-
-void cdsin(short dlog_num, short item_num, short num) 
-{
-	cd_set_item_num( dlog_num,  item_num,  num);
-}
-
 
 void cd_set_item_num(short dlog_num, short item_num, short num)
 {
@@ -1052,57 +1036,56 @@ void cd_draw_item(short dlog_num,short item_num)
 				else
 					draw_dialog_graphic(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])), item_rect[item_index], item_flag[item_index],(item_flag[item_index] >= 2000) ? FALSE : TRUE,0);
 				break;
-			}
+		}
+	}
+
+	if (item_label[item_index] != 0) {
+		store_label = item_label[item_index];
+		if (store_label >= 1000) {
+			store_label -= 1000;
+		}
+		else {
+			TextFace(0);
+		}
+		to_rect = item_rect[item_index];
+		switch (store_label / 100) {
+			case 0:
+				to_rect.right = to_rect.left;
+				to_rect.left -= 2 * (store_label % 100);
+				break;
+			case 1:
+				to_rect.bottom = to_rect.top;
+				to_rect.top -= 2 * (store_label % 100);
+				break;
+			case 2:
+				to_rect.left = to_rect.right;
+				to_rect.right += 2 * (store_label % 100);
+				break;
+			case 3:
+				to_rect.top = to_rect.bottom;
+				to_rect.bottom += 2 * (store_label % 100);
+				break;
 		}
 
-		if (item_label[item_index] != 0) {
-			store_label = item_label[item_index];
-			if (store_label >= 1000) {
-				store_label -= 1000;
+		if (to_rect.bottom - to_rect.top < 14) {
+			to_rect.bottom += (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
+			to_rect.top -= (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
 			}
-			else {
-				TextFace(0);
-			}
-			to_rect = item_rect[item_index];
-			switch (store_label / 100) {
-				case 0:
-					to_rect.right = to_rect.left;
-					to_rect.left -= 2 * (store_label % 100);
-					break;
-				case 1:
-					to_rect.bottom = to_rect.top;
-					to_rect.top -= 2 * (store_label % 100);
-					break;
-				case 2:
-					to_rect.left = to_rect.right;
-					to_rect.right += 2 * (store_label % 100);
-					break;
-				case 3:
-					to_rect.top = to_rect.bottom;
-					to_rect.bottom += 2 * (store_label % 100);
-					break;
-			}
+			else OffsetRect(&to_rect, 0,(to_rect.bottom - to_rect.top) / 6);
+		//cd_erase_rect(dlog_num,to_rect);
+		if (item_active[item_index] != 0) {
+			char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),to_rect,
+				labels[item_label_loc[item_index]],2,12);
 
-			if (to_rect.bottom - to_rect.top < 14) {
-				to_rect.bottom += (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
-				to_rect.top -= (14 - (to_rect.bottom - to_rect.top)) / 2 + 1;
-				}
-				else OffsetRect(&to_rect, 0,(to_rect.bottom - to_rect.top) / 6);
-			//cd_erase_rect(dlog_num,to_rect);
-			if (item_active[item_index] != 0) {
-				char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),to_rect,
-					labels[item_label_loc[item_index]],2,12);
-
-			}
-			TextFace(bold);
 		}
+		TextFace(bold);
+	}
 
-	
 	TextFont(0);
 	TextFace(0);
 	TextSize(12);
 	SetPort(old_port);
-	}
+}
 
 void cd_initial_draw(short dlog_num)
 {
@@ -1124,14 +1107,15 @@ void cd_draw(short dlog_num)
 {
 	short i,which_dlg = -1;
 
-	for (i = 0; i < ND; i++)
+	for (i = 0; i < ND; i++){
 		if ((dlg_keys[i] >= 0) && (dlg_types[i] == dlog_num))
 			which_dlg = i;
+	}
 	if (which_dlg < 0)
 		return;
 	for (i = 0; i < dlg_highest_item[which_dlg] + 1; i++) {
 		cd_draw_item(dlog_num,i);
-		}
+	}
 }
 
 void cd_redraw(WindowPtr window)
@@ -1226,7 +1210,6 @@ void cd_erase_item(short dlog_num, short item_num)
 	SetPort(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])));
 	paint_pattern(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),2,to_fry,1);
 
-		
 	// Now 2nd part of frame processing
 	if (item_num == 0) {
 		place_dlog_borders_around_rect(NULL,dlgs[dlg_index],to_fry);
@@ -1265,16 +1248,17 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	Rect from_rect;
 	GrafPtr old_port;
 	RGBColor c[2] = {{26265,18944,6272},{61184,52530,12544}};//{{0,0,4096},{0,0,8192}}; 206,148,49
-
+	
 	if (cd_get_indices(dlog_num,item_num,&dlg_index,&item_index) < 0)
 		return;
 
 	// no press action for radio buttons
-	if ((dlg_item_type[item_index] == 2) && (mode == eDLGBtnResCompatible) ) {
+	//removed the restriction to eDLGBtnResCompatible mode so that radio buttons don't get random bits of text drawn over them when clicked
+	if ((dlg_item_type[item_index] == 2)/* && (mode == eDLGBtnResCompatible) */) {
 		play_sound(34);
 		return;
-	}	
-
+	}
+	
 	GetPort(&old_port);
 	SetPort(GetWindowPort( GetDialogWindow((DialogPtr)dlgs[dlg_index])));
 	TextFont(geneva_font_num);
@@ -1299,7 +1283,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 		else {
 			char_win_draw_string(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[dlg_index])),item_rect[item_index],
 			 (char *) ((item_index < 10) ? text_long_str[item_index] : 
-			  text_short_str[item_index - 10]),1,8);
+					   text_short_str[item_index - 10]),1,8);
 		}
 
 
@@ -1318,7 +1302,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 			play_sound(37);
 	}
 	if ( mode == eDLGBtnResChange ){
-		if (dlg_item_type[item_index] == 2)		// rdio button
+		if (dlg_item_type[item_index] == 2)		// radio button
 			play_sound(34);
 		else if (play_sounds == TRUE)
 			play_sound(37);
@@ -1326,9 +1310,8 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	
 	// delay
 	if ( mode == eDLGBtnResCompatible ) {
-		if (play_sounds == TRUE) {
+		if (play_sounds == TRUE)
 			Delay(6,&dummy);
-		}
 		else
 			Delay(14,&dummy);
 	}
@@ -1336,7 +1319,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 	// recover graphics of the button
 	if ( (mode == eDLGBtnResCompatible) || (mode == eDLGBtnResRecover) ) {
 		ForeColor(blackColor);
-
+		TextSize(12);
 		rect_draw_some_item(dlg_buttons_gworld[button_type[item_flag[item_index]]][0],from_rect,
 		 dlg_buttons_gworld[button_type[item_flag[item_index]]][0],item_rect[item_index],0,2);
 
@@ -1377,12 +1360,10 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 
 short cd_get_indices(short dlg_num, short item_num, short *dlg_index, short *item_index)
 {
-	if ((*dlg_index = cd_get_dlg_index(dlg_num)) < 0) {
+	if ((*dlg_index = cd_get_dlg_index(dlg_num)) < 0)
 		return -1;
-	}
-	if ((*item_index = cd_get_item_id(dlg_num,item_num)) < 0) {
+	if ((*item_index = cd_get_item_id(dlg_num,item_num)) < 0)
 		return -1;
-	}
 	return 0;
 }
 
@@ -1390,20 +1371,22 @@ short cd_get_dlg_index(short dlog_num)
 {
 	short i;
 
-	for (i = 0; i < ND; i++)
+	for (i = 0; i < ND; i++){
 		if ((dlg_keys[i] >= 0) && (dlg_types[i] == dlog_num))
 			return i;
+	}
 	return -1;
 }
 
 short cd_find_dlog(WindowPtr window, short *dlg_num, short *dlg_key)
 {
 	short i;
-	for (i = 0; i < ND; i++)
+	for (i = 0; i < ND; i++){
 		if ((dlg_keys[i] >= 0) && (dlgs[i] == window)) {
 			*dlg_num = dlg_types[i];
 			*dlg_key = dlg_keys[i];
 			return i;
+		}
 	}
 	return -1;
 }
@@ -1412,15 +1395,11 @@ short cd_get_item_id(short dlg_num, short item_num)
 {
 	short i;
 
-	for (i = 0; i < NI; i++)
+	for (i = 0; i < NI; i++){
 		if ((item_dlg[i] == dlg_num) && (item_number[i] == item_num))
 			return i;
+	}
 	return -1;
-}
-
-void center_window(WindowPtr window)
-{
-// if this is needed, see adjust_window_mode
 }
 
 Rect get_item_rect(WindowPtr hDlg, short item_num)
@@ -1434,12 +1413,10 @@ Rect get_item_rect(WindowPtr hDlg, short item_num)
 	return small_rect;
 }
 
-
 void frame_dlog_rect(GrafPtr hDlg, Rect rect, short val)
 {
 	RGBColor lt_gray = {20320,8825,8825},dk_gray = {16320,3825,3825};
 	GrafPtr old_port;
-
 	
 	GetPort(&old_port);
 	SetPort((GrafPtr) hDlg);
@@ -1460,7 +1437,6 @@ void frame_dlog_rect(GrafPtr hDlg, Rect rect, short val)
 /*	RGBColor lt_gray = {57344,57344,57344},dk_gray = {12287,12287,12287},med_gray = {24574,24574,24574};
 	GrafPtr old_port;
 
-	
 	GetPort(&old_port);
 	SetPort((GrafPtr) hDlg);
 	
@@ -1484,8 +1460,6 @@ void draw_dialog_graphic(GrafPtr hDlg, Rect rect, short which_g, Boolean do_fram
 // Won't be any graphics in dialogs for this editor
 {
 }
-
-
 
 Rect calc_rect(short i, short j)
 {

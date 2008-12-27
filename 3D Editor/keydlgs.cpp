@@ -147,12 +147,12 @@ void display_strings(char *text1, char *text2,char *title,short sound_num,short 
 		store_which_string_dlog++;
 	cd_create_dialog_parent_num(store_which_string_dlog,parent_num);
 	
-	csit(store_which_string_dlog,4,(char *) text1);
+	cd_set_item_text(store_which_string_dlog,4,(char *) text1);
 	if ((text2 != NULL) && (text2[0] != 0)) {
-		csit(store_which_string_dlog,5,(char *) text2);
+		cd_set_item_text(store_which_string_dlog,5,(char *) text2);
 	}
 	if (strlen(title) > 0)
-		csit(store_which_string_dlog,6,title);
+		cd_set_item_text(store_which_string_dlog,6,title);
 
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
@@ -203,12 +203,12 @@ void put_text_res()
 	
 	for (i = 0; i < 40; i++) {
 		if (store_first_t + which_page * 40 + i > store_last_t) {
-			csit(820,7 + i * 2,"");
+			cd_set_item_text(820,7 + i * 2,"");
 			cd_activate_item(820,8 + i * 2,0);
 		}
 		else {
 			get_str(str,store_res_list,store_first_t + 40 * which_page + i);
-			csit(820,7 + i * 2,(char *) str);
+			cd_set_item_text(820,7 + i * 2,(char *) str);
 			cd_activate_item(820,8 + i * 2,1);
 		}
 		if (which_page * 40 + i == store_cur_t - store_first_t)
@@ -242,7 +242,7 @@ short choose_text_res(short res_list,short first_t,short last_t,short cur_choice
 
 	cd_create_dialog_parent_num(820,parent_num);
 
-	csit(820,3,title);
+	cd_set_item_text(820,3,title);
 	if (last_t - first_t < 40) {
 		cd_activate_item(820,4,0);
 		cd_activate_item(820,5,0);
@@ -310,7 +310,7 @@ short how_many_dlog(short what_start,short minimum,short maximum,char *what_text
 			
 	cd_create_dialog_parent_num(828,0);
 	
-	csit(828,4,what_text);
+	cd_set_item_text(828,4,what_text);
 	CDSN(828,2,what_start);
 	
 	while (dialog_not_toast)
@@ -348,7 +348,7 @@ void get_str_dlog(char *start_str,char *header_str,char *response,Boolean strict
 	
 	store_strict_string = strict_string;
 	CDST(829,2,start_str);
-	csit(829,4,header_str);
+	cd_set_item_text(829,4,header_str);
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 	

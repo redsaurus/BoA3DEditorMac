@@ -57,7 +57,7 @@ void put_placed_monst_in_dlog()
 	Str255 str;
 	short i;
 
-	csit(837,38,scen_data.scen_creatures[store_placed_monst.number].name);
+	cd_set_item_text(837,38,scen_data.scen_creatures[store_placed_monst.number].name);
  	cd_set_led_range(837,27,30,store_placed_monst.start_attitude - 2);
 	if(strlen((char *)store_placed_monst.char_script) <= 0){
 		if(strlen(scen_data.scen_creatures[store_placed_monst.number].default_script)<=0)
@@ -85,7 +85,7 @@ void put_placed_monst_in_dlog()
 	 	CDSN(837,15 + i,store_placed_monst.memory_cells[i]);
 
  	get_str(str,4,store_placed_monst.time_flag + 1);
- 	csit(837,39,(char *) str);
+ 	cd_set_item_text(837,39,(char *) str);
 }
 Boolean get_placed_monst_in_dlog()
 {
@@ -182,7 +182,7 @@ void edit_placed_monst(short which_m)
 	
 	cd_create_dialog_parent_num(837,0);
 	
-	cdsin(837,37,which_m + 6);
+	cd_set_item_num(837,37,which_m + 6);
 
 	put_placed_monst_in_dlog();
 
@@ -253,7 +253,7 @@ short get_a_number(short which_dlog,short default_value,short min,short max)
 	if ((which_dlog == 842) || (which_dlog == 855) || (which_dlog == 856) ){
 		cd_get_item_text(which_dlog,6,(char *) temp_str);
 		sprintf((char *) str2,"%s (%d - %d)",(char *) temp_str,min,max);
-		csit(which_dlog,6,(char *) str2);
+		cd_set_item_text(which_dlog,6,(char *) str2);
 	}		
 
 	while (dialog_not_toast)
@@ -362,7 +362,7 @@ void outdoor_details()
 	CDST(851,3,current_terrain.section_script);
 	CDSN(851,4,current_terrain.extra[0]);
 	sprintf((char *) temp_str,"X = %d, Y = %d",cur_out.x,cur_out.y);
-	csit(851,7,(char *) temp_str);
+	cd_set_item_text(851,7,(char *) temp_str);
 	cd_set_led(851,8,current_terrain.is_on_surface);
 
 	while (dialog_not_toast)
@@ -376,22 +376,22 @@ void put_out_wand_in_dlog()
 	Str255 str;
 	short i;
 	
-	cdsin(852,41,store_which_out_wand);
+	cd_set_item_num(852,41,store_which_out_wand);
 	for (i = 0; i < 4; i++) {
 		if (store_out_wand.hostile[i] <= 0)
-			csit(852, i + 31, "Empty");
+			cd_set_item_text(852, i + 31, "Empty");
 			else {
 				get_str(str,-1,store_out_wand.hostile[i]);
-				csit(852,i + 31,(char *) str);
+				cd_set_item_text(852,i + 31,(char *) str);
 				}
 		CDSN(852,2 + i,store_out_wand.hostile_amount[i]);
 		}
 	for (i = 0; i < 3; i++) {
 		if (store_out_wand.friendly[i] <= 0)
-			csit(852, i + 35, "Empty");
+			cd_set_item_text(852, i + 35, "Empty");
 			else {
 				get_str(str,-1,store_out_wand.friendly[i]);
-				csit(852,i + 35,(char *) str);
+				cd_set_item_text(852,i + 35,(char *) str);
 				}
 		CDSN(852,6 + i,store_out_wand.friendly_amount[i]);
 		}
@@ -544,9 +544,9 @@ void edit_out_wand(short mode)
 	cd_create_dialog_parent_num(852,0);
 	
 	if (mode == 1)
-		csit(852,53,"Outdoor Special Encounter:");
+		cd_set_item_text(852,53,"Outdoor Special Encounter:");
 	if (mode == 2)
-		csit(852,53,"Outdoor Preplaced Encounter:");
+		cd_set_item_text(852,53,"Outdoor Preplaced Encounter:");
 
 	put_out_wand_in_dlog();
 
@@ -785,9 +785,9 @@ void pick_out_event_filter (short item_hit)
 			break;
 	}
 	sprintf((char *) temp_str,"X = %d",store_cur_loc.x);
-	csit(854,8,(char *) temp_str);
+	cd_set_item_text(854,8,(char *) temp_str);
 	sprintf((char *) temp_str,"Y = %d",store_cur_loc.y);
-	csit(854,11,(char *) temp_str);
+	cd_set_item_text(854,11,(char *) temp_str);
 }
 
 short pick_out(location default_loc,short max_x,short max_y)
@@ -802,12 +802,12 @@ short pick_out(location default_loc,short max_x,short max_y)
 	
 	cd_create_dialog_parent_num(854,0);
 	
-	cdsin(854,7,store_max_x);	
-	cdsin(854,10,store_max_y);
+	cd_set_item_num(854,7,store_max_x);	
+	cd_set_item_num(854,10,store_max_y);
 	sprintf((char *) temp_str,"X = %d",store_cur_loc.x);
-	csit(854,8,(char *) temp_str);
+	cd_set_item_text(854,8,(char *) temp_str);
 	sprintf((char *) temp_str,"Y = %d",store_cur_loc.y);
-	csit(854,11,(char *) temp_str);
+	cd_set_item_text(854,11,(char *) temp_str);
 
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &basic_dlog_hit);
@@ -885,16 +885,16 @@ void change_outdoor_size_event_filter (short item_hit)
 	extra_dialog_answer[extra_dialog_answer_index] += extra_dialog_answer_add;
 	
 	sprintf((char *) temp_str,"%s%d",extra_dialog_answer[0] < 0 ? "-" : "+",(int)abs(extra_dialog_answer[0]));
-	csit(991,12,(char *) temp_str);
+	cd_set_item_text(991,12,(char *) temp_str);
 	sprintf((char *) temp_str,"%s%d",extra_dialog_answer[1] < 0 ? "-" : "+",(int)abs(extra_dialog_answer[1]));
-	csit(991,15,(char *) temp_str);
+	cd_set_item_text(991,15,(char *) temp_str);
 	sprintf((char *) temp_str,"%s%d",extra_dialog_answer[2] < 0 ? "-" : "+",(int)abs(extra_dialog_answer[2]));
-	csit(991,18,(char *) temp_str);
+	cd_set_item_text(991,18,(char *) temp_str);
 	sprintf((char *) temp_str,"%s%d",extra_dialog_answer[3] < 0 ? "-" : "+",(int)abs(extra_dialog_answer[3]));
-	csit(991,21,(char *) temp_str);
+	cd_set_item_text(991,21,(char *) temp_str);
 	
-	cdsin(991,28,new_x_size);
-	cdsin(991,29,new_y_size);
+	cd_set_item_num(991,28,new_x_size);
+	cd_set_item_num(991,29,new_y_size);
 }
 
 Boolean change_outdoor_size()
@@ -908,16 +908,16 @@ Boolean change_outdoor_size()
 	
 	cd_create_dialog_parent_num(991,0);
 	
-	csit(991,12,"+0");
-	csit(991,15,"+0");
-	csit(991,18,"+0");
-	csit(991,21,"+0");
+	cd_set_item_text(991,12,"+0");
+	cd_set_item_text(991,15,"+0");
+	cd_set_item_text(991,18,"+0");
+	cd_set_item_text(991,21,"+0");
 	
-	cdsin(991,26,store_max_x);
-	cdsin(991,27,store_max_y);
+	cd_set_item_num(991,26,store_max_x);
+	cd_set_item_num(991,27,store_max_y);
 	
-	cdsin(991,28,store_max_x);
-	cdsin(991,29,store_max_y);
+	cd_set_item_num(991,28,store_max_x);
+	cd_set_item_num(991,29,store_max_y);
 	
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &basic_dlog_hit);
@@ -981,7 +981,7 @@ Boolean new_town()
 	 
 	cd_create_dialog_parent_num(830,0);
 	
-	cdsin(830,14,new_town);
+	cd_set_item_num(830,14,new_town);
 	cd_set_led(830,11,1);
 	cd_set_led(830,18,town.is_on_surface);
 	sprintf((char *) temp_str,"New Town Name");
@@ -1197,7 +1197,7 @@ void put_out_strs_in_dlog()
 			}
 			else sprintf((char *) str,"L = %d, T = %d, R = %d, B = %d",current_terrain.info_rect[i].left,
 				current_terrain.info_rect[i].top,current_terrain.info_rect[i].right,current_terrain.info_rect[i].bottom);
-		csit(850,13 + i,(char *) str);
+		cd_set_item_text(850,13 + i,(char *) str);
 		CDST(850,2 + i,current_terrain.info_rect_text[i]);
 		}
 
@@ -1271,7 +1271,7 @@ void put_town_strs_in_dlog()
 			}
 			else sprintf((char *) str,"L = %d, T = %d, R = %d, B = %d",town.room_rect[i].left,
 				town.room_rect[i].top,town.room_rect[i].right,town.room_rect[i].bottom);
-		csit(839,21 + i,(char *) str);
+		cd_set_item_text(839,21 + i,(char *) str);
 		CDST(839,2 + i,town.info_rect_text[i]);
 		}
 
@@ -1336,7 +1336,7 @@ void put_item_placement_in_dlog()
 {
 	short i;
 	
-	cdsin(812,27,cur_shortcut);
+	cd_set_item_num(812,27,cur_shortcut);
 	cd_set_led(812,38,store_storage.property);
 	CDSN(812,22,store_storage.ter_type);
 	for (i = 0; i < 10; i++) {
@@ -1695,7 +1695,7 @@ void edit_scen_intro(short which_part)
 	CDSN(804,8,scenario.intro_pic_resources[which_part]);
 	for (i = 0; i < 6; i++)
 		CDST(804, 2 + i,scenario.intro_text[which_part][i]);
-	cdsin(804,16,store_which_part);
+	cd_set_item_num(804,16,store_which_part);
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
 	cd_kill_dialog(804,0);
