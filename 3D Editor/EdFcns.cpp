@@ -581,14 +581,14 @@ void handle_action(Point the_point,EventRecord event)
 						overall_mode = 4;
 						set_cursor(3);
 						break;					
-					case 5: // set height rectangle
+					case 5: // set/add height rectangle
 						if(!shftKey)
 							set_string("Set Height","Select rectangle to set");
 						else
 							set_string("Change Height","Select rectangle to raise/lower");
 						mode_count = 2;
 						set_cursor(5);
-						overall_mode = (shftKey?24:20);
+						overall_mode = (shftKey?24:20);  //if shift is on, add height
 						need_redraw = TRUE;
 						break;					
 					case 6:// empty rectangle
@@ -797,31 +797,37 @@ void handle_action(Point the_point,EventRecord event)
 					case 400: // Make Spot Blocked
 						set_string("Make Spot Blocked","Select location");
 						overall_mode = 61;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
 					case 401: 
 						set_string("Place web","Select location");
 						overall_mode = 62;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
 					case 402: 
 						set_string("Place crate","Select location");
 						overall_mode = 63;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
 					case 403: 
 						set_string("Place barrel","Select location");
 						overall_mode = 64;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
 					case 404: 
 						set_string("Place fire barrier","Select location");
 						overall_mode = 65;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 405: 
 						set_string("Place force barrier","Select location");
 						overall_mode = 66;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
 					case 406:	//some as yet unused buttons
@@ -833,46 +839,63 @@ void handle_action(Point the_point,EventRecord event)
 					case 500: 
 						set_string("Clear space","Select space to clear");
 						overall_mode = 67;
+						object_sticky_draw = shftKey;
 						set_cursor(4);
 						break;
 					case 501: 
 						set_string("Place small blood stain","Select stain location");
-						overall_mode = 68; mode_count = 0;
+						overall_mode = 68;
+						mode_count = 0;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 502: 
 						set_string("Place ave. blood stain","Select stain location");
-						overall_mode = 68; mode_count = 1;
+						overall_mode = 68;
+						mode_count = 1;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 503: 
 						set_string("Place large blood stain","Select stain location");
-						overall_mode = 68; mode_count = 2;
+						overall_mode = 68;
+						mode_count = 2;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 504: 
 						set_string("Place small slime pool","Select slime location");
-						overall_mode = 68; mode_count = 3;
+						overall_mode = 68;
+						mode_count = 3;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 505: 
 						set_string("Place large slime pool","Select slime location");
-						overall_mode = 68; mode_count = 4;
+						overall_mode = 68;
+						mode_count = 4;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 506: 
 						set_string("Place dried blood","Select dried blood location");
-						overall_mode = 68; mode_count = 5;
+						overall_mode = 68;
+						mode_count = 5;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 507: 
 						set_string("Place bones","Select bones location");
-						overall_mode = 68; mode_count = 6;
+						overall_mode = 68;
+						mode_count = 6;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 					case 508: 
 						set_string("Place rocks","Select rocks location");
-						overall_mode = 68; mode_count = 7;					
+						overall_mode = 68;
+						mode_count = 7;
+						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;
 				}
@@ -1254,7 +1277,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			}
 			overall_mode = 40;
 			set_cursor(7);	 
-			break;		
+			break;
 		case 46: // 46 - placing creature
 			create_new_creature(mode_count,spot_hit,NULL);
 			if(current_drawing_mode==3){
@@ -1266,7 +1289,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			}
 			else
 				reset_drawing_mode();
-			break;		
+			break;
 		case 47: // 47 - placing item
 			create_new_item(mode_count,spot_hit,FALSE,NULL);
 			if(current_drawing_mode==4){
@@ -1278,7 +1301,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			}
 			else
 				reset_drawing_mode(); 
-			break;		
+			break;
 		case 48: // 48 - pasting instance
 			paste_selected_instance(spot_hit);
 			set_string("Select/edit placed object","Select object to edit");
@@ -1418,27 +1441,33 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			break;		
 		case 61: // 61 - blocked spot
 			make_blocked(spot_hit.x,spot_hit.y);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 62: // 62-66 - barrels, atc
 			make_web(spot_hit.x,spot_hit.y); 
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 63: // 62-66 - barrels, atc
 			make_crate(spot_hit.x,spot_hit.y);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 64: // 62-66 - barrels, atc
 			make_barrel(spot_hit.x,spot_hit.y);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 65: // 62-66 - barrels, atc
 			make_fire_barrier(spot_hit.x,spot_hit.y);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 66: // 62-66 - barrels, atc
 			make_force_barrier(spot_hit.x,spot_hit.y);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 67: // 67 - clean space
 			take_blocked(spot_hit.x,spot_hit.y); 
@@ -1450,11 +1479,13 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			for (i = 0; i < 8; i++){
 				take_sfx(spot_hit.x,spot_hit.y,i);
 			}
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 68: // 68 - place different floor stains
 			make_sfx(spot_hit.x,spot_hit.y,mode_count);
-			reset_drawing_mode(); 
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
 			break;		
 		case 69: //edit town entrance
 			edit_town_entry(spot_hit);
@@ -1559,7 +1590,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			case 20: // 20 - set height rectangle
 				set_rect_height(working_rect);
 				break;
-			case 24: // 24 - change height rectangle
+			case 24: // 24 - add height rectangle
 				add_rect_height(working_rect);
 				break;
 			case 21: // 21 - place text rectangle
