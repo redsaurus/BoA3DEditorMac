@@ -4144,40 +4144,33 @@ void p2c(Str255 str)
 //   -8 - outdoor section name
 void get_str(Str255 str,short i, short j)
 {
-	
-	if (i == -1) {
-		sprintf((char *) str,"%s (L%d)",scen_data.scen_creatures[j].name,
-				scen_data.scen_creatures[j].level);
-		return;
+	switch(i){
+		case -1:
+			sprintf((char *) str,"%s (L%d)",scen_data.scen_creatures[j].name,scen_data.scen_creatures[j].level);
+			break;
+		case -2:
+			strcpy((char *) str,scen_data.scen_items[j].full_name);
+			break;
+		case -3:
+			strcpy((char *) str,button_strs[available_dlog_buttons[j]]);
+			break;
+		case -4:
+			strcpy((char *) str,scen_data.scen_terrains[j].ter_name);
+			break;
+		case -6:
+			strcpy((char *) str,scen_data.scen_floors[j].floor_name);
+			break;
+		case -7:
+			sprintf((char *) str,"(%i) %s",(j-1),(char*)&zone_names.town_names[j-1][0]);
+			break;
+		case -8:
+			int y = (j-1)/zone_names.out_width;
+			sprintf((char *) str,"(%i,%i) %s",(j-1)-(y*zone_names.out_width),y,(char*)&zone_names.section_names[j-1][0]);
+			break;
+		default:
+			GetIndString(str, i, j);
+			p2c(str);
 	}
-	if (i == -2) {
-		strcpy((char *) str,scen_data.scen_items[j].full_name);
-		return;
-	}
-	if (i == -3) {
-		strcpy((char *) str,button_strs[available_dlog_buttons[j]]);
-		return;
-	}
-	
-	if (i == -4) {
-		strcpy((char *) str,scen_data.scen_terrains[j].ter_name);
-		return;
-	}
-	if (i == -6) {
-		strcpy((char *) str,scen_data.scen_floors[j].floor_name);
-		return;
-	}
-	if(i == -7){
-		sprintf((char *) str,"(%i) %s",(j-1),(char*)&zone_names.town_names[j-1][0]);
-		return;
-	}
-	if(i == -8){
-		int y = (j-1)/zone_names.out_width;
-		sprintf((char *) str,"(%i,%i) %s",(j-1)-(y*zone_names.out_width),y,(char*)&zone_names.section_names[j-1][0]);
-		return;
-	}
-	GetIndString(str, i, j);
-	p2c(str);
 }
 
 short string_length(char *str)
