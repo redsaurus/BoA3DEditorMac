@@ -485,7 +485,7 @@ short cd_process_click(WindowPtr window,Point the_point, short mods,short *item)
 	if ((which_dlg = cd_find_dlog(window,&dlg_num,&dlog_key)) < 0)
 		return -1;
 
-	for (i = 0; i < dlg_highest_item[which_dlg] + 1; i++)
+	for (i = 0; i < dlg_highest_item[which_dlg] + 1; i++){
 		if ((item_id = cd_get_item_id(dlg_num,i)) >= 0) {
 			if ((PtInRect(the_point,&item_rect[item_id])) && (item_active[item_id] > 0)
 				&& ((dlg_item_type[item_id] < 3) || (dlg_item_type[item_id] == 8)
@@ -498,6 +498,7 @@ short cd_process_click(WindowPtr window,Point the_point, short mods,short *item)
 					return dlg_num;
 			}
 		}
+	}
 	return -1;
 }
 
@@ -508,7 +509,6 @@ short cd_process_mousetrack( short dlg_num, short item_num, Rect theRect )
 	short result = -1;
 	Boolean prevInside = FALSE;
 	Boolean currInside = TRUE;
-	
 	cd_press_button(dlg_num, item_num, eDLGBtnResChange);	// give click response
 
 	RgnHandle clipRgn = NewRgn();	// Get copy of clipping region, seems not to use currently
@@ -529,13 +529,23 @@ short cd_process_mousetrack( short dlg_num, short item_num, Rect theRect )
 	if ( WaitNextEvent( mUpMask, &anEvent, SLEEP_TICKS, MOUSE_REGION) ) {
 		currPt = anEvent.where;
 		GlobalToLocal( &currPt );
-		if ( PtInRect(currPt, &theRect) && PtInRgn(currPt, clipRgn) ) {
+		if ( PtInRect(currPt, &theRect) && PtInRgn(currPt, clipRgn) )
 			result = dlg_num;
-		}
+	}
+	else{
+		//printf("no mouse-up makes cyclops sad: @[ \n");
+		//no mouse up event. Not clear why this happens, but we have to do something, so brute force check where the cursor is
+		GetMouse( &currPt );
+		currInside = PtInRect(currPt, &theRect) && PtInRgn(currPt, clipRgn);
+		if(currInside)
+			result = dlg_num;
+		if ( !prevInside && currInside )
+			cd_press_button(dlg_num, item_num, eDLGBtnResChange);
+		if ( prevInside && !currInside )
+			cd_press_button(dlg_num, item_num, eDLGBtnResRecover);
 	}
 	cd_press_button(dlg_num, item_num, eDLGBtnResRecover);
 	DisposeRgn( clipRgn );
-	
 	return result;
 }
 
