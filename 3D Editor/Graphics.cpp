@@ -2923,33 +2923,32 @@ void draw_ter_large()
 				}
 				for (short j = 0; j < 8; j++){
 					// draw stains
-					if (is_sfx(loc_drawn.x,loc_drawn.y,j)) {
-						a.which_sheet = 680;
-						a.which_icon = 63 + j;
+					a.which_sheet = 680;
+					a.which_icon = 63 + j;
+					if (is_sfx(loc_drawn.x,loc_drawn.y,j))
 						place_terrain_icon_into_ter_large(a,q,r);
-					}
-					// draw ter scripts
-					for (i = 0; i < NUM_TER_SCRIPTS; i++){
-						if (town.ter_scripts[i].exists)
-							draw_ter_script(i,loc_drawn,q,r);
-					}
-					// draw creatures
-					for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++){
-								if (town.creatures[i].exists())
-									draw_creature(i,loc_drawn,q,r);
-					}
-					// draw items
-					for (i = 0; i < NUM_TOWN_PLACED_ITEMS; i++){
-						if (town.preset_items[i].exists()) 
-							draw_item(i,loc_drawn,q,r);
-					}
-					// draw selected instance
-					if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
-						draw_creature(selected_item_number % 1000,loc_drawn,q,r,true);
-					}
-					if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
-						draw_item(selected_item_number % 1000,loc_drawn,q,r,true);
-					}
+				}
+				// draw ter scripts
+				for (i = 0; i < NUM_TER_SCRIPTS; i++){
+					if (town.ter_scripts[i].exists)
+						draw_ter_script(i,loc_drawn,q,r);
+				}
+				// draw creatures
+				for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++){
+					if (town.creatures[i].exists())
+						draw_creature(i,loc_drawn,q,r);
+				}
+				// draw items
+				for (i = 0; i < NUM_TOWN_PLACED_ITEMS; i++){
+					if (town.preset_items[i].exists()) 
+						draw_item(i,loc_drawn,q,r);
+				}
+				// draw selected instance
+				if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
+					draw_creature(selected_item_number % 1000,loc_drawn,q,r,true);
+				}
+				if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
+					draw_item(selected_item_number % 1000,loc_drawn,q,r,true);
 				}
 			}
 								
@@ -3404,20 +3403,14 @@ void draw_ter_small()
 		SetPort(GetWindowPort(mainPtr));
 		
 		// draw grid of lines
-		if (hintbook_mode == FALSE) {
+		if (hintbook_mode == FALSE){
 			for (i = 1; i < 64; i++){
-				if (i % 10 == 0) {
+				if (i % 8 == 0){
 					put_line_in_gworld(ter_draw_gworld,0,SMALL_SPACE_SIZE * i,SMALL_SPACE_SIZE * MAX_TOWN_SIZE - 1,SMALL_SPACE_SIZE * i,3 * 8,3 * 8,6 * 8);
-				}
-				if (i % 10 == 5) {
-					put_line_in_gworld(ter_draw_gworld,0,SMALL_SPACE_SIZE * i,SMALL_SPACE_SIZE * MAX_TOWN_SIZE - 1,SMALL_SPACE_SIZE * i,10 * 8,10 * 8,20 * 8);
-				}
-			}
-			for (i = 1; i < 64; i++){
-				if (i % 10 == 0) {
 					put_line_in_gworld(ter_draw_gworld,SMALL_SPACE_SIZE * i,0,SMALL_SPACE_SIZE * i,SMALL_SPACE_SIZE * MAX_TOWN_SIZE - 1,3 * 8,3 * 8,6 * 8);
 				}
-				if (i % 10 == 5) {
+				if (i % 8 == 4){
+					put_line_in_gworld(ter_draw_gworld,0,SMALL_SPACE_SIZE * i,SMALL_SPACE_SIZE * MAX_TOWN_SIZE - 1,SMALL_SPACE_SIZE * i,10 * 8,10 * 8,20 * 8);
 					put_line_in_gworld(ter_draw_gworld,SMALL_SPACE_SIZE * i,0,SMALL_SPACE_SIZE * i,SMALL_SPACE_SIZE * MAX_TOWN_SIZE - 1,10 * 8,10 * 8,20 * 8);
 				}
 			}
@@ -3458,13 +3451,13 @@ void place_left_text()
  		paint_pattern(NULL,1,left_text_lines[i],1);
 	//FillCRect(&left_text_lines[i],bg[12]);
 	
-	if (file_is_loaded == FALSE) {
+	if (file_is_loaded == FALSE){
 		sprintf((char *) draw_str,"No Scenario Loaded"); 
 		char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
 		return;
 	}
 	
-	if (editing_town) {
+	if (editing_town){
 		// Erase and draw bottom text strs
 		if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
 			sprintf((char *) draw_str,"Creature %d: %s",selected_item_number % 1000 + 6,
@@ -3586,38 +3579,29 @@ void place_left_text()
 
 void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gworld,Rect targ_rect,char masked,short main_win)
 {
-	//PixMapHandle	test1, test2;
-	//BitMap store_dest;
 	GrafPtr cur_port;
 	RGBColor	store_color;
 	
-	if (src_gworld == NULL)
+	if(src_gworld == NULL)
 		return;
-	if (main_win == 2) {
+	if(main_win == 2){
 		GetBackColor(&store_color);
 		BackColor(whiteColor);
 	}
-	GetPort(&cur_port);	
-	//store_dest = cur_port->portBits;	
-	//test1 = src_gworld->portPixMap;
-	//LockPixels(test1);
-	if (main_win == 0) {
-		//test2 = targ_gworld->portPixMap; 
-		//LockPixels(test2);
+	GetPort(&cur_port);
+	if (main_win == 0){
 		if (masked == 1) 
 			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(targ_gworld), &src_rect, &targ_rect, transparent , NULL);	
 		else 
 			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(targ_gworld), &src_rect, &targ_rect, (masked == 10) ? addOver : 0, NULL);
-		//UnlockPixels(test2);
 	}  
-	else {
-		if (masked == 1) 
+	else{
+		if(masked == 1) 
 			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(cur_port), &src_rect, &targ_rect, transparent , NULL);
 		else 
 			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(cur_port), &src_rect, &targ_rect, (masked == 10) ? addOver : 0, NULL);
 	}
-	//UnlockPixels(test1);
-	if (main_win == 2) 
+	if(main_win == 2) 
 		RGBBackColor(&store_color);
 }
 
@@ -4079,16 +4063,16 @@ void win_draw_string(GrafPtr dest_window,Rect dest_rect,Str255 str,short mode,sh
 				//	i = 10000;
 			}
 				
-				if (i - last_line_break > 1) {
-					strcpy((char *)str_to_draw,(char *)null_s);
-					strncpy ((char *) str_to_draw,(char *) c_str + last_line_break,(size_t) (i - last_line_break));
-					sprintf((char *)str_to_draw2," %s",str_to_draw);
-					if (strlen((char *) str_to_draw2) > 3) {
-						str_to_draw2[0] = (char) strlen((char *)str_to_draw);
-						DrawString(str_to_draw2);
-					}
-				}	
-				break;
+			if (i - last_line_break > 1) {
+				strcpy((char *)str_to_draw,(char *)null_s);
+				strncpy ((char *) str_to_draw,(char *) c_str + last_line_break,(size_t) (i - last_line_break));
+				sprintf((char *)str_to_draw2," %s",str_to_draw);
+				if (strlen((char *) str_to_draw2) > 3) {
+					str_to_draw2[0] = (char) strlen((char *)str_to_draw);
+					DrawString(str_to_draw2);
+				}
+			}	
+			break;
 		case 1:
 			MoveTo((dest_rect.right + dest_rect.left) / 2 - (4 * total_width) / 9 + adjust_x, 
 				   (dest_rect.bottom + dest_rect.top - line_height) / 2 + 9 + adjust_y);	
@@ -4727,9 +4711,8 @@ void set_blitter_color(UInt16 color)
 // tint_strength: 0 - weak, 1 - strong
 void tint_graphic( GWorldPtr dest,short tint_strength)
 {
-	if (dest == NULL) {
+	if (dest == NULL)
 		return;
-	}
 	Rect rect_to_fill = get_graphic_rect(dest);
 	UInt32	destRowBytes;
 	UInt16	*destBits;
@@ -4794,9 +4777,8 @@ void tint_graphic( GWorldPtr dest,short tint_strength)
 // all shifts are 0 to 31
 void hue_graphic( GWorldPtr dest,short up_or_down,short red_shift,short green_shift,short blue_shift)
 {
-	if (dest == NULL) {
+	if (dest == NULL)
 		return;
-	}
 	Rect rect_to_fill = get_graphic_rect(dest);
 	UInt32	destRowBytes;
 	UInt16	*destBits;
