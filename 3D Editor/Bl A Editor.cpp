@@ -405,21 +405,24 @@ Boolean Handle_One_Event()
 		handle_action(event.where,event);
 	}
 	//printf("%i\n",event.what);
-	switch (event.what)
-	{
+	switch (event.what){
 		case keyDown: case autoKey:
 				chr = event.message & charCodeMask;
 				chr2 = (char) ((event.message & keyCodeMask) >> 8);
-				if ((event.modifiers & cmdKey) != 0) {
-					if (event.what != autoKey) {
+				if((event.modifiers & cmdKey) != 0){
+					if(chr2>=123 && chr2<=126)
+						handle_keystroke(chr,chr2,event);
+					if(event.what != autoKey){
 						BringToFront(mainPtr);
 						SetPort(GetWindowPort(mainPtr));
 						if(chr>='1' && chr<=(editing_town ? '5' : '3')){ //TODO: remove this temporary hack
 							set_drawing_mode(chr-'1');
 							draw_main_screen();
 						}
-						menu_choice = MenuKey(chr);
-						handle_menu_choice(menu_choice);
+						else{
+							menu_choice = MenuKey(chr);
+							handle_menu_choice(menu_choice);
+						}
 					}
 				}
 				else if (chr == 'Q')
@@ -1035,6 +1038,7 @@ OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef e
 					}
 				}
 				handle_scroll( (editing_town) ? max_zone_dim[town_type] : 48, scrl, false, false );
+				//printf("done handling scroll (palette)\n");
 			}
 		}
 	}
@@ -1110,6 +1114,7 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 					scrl|=eSCRL_Right;
 			}
 			handle_scroll( (editing_town) ? max_zone_dim[town_type] : 48, scrl, false, false );
+			//printf("done handling scroll (view)\n");
 		}
 	}
 	return(result);

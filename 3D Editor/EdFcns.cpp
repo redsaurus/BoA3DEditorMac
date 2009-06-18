@@ -1822,8 +1822,7 @@ bool out_of_view_3D(location loc){
 
 // "Outdoor: drawing mode failure after moving section" fix
 // handle ten key on a separate subroutine
-void handle_keystroke(char chr,char chr2,EventRecord event)
-{
+void handle_keystroke(char chr,char chr2,EventRecord event){
 	Point pass_point;
 	short i,j;
 	
@@ -1837,106 +1836,194 @@ void handle_keystroke(char chr,char chr2,EventRecord event)
 	}
 	
 	//handle arrow keys
-	//this is a little complicated:
-	//in the case that new navigation by arrow keys is allowed:
-	//without modifiers, the arrow keys move the viewport in the specified directions
-	//	with just the shift key the viewport is moved in large steps (7 units)
-	//	with just the control key the viewport is moved to the edge of the current zone
-	//	with the option key the keystroke applies to the selected object, if any
-	//		with the option key only the selected object is shifted in the specified direction
-	//		with the option key and shift key the selected object is rotated
-	//if the new navigation system is not allowed, the old style is used
-	//	without modifiers, the arrow keys move the selected object
-	//	with the shift key the selected object is rotated instead
-	if ((chr2 >= 123) && (chr2 <= 126) && (cur_viewing_mode == 0 || cur_viewing_mode == 10 || cur_viewing_mode == 11)) {
-		if(allow_arrow_key_navigation){ //use new style controls
-			if(!((event.modifiers & optionKey) || (event.modifiers & cmdKey))){ //move the view
-				switch(chr2){
-					case 126: //up
-						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Top, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
-						break;
-					case 124: //right
-						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Right, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
-						break;
-					case 123: //left
-						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Left, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
-						break;
-					case 125: //down
-						handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Bottom, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
-						break;
+	if(chr2 >= 123 && chr2 <= 126){
+		//navigation among towns and outdoor sections
+		if(event.modifiers & cmdKey){
+			int targetZone=-1;
+			switch(chr2){
+				case 126: //up
+					if(!editing_town){
+						if(cur_out.y>0)
+							targetZone=cur_out.x*100 + cur_out.y-1;
+						else
+							EdSysBeep(20);
+					}
+					else
+						EdSysBeep(20);
+					break;
+				case 125: //down
+					if(!editing_town){
+						if(cur_out.y<scenario.out_height-1)
+							targetZone=cur_out.x*100 + cur_out.y+1;
+						else
+							EdSysBeep(20);
+					}
+					else
+						EdSysBeep(20);
+					break;
+				case 124: //right
+					if(editing_town){
+						if(cur_town<scenario.num_towns - 1)
+							targetZone=cur_town+1;
+						else
+							EdSysBeep(20);
+					}
+					else{
+						if(cur_out.x<scenario.out_width-1)
+							targetZone=(cur_out.x+1)*100 + cur_out.y;
+						else
+							EdSysBeep(20);
+					}	
+					break;
+				case 123: //left
+					if(editing_town){
+						if(cur_town>0)
+							targetZone=cur_town-1;
+						else
+							EdSysBeep(20);
+					}
+					else{
+						if(cur_out.x>0)
+							targetZone=(cur_out.x-1)*100 + cur_out.y;
+						else
+							EdSysBeep(20);
+					}
+					break;
+			}
+			if(targetZone!=-1){
+				if(editing_town){
+					//if no changes were made, or the user okays it, go ahead
+					if(!change_made_town || save_check(859)){
+						load_town(targetZone);
+						clear_selected_copied_objects();
+						set_up_terrain_buttons();
+						change_made_town = FALSE;
+						cen_x = max_zone_dim[town_type] / 2; cen_y = max_zone_dim[town_type] / 2;
+						reset_drawing_mode();
+						reset_small_drawn();
+						purgeUndo();
+						purgeRedo();
+						redraw_screen();
+					}
+				}
+				else{//editing outdoors
+					//if no changes were made, or the user okays it, go ahead
+					if(!change_made_outdoors || save_check(859)){
+						location spot_hit = {targetZone / 100,targetZone % 100};
+						clear_selected_copied_objects();
+						augment_terrain(spot_hit);
+						set_up_terrain_buttons();
+						cen_x = 24; cen_y = 24;
+						reset_drawing_mode();
+						purgeUndo();
+						purgeRedo();
+						redraw_screen();
+						change_made_outdoors = FALSE;
+					}
 				}
 			}
-			else if(editing_town && (event.modifiers & optionKey) && (selected_item_number >= 0)){ 
-				if(!(event.modifiers & shiftKey)){ //move the selected instance
+		}
+		//this is a little complicated:
+		//in the case that new navigation by arrow keys is allowed:
+		//without modifiers, the arrow keys move the viewport in the specified directions
+		//	with just the shift key the viewport is moved in large steps (7 units)
+		//	with just the control key the viewport is moved to the edge of the current zone
+		//	with the option key the keystroke applies to the selected object, if any
+		//		with the option key only the selected object is shifted in the specified direction
+		//		with the option key and shift key the selected object is rotated
+		//if the new navigation system is not allowed, the old style is used
+		//	without modifiers, the arrow keys move the selected object
+		//	with the shift key the selected object is rotated instead
+		else if(cur_viewing_mode == 0 || cur_viewing_mode == 10 || cur_viewing_mode == 11) {
+			if(allow_arrow_key_navigation){ //use new style controls
+				if(!((event.modifiers & optionKey) || (event.modifiers & cmdKey))){ //move the view
 					switch(chr2){
 						case 126: //up
-							shift_selected_instance(0, -1);
-							
+							handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Top, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
 							break;
 						case 124: //right
-							shift_selected_instance(1,0);
+							handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Right, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
 							break;
 						case 123: //left
-							shift_selected_instance(-1,0);
+							handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Left, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
 							break;
 						case 125: //down
-							shift_selected_instance(0, 1);
+							handle_scroll( (editing_town ? max_zone_dim[town_type] : 48), eSCRL_Bottom, (event.modifiers & controlKey), (event.modifiers & shiftKey) );
 							break;
 					}
-					location new_loc = selected_instance_location();
-					if(new_loc.x>-1){
-						if((cur_viewing_mode == 0 && (abs(new_loc.x-cen_x)>4 || abs(new_loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(new_loc))){
-							cen_x = new_loc.x;
-							cen_y = new_loc.y;
-							draw_terrain();
-							draw_function_buttons(1);
+				}
+				else if(editing_town && (event.modifiers & optionKey) && (selected_item_number >= 0)){ 
+					if(!(event.modifiers & shiftKey)){ //move the selected instance
+						switch(chr2){
+							case 126: //up
+								shift_selected_instance(0, -1);
+								
+								break;
+							case 124: //right
+								shift_selected_instance(1,0);
+								break;
+							case 123: //left
+								shift_selected_instance(-1,0);
+								break;
+							case 125: //down
+								shift_selected_instance(0, 1);
+								break;
+						}
+						location new_loc = selected_instance_location();
+						if(new_loc.x>-1){
+							if((cur_viewing_mode == 0 && (abs(new_loc.x-cen_x)>4 || abs(new_loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(new_loc))){
+								cen_x = new_loc.x;
+								cen_y = new_loc.y;
+								draw_terrain();
+								draw_function_buttons(1);
+							}
+						}
+					}
+					else{ //rotate the selected instance
+						switch(chr2){
+							case 126: //up
+							case 125: //down
+								rotate_selected_instance(2);
+								break;
+							case 124: //right
+								rotate_selected_instance(-1);
+								break;
+							case 123: //left
+								rotate_selected_instance(1);
+								break;
 						}
 					}
 				}
-				else{ //rotate the selected instance
-					switch(chr2){
-						case 126: //up
-						case 125: //down
-							rotate_selected_instance(2);
-							break;
-						case 124: //right
-							rotate_selected_instance(-1);
-							break;
-						case 123: //left
-							rotate_selected_instance(1);
-							break;
-					}
+			}
+			else{ //fall back on old functionality
+				if ((chr2 == 126) && (selected_item_number >= 0)){
+					if(event.modifiers & shiftKey)
+						rotate_selected_instance(2);
+					else
+						shift_selected_instance(0, -1);
+				}
+				if ((chr2 == 124) && (selected_item_number >= 0)){
+					if(event.modifiers & shiftKey)
+						rotate_selected_instance(-1);
+					else
+						shift_selected_instance(1,0);
+				}
+				if ((chr2 == 123) && (selected_item_number >= 0)){
+					if(event.modifiers & shiftKey)
+						rotate_selected_instance(1);
+					else
+						shift_selected_instance(-1,0);
+				}
+				if ((chr2 == 125) && (selected_item_number >= 0)){
+					if(event.modifiers & shiftKey)
+						rotate_selected_instance(2);
+					else
+						shift_selected_instance(0, 1);
 				}
 			}
+			draw_terrain();
+			return;
 		}
-		else{ //fall back on old functionality
-			if ((chr2 == 126) && (selected_item_number >= 0)){
-				if(event.modifiers & shiftKey)
-					rotate_selected_instance(2);
-				else
-					shift_selected_instance(0, -1);
-			}
-			if ((chr2 == 124) && (selected_item_number >= 0)){
-				if(event.modifiers & shiftKey)
-					rotate_selected_instance(-1);
-				else
-					shift_selected_instance(1,0);
-			}
-			if ((chr2 == 123) && (selected_item_number >= 0)){
-				if(event.modifiers & shiftKey)
-					rotate_selected_instance(1);
-				else
-					shift_selected_instance(-1,0);
-			}
-			if ((chr2 == 125) && (selected_item_number >= 0)){
-				if(event.modifiers & shiftKey)
-					rotate_selected_instance(2);
-				else
-					shift_selected_instance(0, 1);
-			}
-		}
-		draw_terrain();
-		return;
 	}
 	
 	if (((chr2 == 51) || (chr2 == 117)) && (editing_town == TRUE) && (cur_viewing_mode == 0 || cur_viewing_mode == 10 || cur_viewing_mode == 11)) {
