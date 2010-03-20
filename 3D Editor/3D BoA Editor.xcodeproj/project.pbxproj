@@ -22,7 +22,7 @@
 			name = "Isaacs - BoA Editor";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */;
+			productReference = 6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 <plist version=\"1.0\">
@@ -99,7 +99,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0249A66BFF388E3F11CA2CEA /* libstdc++.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++.a"; path = "/usr/lib/libstdc++.a"; sourceTree = "<absolute>"; };
 		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		6A66C40006771A6E0030138E /* Bl A Editor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = "Bl A Editor.cpp"; sourceTree = "<group>"; };
 		6A66C40206771A6F0030138E /* Bl A Fileio.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = "Bl A Fileio.cpp"; sourceTree = "<group>"; };
@@ -115,11 +114,11 @@
 		6A66C40C06771A6F0030138E /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
 		6A66C40D06771A6F0030138E /* tokntype.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tokntype.h; sourceTree = "<group>"; };
 		6A66C40E06771A6F0030138E /* townout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = townout.cpp; sourceTree = "<group>"; };
-		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D4864980CDCDAD100444D09 /* BoAScen.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAScen.icns; sourceTree = "<group>"; };
 		9DD2E4670CC079810078A447 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
-		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
-		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor."; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
+		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAEdAPPL.icns; sourceTree = "<group>"; };
 		C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "3D BoA Editor_Prefix.pch"; sourceTree = "<group>"; };
 		C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "3D Editor Graphics.r"; sourceTree = "<group>"; };
@@ -150,8 +149,8 @@
 		195DF8CFFE9D517E11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor */,
-				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */,
+				6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */,
+				9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -204,7 +203,6 @@
 			children = (
 				9DD2E4670CC079810078A447 /* libstdc++-static.a */,
 				20286C33FDCF999611CA2CEA /* Carbon.framework */,
-				0249A66BFF388E3F11CA2CEA /* libstdc++.a */,
 			);
 			name = "External Frameworks and Libraries";
 			sourceTree = "<group>";
@@ -271,7 +269,7 @@
 			name = "Isaacs - BoA Editor (Upgraded)";
 			productInstallPath = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 			productName = "Isaacs - BoA Editor";
-			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor. */;
+			productReference = 9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -408,7 +406,6 @@
 				GCC_PREFIX_HEADER = "3D BoA Editor_Prefix.pch";
 				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
-				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "-Wshadow";
 				OTHER_LDFLAGS = "";
 				OTHER_REZFLAGS = "";
@@ -443,7 +440,6 @@
 				GCC_WARN_SHADOW = YES;
 				INSTALL_PATH = "/Applications/QuickBooks NUE/Fonts/Data/ /B/Bj17boa36/Blades of Avernum Files";
 				LIBRARY_SEARCH_PATHS = /usr/lib/gcc/darwin/3.3;
-				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "-Wshadow";
 				OTHER_LDFLAGS = "";
 				OTHER_REZFLAGS = "";
@@ -521,6 +517,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ppc;
+				GCC_VERSION = 4.0;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Development;
 		};
@@ -535,7 +533,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ppc;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_VERSION = 4.0;
+				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				WARNING_CFLAGS = "-Wno-write-strings";
 			};
 			name = Deployment;
 		};

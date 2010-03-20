@@ -25,6 +25,8 @@ const Rect kRect3DEditScrn = {
 	496 + TER_RECT_UL_Y
 };
 
+extern const Rect terrain_viewport_3d;
+
 extern scenario_data_type scenario;
 extern town_record_type town;
 extern scen_item_data_type scen_data;
@@ -374,10 +376,8 @@ void handle_action(Point the_point,EventRecord event)
 			short center_height;
 			short rel_x, rel_y;
 			
-			Rect terrain_area_rect = {5,5,420,501};//{large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,
-				//large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right};
+			Rect terrain_area_rect = terrain_viewport_3d;
 			
-			//InsetRect(&terrain_area_rect,-15,-15);
 			ZeroRectCorner(&terrain_area_rect);
 			
 			center_area_x = terrain_area_rect.right / 2;
@@ -465,8 +465,6 @@ void handle_action(Point the_point,EventRecord event)
 					change_made_town = TRUE;
 				else
 					change_made_outdoors = TRUE;
-				//erasing_mode = TRUE;
-				//mouse_button_held = TRUE;		
 				
 				handle_ter_spot_press(spot_hit,option_hit,alt_hit,ctrlKey);			
 				
@@ -3876,9 +3874,13 @@ void frill_terrain()
 	short i,j;
 	short terrain_type;
 	unsigned char floor_type;
+	int edge_correct = 0;
+	//if the edge floor repeats to infinity, don't add frills to edge spaces, to avoid weird looking rows
+	if(town.external_floor_type == -1)
+		edge_correct = 1;
 	
-	for (i = 0; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); i++){
-		for (j = 0; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); j++) {
+	for (i = edge_correct; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; i++){
+		for (j = edge_correct; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; j++) {
 			terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
 			floor_type = (editing_town == TRUE) ? t_d.floor[i][j] : current_terrain.floor[i][j];
 			

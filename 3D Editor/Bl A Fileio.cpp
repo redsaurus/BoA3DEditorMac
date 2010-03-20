@@ -823,7 +823,7 @@ void save_campaign()
 		}
 	}		
 	// now, finally, write towns.
-	for (k = 0; k < scenario.num_towns; k++)
+	for (k = 0; k < scenario.num_towns; k++){
 		if (k == cur_town) {
 			// write towns
 			if (currently_editing_windows_scenario)
@@ -876,10 +876,8 @@ void save_campaign()
 			}
 			len+=(long) (sizeof (town_record_type));
 			SetFPos(scen_f,3,len);
-			//SetFPos(scen_f,3,save_town_size);
 		}
 		else { /// load unedited town into buffer and save, doing translataions when necessary
-
 			len = (long) (sizeof(town_record_type));
 			error = FSRead(scen_f, &len, buffer);
 			if (error != 0)
@@ -904,7 +902,7 @@ void save_campaign()
 				return;
 			}
 		}
-	
+	}
 	change_made_town = change_made_outdoors = FALSE;
 	// now, everything is moved over. Delete the original, and rename the dummy
 	error = FSClose(scen_f); 
@@ -1589,14 +1587,11 @@ void load_campaign(FSSpec* file_to_load)
 	overall_mode = 0;	
 	change_made_town = change_made_outdoors = FALSE;
 	load_town(scenario.last_town_edited);
-	//load_town(0);
-	//load_outdoors(scenario.last_out_edited,0);
 	augment_terrain(scenario.last_out_edited);
 	load_all_outdoor_names(NULL);
 	load_all_town_names(NULL);
 	file_is_loaded = TRUE;
 	clear_selected_copied_objects();
-	//load_spec_graphics();
 
 	// load in all the scenario data
 	// First, initialize all scen data
@@ -1658,7 +1653,7 @@ void load_outdoor_borders(location which_out)
 		
 	if ((error = FSpOpenDF(&current_scenario_file_info,1,&file_id)) != 0) {
 		oops_error(76); return;
-		}
+	}
 	
 	for(i = -1; i <= 1; i++) {
 		for(k = -1; k <= 1; k++) {
@@ -1697,31 +1692,34 @@ void load_outdoor_borders(location which_out)
 			
 			//compatibility with 2D display.  probably not needed anymore,
 			//but there's no need to take it out.
-			if (i == 0 && k == -1) 
-				for (j = 0; j < 48; j++) {				
+			if (i == 0 && k == -1){
+				for (j = 0; j < 48; j++){				
 					borders[0][j] = store_out.terrain[j][47];
 					border_floor[0][j] = store_out.floor[j][47];
 					border_height[0][j] = store_out.height[j][47];
 				}
-			if (i == 1 && k == 0) 
-				for (j = 0; j < 48; j++) {				
+			}
+			if (i == 1 && k == 0){
+				for (j = 0; j < 48; j++){				
 					borders[1][j] = store_out.terrain[0][j];
 					border_floor[1][j] = store_out.floor[0][j];
 					border_height[1][j] = store_out.height[0][j];
 				}
-			if (i == 0 && k == 1) 
-				for (j = 0; j < 48; j++) {				
+			}
+			if (i == 0 && k == 1){
+				for (j = 0; j < 48; j++){				
 					borders[2][j] = store_out.terrain[j][0];
 					border_floor[2][j] = store_out.floor[j][0];
 					border_height[2][j] = store_out.height[j][0];
 				}
-			if (i == -1 && k == 0) 
-				for (j = 0; j < 48; j++) {				
+			}
+			if (i == -1 && k == 0){
+				for (j = 0; j < 48; j++){				
 					borders[3][j] = store_out.terrain[47][j];
 					border_floor[3][j] = store_out.floor[47][j];
 					border_height[3][j] = store_out.height[47][j];
 				}
-			
+			}
 		}
 	}
 	error = FSClose(file_id);
@@ -1745,7 +1743,7 @@ void load_outdoors(location which_out,short mode)
 		
 	if ((error = FSpOpenDF(&current_scenario_file_info,1,&file_id)) != 0) {
 		oops_error(76); return;
-		}	
+	}	
 	
 	out_sec_num = scenario.out_width * which_out.y + which_out.x;
 	
@@ -1764,39 +1762,38 @@ void load_outdoors(location which_out,short mode)
 	if (currently_editing_windows_scenario)
 		store_out.port();
 
-	if (mode == 0) {
+	if (mode == 0){
 		current_terrain = store_out;
-		}
-	
-	if (mode == 0) 	{
 		cur_out = which_out;
+	}
+	if (mode == 1){
+		for (j = 0; j < 48; j++){				
+			borders[0][j] = store_out.terrain[j][47];
+			border_floor[0][j] = store_out.floor[j][47];
+			border_height[0][j] = store_out.height[j][47];
 		}
-		
-	if (mode == 1) 
-		for (j = 0; j < 48; j++) {				
-				borders[0][j] = store_out.terrain[j][47];
-				border_floor[0][j] = store_out.floor[j][47];
-				border_height[0][j] = store_out.height[j][47];
-				}
-	if (mode == 2) 
-		for (j = 0; j < 48; j++) {				
-				borders[1][j] = store_out.terrain[0][j];
-				border_floor[1][j] = store_out.floor[0][j];
-				border_height[1][j] = store_out.height[0][j];
-				}
-	if (mode == 3) 
-		for (j = 0; j < 48; j++) {				
-				borders[2][j] = store_out.terrain[j][0];
-				border_floor[2][j] = store_out.floor[j][0];
-				border_height[2][j] = store_out.height[j][0];
-				}
-	if (mode == 4) 
-		for (j = 0; j < 48; j++) {				
-				borders[3][j] = store_out.terrain[47][j];
-				border_floor[3][j] = store_out.floor[47][j];
-				border_height[3][j] = store_out.height[47][j];
-				}
-				
+	}
+	if (mode == 2){
+		for (j = 0; j < 48; j++){				
+			borders[1][j] = store_out.terrain[0][j];
+			border_floor[1][j] = store_out.floor[0][j];
+			border_height[1][j] = store_out.height[0][j];
+		}
+	}
+	if (mode == 3){
+		for (j = 0; j < 48; j++){				
+			borders[2][j] = store_out.terrain[j][0];
+			border_floor[2][j] = store_out.floor[j][0];
+			border_height[2][j] = store_out.height[j][0];
+		}
+	}
+	if (mode == 4){
+		for (j = 0; j < 48; j++){				
+			borders[3][j] = store_out.terrain[47][j];
+			border_floor[3][j] = store_out.floor[47][j];
+			border_height[3][j] = store_out.height[47][j];
+		}
+	}
 
 	error = FSClose(file_id);
 	if (error != 0) {FSClose(file_id);oops_error(79);return;}

@@ -1,9 +1,10 @@
 // !$*UTF8*$!
 {
 	20286C28FDCF999611CA2CEA /* Project object */ = {
-		activeArchitecture = ppc;
-		activeBuildConfigurationName = Development;
+		activeArchitecturePreference = ppc;
+		activeBuildConfigurationName = Deployment;
 		activeExecutable = 9DFCBBE80CC0728100DD1669 /* Isaacs - BoA Editor (Upgraded) */;
+		activeSDKPreference = macosx10.5;
 		activeTarget = 9DFCBBC80CC0728000DD1669 /* Isaacs - BoA Editor (Upgraded) */;
 		addToTargets = (
 			9DFCBBC80CC0728000DD1669 /* Isaacs - BoA Editor (Upgraded) */,
@@ -44,8 +45,8 @@
 				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
 				PBXFileTableDataSourceColumnSortingKey = PBXBookmarksDataSource_NameID;
 				PBXFileTableDataSourceColumnWidthsKey = (
-					545.2085,
-					529.5991,
+					545,
+					189,
 				);
 				PBXFileTableDataSourceColumnsKey = (
 					PBXBookmarksDataSource_LocationID,
@@ -85,7 +86,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					861,
+					445,
 					20,
 					123,
 					43,
@@ -106,8 +107,8 @@
 				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
 				PBXFileTableDataSourceColumnSortingKey = PBXFindDataSource_LocationID;
 				PBXFileTableDataSourceColumnWidthsKey = (
-					489.2974,
-					492.2085,
+					489,
+					245.20849609375,
 				);
 				PBXFileTableDataSourceColumnsKey = (
 					PBXFindDataSource_MessageID,
@@ -120,7 +121,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
 					20,
-					590,
+					426,
 					20,
 					118,
 					43,
@@ -143,7 +144,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					819,
+					403,
 					60,
 					20,
 					125,
@@ -160,7 +161,7 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 252089565;
+			PBXPerProjectTemplateStateSaveDate = 290749062;
 			PBXPrepackagedSmartGroups_v2 = (
 				{
 					PBXTransientLocationAtTop = bottom;
@@ -671,7 +672,7 @@
 				PBXModuleWindowStatusBarHidden = YES;
 				RubberWindowFrame = "267 352 745 464 0 0 1280 832 ";
 			};
-			PBXWorkspaceStateSaveDate = 252089565;
+			PBXWorkspaceStateSaveDate = 290749062;
 		};
 		sourceControlManager = 9D905FA00881979E0041D080 /* Source Control */;
 		userBuildSettings = {
@@ -679,36 +680,36 @@
 	};
 	6A66C40006771A6E0030138E /* Bl A Editor.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 19908}}";
-			sepNavSelRange = "{20930, 0}";
-			sepNavVisRange = "{20361, 1281}";
+			sepNavIntBoundsRect = "{{0, 0}, {1428, 19362}}";
+			sepNavSelRange = "{32634, 0}";
+			sepNavVisRange = "{29956, 2226}";
 			sepNavVisRect = "{{0, 9459}, {985, 613}}";
-			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
+			sepNavWindowFrame = "{{1, 4}, {1439, 874}}";
 		};
 	};
 	6A66C40206771A6F0030138E /* Bl A Fileio.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1391, 83692}}";
-			sepNavSelRange = "{24067, 13}";
-			sepNavVisRange = "{23288, 1093}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 83272}}";
+			sepNavSelRange = "{31356, 10}";
+			sepNavVisRange = "{29875, 2104}";
 			sepNavVisRect = "{{0, 16851}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40306771A6F0030138E /* dlogtool.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 21224}}";
-			sepNavSelRange = "{38619, 0}";
-			sepNavVisRange = "{34256, 1415}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 21154}}";
+			sepNavSelRange = "{21203, 9}";
+			sepNavVisRange = "{21320, 1423}";
 			sepNavVisRect = "{{0, 20597}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40406771A6F0030138E /* EdFcns.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 81354}}";
-			sepNavSelRange = "{8464, 0}";
-			sepNavVisRange = "{16664, 1566}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 82544}}";
+			sepNavSelRange = "{120493, 0}";
+			sepNavVisRange = "{120284, 1990}";
 			sepNavVisRect = "{{0, 45715}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
@@ -724,54 +725,54 @@
 	};
 	6A66C40606771A6F0030138E /* EdParser.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 48734}}";
-			sepNavSelRange = "{23134, 21}";
-			sepNavVisRange = "{22658, 1766}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 47572}}";
+			sepNavSelRange = "{52359, 7}";
+			sepNavVisRange = "{50284, 2177}";
 			sepNavVisRect = "{{0, 24836}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40706771A6F0030138E /* EdUtils.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 3374}}";
-			sepNavSelRange = "{4226, 8}";
-			sepNavVisRange = "{3600, 1101}";
+			sepNavIntBoundsRect = "{{0, 0}, {1391, 3500}}";
+			sepNavSelRange = "{861, 80}";
+			sepNavVisRange = "{2812, 583}";
 			sepNavVisRect = "{{0, 3195}, {1241, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40806771A6F0030138E /* global.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1391, 27230}}";
-			sepNavSelRange = "{47135, 0}";
-			sepNavVisRange = "{46456, 1871}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 28868}}";
+			sepNavSelRange = "{20241, 19}";
+			sepNavVisRange = "{19132, 1522}";
 			sepNavVisRect = "{{0, 10696}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40906771A6F0030138E /* Graphics.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1670, 72380}}";
-			sepNavSelRange = "{199623, 9}";
-			sepNavVisRange = "{198607, 1208}";
+			sepNavIntBoundsRect = "{{0, 0}, {1391, 72100}}";
+			sepNavSelRange = "{84393, 30}";
+			sepNavVisRange = "{83800, 1098}";
 			sepNavVisRect = "{{0, 57632}, {983, 398}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
 	};
 	6A66C40A06771A6F0030138E /* keydlgs.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1391, 5432}}";
-			sepNavSelRange = "{8965, 0}";
-			sepNavVisRange = "{4198, 868}";
+			sepNavIntBoundsRect = "{{0, 0}, {1391, 5194}}";
+			sepNavSelRange = "{3947, 59}";
+			sepNavVisRange = "{3340, 858}";
 			sepNavVisRect = "{{0, 257}, {1241, 613}}";
-			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
+			sepNavWindowFrame = "{{0, 4}, {1280, 874}}";
 		};
 	};
 	6A66C40B06771A6F0030138E /* Library.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1391, 13300}}";
-			sepNavSelRange = "{16884, 17}";
-			sepNavVisRange = "{16521, 735}";
+			sepNavIntBoundsRect = "{{0, 0}, {1391, 13104}}";
+			sepNavSelRange = "{7548, 18}";
+			sepNavVisRange = "{7145, 814}";
 			sepNavVisRect = "{{0, 0}, {1241, 699}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
@@ -786,17 +787,18 @@
 	};
 	6A66C40D06771A6F0030138E /* tokntype.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1241, 15988}}";
-			sepNavSelRange = "{2293, 5}";
+			sepNavIntBoundsRect = "{{0, 0}, {1233, 15372}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{2591, 761}";
 			sepNavVisRect = "{{0, 966}, {1241, 699}}";
 			sepNavWindowFrame = "{{1, 4}, {1280, 828}}";
 		};
 	};
 	6A66C40E06771A6F0030138E /* townout.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1391, 26236}}";
-			sepNavSelRange = "{45093, 0}";
-			sepNavVisRange = "{4786, 757}";
+			sepNavIntBoundsRect = "{{0, 0}, {1393, 25760}}";
+			sepNavSelRange = "{18480, 19}";
+			sepNavVisRange = "{17532, 1666}";
 			sepNavVisRect = "{{0, 13972}, {983, 398}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};
@@ -823,6 +825,9 @@
 		configStateDict = {
 		};
 		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
 		dylibVariantSuffix = "";
@@ -835,6 +840,7 @@
 		name = "Isaacs - BoA Editor";
 		savedGlobals = {
 		};
+		showTypeColumn = 0;
 		sourceDirectories = (
 		);
 	};
@@ -844,6 +850,9 @@
 		isSCMEnabled = 1;
 		scmConfiguration = {
 			repositoryName = "3D BoA Editor";
+			repositoryNamesForRoots = {
+				"" = "3D BoA Editor";
+			};
 		};
 		scmType = scm.subversion;
 	};
@@ -877,6 +886,9 @@
 		configStateDict = {
 		};
 		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
 		dylibVariantSuffix = "";
@@ -889,6 +901,7 @@
 		name = "Isaacs - BoA Editor (Upgraded)";
 		savedGlobals = {
 		};
+		showTypeColumn = 0;
 		sourceDirectories = (
 		);
 	};
@@ -910,9 +923,9 @@
 	};
 	C7E5FD2907AF567300D7E90C /* Bl A Editor.r */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1393, 397474}}";
-			sepNavSelRange = "{106097, 13}";
-			sepNavVisRange = "{103834, 3998}";
+			sepNavIntBoundsRect = "{{0, 0}, {1391, 398566}}";
+			sepNavSelRange = "{1962941, 4}";
+			sepNavVisRange = "{1960883, 2302}";
 			sepNavVisRect = "{{0, 163417}, {985, 613}}";
 			sepNavWindowFrame = "{{0, 4}, {1440, 874}}";
 		};

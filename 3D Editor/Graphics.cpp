@@ -413,6 +413,7 @@ void set_up_terrain_buttons()
 				a.which_sheet = 916;
 		}
 		else {
+			short sbar_pos;
 			switch (current_drawing_mode) {
 				case 0:
 					a = scen_data.scen_floors[i].ed_pic;
@@ -423,7 +424,7 @@ void set_up_terrain_buttons()
 						do_this_item = FALSE;
 						break;
 				case 1: case 2:
-					short sbar_pos = GetControlValue(right_sbar);
+					sbar_pos = GetControlValue(right_sbar);
 					store_ter_type = /*sbar_pos * 12 + */i;
 					//if (sbar_pos * 12 + i < 512) {
 						a = scen_data.scen_terrains[/*sbar_pos * 12 + */i].ed_pic;
@@ -1957,7 +1958,6 @@ void draw_ter_3D_large()
 	view_from.x = cen_x;
 	view_from.y = cen_y;
 	
-	//extern Rect large_edit_ter_rects[9][9];
 	paint_pattern(ter_draw_gworld,0,terrain_rect_gr_size,2);
 	
 	SetPort((GrafPtr) ter_draw_gworld);
@@ -1973,10 +1973,6 @@ void draw_ter_3D_large()
 	
 	ZeroRectCorner(&whole_area_rect);
 	FrameRect(&whole_area_rect);
-	
-	//InsetRect(&whole_area_rect,15,15);
-	//FrameRect(&whole_area_rect);
-	//InsetRect(&whole_area_rect,-15,-15);
 	
 	SetPort(GetWindowPort(mainPtr));
 	
@@ -2742,8 +2738,6 @@ continue;*/
 	OffsetRect(&to_rect,TER_RECT_UL_X,TER_RECT_UL_Y);
 	rect_draw_some_item(ter_draw_gworld,whole_area_rect,ter_draw_gworld,to_rect,0,1);			
 	small_any_drawn = FALSE;
-	//if (cur_viewing_mode == 0) 
-	//	draw_frames();
 }
 
 //Draws terrain in 2D mode, zoomed in
@@ -4128,6 +4122,7 @@ void p2c(Str255 str)
 //   -8 - outdoor section name
 void get_str(Str255 str,short i, short j)
 {
+	int y;
 	switch(i){
 		case -1:
 			sprintf((char *) str,"%s (L%d)",scen_data.scen_creatures[j].name,scen_data.scen_creatures[j].level);
@@ -4148,7 +4143,7 @@ void get_str(Str255 str,short i, short j)
 			sprintf((char *) str,"(%i) %s",(j-1),(char*)&zone_names.town_names[j-1][0]);
 			break;
 		case -8:
-			int y = (j-1)/zone_names.out_width;
+			y = (j-1)/zone_names.out_width;
 			sprintf((char *) str,"(%i,%i) %s",(j-1)-(y*zone_names.out_width),y,(char*)&zone_names.section_names[j-1][0]);
 			break;
 		default:
@@ -5098,7 +5093,8 @@ void cant_draw_graphics_error(graphic_id_type a,char *bonus_string,short bonus_n
 	
 	if (bonus_num >= 0)
 		sprintf(error2,"%s %d. You won't see this error again until you load a new outdoor section or town.",bonus_string,bonus_num);
-	else sprintf(error2,"You won't see this error again until you load a new outdoor section or town.");
+	else
+		sprintf(error2,"You won't see this error again until you load a new outdoor section or town.");
 	give_error(error,error2,0);
 }
 
