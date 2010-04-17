@@ -15,6 +15,7 @@
 //#include "stdio.h"
 //#include "string.h"
 #include "global.h"
+#include "QuickTime/QuickTime.h"
 
 extern scenario_data_type scenario;
 extern zone_names_data_type zone_names;
@@ -113,6 +114,7 @@ Rect terrain_buttons_size;
 static GWorldPtr graphics_library[MAX_NUM_SHEETS_IN_LIBRARY];
 static graphic_id_type graphics_library_index[MAX_NUM_SHEETS_IN_LIBRARY];
 static short num_sheets_in_library = 0;
+static short num_builtin_sheets_in_library = 0;
 
 static char current_string[256] = "";
 char current_string2[256] = "";
@@ -177,7 +179,7 @@ void Set_up_win ()
 		SetRect(&terrain_rects_3D[i],3 + (i % 12) * (TER_BUTTON_SIZE + 1),2 + (i / 12) * (TER_BUTTON_HEIGHT_3D + 1),
 				3 + (i % 12) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / 12) * (TER_BUTTON_HEIGHT_3D + 1) + TER_BUTTON_HEIGHT_3D);
 	
-	for (i = 0; i < MAX_NUM_SHEETS_IN_LIBRARY; i++) {
+	for (i = num_builtin_sheets_in_library; i < MAX_NUM_SHEETS_IN_LIBRARY; i++) {
 		graphics_library[i] = NULL;
 	}
 	Rect theWorld_screen = {large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,
@@ -254,9 +256,9 @@ void load_main_screen()
 	//	    map_pat[i] = GetPixPat (200 + i);
 	
 	//these items are now in seperate sheets, much neater and easier to maintain
-	markers = load_pict(915);
+	/*markers = load_pict(915);
 	townButtons = load_pict(918);
-	outdoorButtons = load_pict(919);
+	outdoorButtons = load_pict(919);*/
 		
 	mixed_gworld = load_pict(903);
 	if (dlog_horiz_border_bottom_gworld == NULL)
@@ -712,7 +714,7 @@ Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_
 	if (index < 0) {
 		//cant_draw_graphics_error(a);
 		return FALSE;	
-	}		
+	}
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
@@ -932,14 +934,30 @@ void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,s
 	rect_draw_some_item(markers,tiny_from,ter_draw_gworld,tiny_to,1,0);
 }
 
-void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect)
+void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,bool selected)
 {
 	Rect ter_script_icon_from = {40/*143*/,160,54/*157*/,183};
 	
 	Rect to_rect = {at_point_center_y + 7, at_point_center_x, at_point_center_y + 7 + 14, at_point_center_x + 23};
 	
-	if(rects_touch(&to_rect,to_whole_area_rect))
-		rect_draw_some_item(markers,ter_script_icon_from,ter_draw_gworld,to_rect,1,0);
+	GWorldPtr src_gworld = markers;
+	
+	if(rects_touch(&to_rect,to_whole_area_rect)){
+		if(selected){
+			Rect temp_rect = ter_script_icon_from;
+			ZeroRectCorner(&temp_rect);
+			OffsetRect(&temp_rect, 2, 2);
+			//TODO: the bordders added next tend to go nuts on the lower right edge of the icon, maybe should clean out tint_area first?
+			rect_draw_some_item(src_gworld,ter_script_icon_from,tint_area,temp_rect,0,0);
+			ter_script_icon_from = temp_rect;
+			InsetRect(&ter_script_icon_from, -2, -2);
+			InsetRect(&to_rect, -2, -2);
+			src_gworld = tint_area;
+			add_border_to_graphic(&src_gworld,&ter_script_icon_from,27,0,31);
+			add_border_to_graphic(&src_gworld,&ter_script_icon_from,31,0,31);
+		}
+		rect_draw_some_item(src_gworld,ter_script_icon_from,ter_draw_gworld,to_rect,1,0);
+	}
 }
 
 void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *drawing_terrain, short square_x, short square_y, short t_to_draw, short floor_to_draw, short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect)
@@ -954,7 +972,7 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 		// draw ter scripts
 		for (i = 0; i < NUM_TER_SCRIPTS; i++) {
 			if (town.ter_scripts[i].exists && same_point(town.ter_scripts[i].loc,loc_drawn)) {
-				draw_ter_script_3D(at_point_center_x,at_point_center_y,to_whole_area_rect);
+				draw_ter_script_3D(at_point_center_x,at_point_center_y,to_whole_area_rect,(selected_item_number-9000)==i);
 			}
 		}
 	}
@@ -2419,6 +2437,12 @@ continue;*/
 															   town.special_rects[i], 1 + 4, 200, 200, 255, to_whole_area_rect);
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   town.special_rects[i], 2 + 4, 0, 0, 255, to_whole_area_rect);
+									if(i==(selected_item_number-10000)){
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   town.special_rects[i], -1 + 4, 255, 0, 255, to_whole_area_rect);
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   town.special_rects[i], 0 + 4, 222, 0, 255, to_whole_area_rect);
+									}
 								}
 							}
 							
@@ -2925,7 +2949,7 @@ void draw_ter_large()
 				// draw ter scripts
 				for (i = 0; i < NUM_TER_SCRIPTS; i++){
 					if (town.ter_scripts[i].exists)
-						draw_ter_script(i,loc_drawn,q,r);
+						draw_ter_script(i,loc_drawn,q,r,(selected_item_number-9000)==i);
 				}
 				// draw creatures
 				for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++){
@@ -3075,6 +3099,12 @@ void draw_ter_large()
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,200,200,255);
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,0,255);
+					if(i==(selected_item_number-10000)){
+						InsetRect(&rectangle_draw_rect,-2,-2);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
+						InsetRect(&rectangle_draw_rect,-1,-1);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					}
 				}
 			}
 			// zone border rect
@@ -3205,8 +3235,7 @@ void draw_creature(short creature_num,location loc_drawn,short in_square_x,short
 			put_rect_in_gworld(ter_draw_gworld,to_rect,215,0,255);
 			InsetRect(&to_rect,-1,-1);
 			put_rect_in_gworld(ter_draw_gworld,to_rect,255,0,255);
-			InsetRect(&to_rect,1,1);
-			InsetRect(&to_rect,1,1);
+			InsetRect(&to_rect,2,2);
 		}
 		
 		// do facing
@@ -3263,13 +3292,12 @@ void draw_item(short item_num,location loc_drawn,short in_square_x,short in_squa
 			put_rect_in_gworld(ter_draw_gworld,to_rect,215,0,255);
 			InsetRect(&to_rect,-1,-1);
 			put_rect_in_gworld(ter_draw_gworld,to_rect,255,0,255);
-			InsetRect(&to_rect,1,1);
-			InsetRect(&to_rect,1,1);
+			InsetRect(&to_rect,2,2);
 		}
 	}
 }
 
-void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y)
+void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y,bool selected)
 {
 	Rect ter_script_icon_from = {0,100,20,120};
 	
@@ -3280,6 +3308,13 @@ void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short
 		to_rect.left = to_rect.right - 20;
 		to_rect.bottom = to_rect.top + 20;
 		rect_draw_some_item(markers,ter_script_icon_from,ter_draw_gworld,to_rect,0,0);
+		if(selected){
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,215,0,255);
+			InsetRect(&to_rect,-1,-1);
+			put_rect_in_gworld(ter_draw_gworld,to_rect,255,0,255);
+			InsetRect(&to_rect,2,2);
+		}
 	}
 }
 
@@ -3524,50 +3559,88 @@ void place_left_text()
 				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[i + 2],(char *) draw_str,2,10);		
 			}
 		}
+		if ((selected_item_number >= 10000) && (selected_item_number < 10000 + NUM_TOWN_PLACED_SPECIALS)) {
+			sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_item_number % 1000);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  State: %d",town.spec_id[selected_item_number % 1000]);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"  Top Boundary: %d",town.special_rects[selected_item_number % 1000].top);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  Left Boundary: %d",town.special_rects[selected_item_number % 1000].left);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"[Redraw]");
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"  Bottom Boundary: %d",town.special_rects[selected_item_number % 1000].bottom);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  Right Boundary: %d",town.special_rects[selected_item_number % 1000].right);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+		}
 		if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
-			sprintf((char *) draw_str,"Item %d",selected_item_number % 1000); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
+			sprintf((char *) draw_str,"Item %d",selected_item_number % 1000);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
 			sprintf((char *) draw_str,"  %s",
-					scen_data.scen_items[town.preset_items[selected_item_number % 1000].which_item].full_name); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
+					scen_data.scen_items[town.preset_items[selected_item_number % 1000].which_item].full_name);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
 			if (scen_data.scen_items[town.preset_items[selected_item_number % 1000].which_item].charges > 0) {
 				sprintf((char *) draw_str,"  Charges/Amount: %d",
-						town.preset_items[selected_item_number % 1000].charges); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
+						town.preset_items[selected_item_number % 1000].charges);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
 			}
 			if (town.preset_items[selected_item_number % 1000].properties & 2)
 				sprintf((char *) draw_str,"  Property");
 			else sprintf((char *) draw_str,"  Not Property");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);		
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);
 			if (town.preset_items[selected_item_number % 1000].properties & 4)
 				sprintf((char *) draw_str,"  Contained");
 			else sprintf((char *) draw_str,"  Not Contained");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);		
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
 			sprintf((char *) draw_str,"  Drawing Shift X: %d",
-					town.preset_items[selected_item_number % 1000].item_shift.x); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);		
+					town.preset_items[selected_item_number % 1000].item_shift.x);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
 			sprintf((char *) draw_str,"  Drawing Shift Y: %d",
-					town.preset_items[selected_item_number % 1000].item_shift.y); 
+					town.preset_items[selected_item_number % 1000].item_shift.y);
 			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
 			sprintf((char *) draw_str,"  Edit Properties");
 			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
 		}
 		if (selected_item_number < 0) {
-			sprintf((char *) draw_str,"Editing Town/Dungeon %d",cur_town); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-			sprintf((char *) draw_str,"  %s",town.town_name); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
-			//sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y); 
-			//char_win_draw_string(mainPtr,left_text_lines[2],(char *) draw_str,2,10);		
+			sprintf((char *) draw_str,"Editing Town/Dungeon %d",cur_town);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  %s",town.town_name);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);	
 		}
 	}
 	else {
-		sprintf((char *) draw_str,"Editing Outdoors"); 
-		char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-		sprintf((char *) draw_str,"  %s",current_terrain.name); 
-		char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
-		sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y); 
-		char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
+		if (selected_item_number < 0) {
+			sprintf((char *) draw_str,"Editing Outdoors"); 
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
+			sprintf((char *) draw_str,"  %s",current_terrain.name); 
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
+			sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y); 
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
+		}
+		else if ((selected_item_number >= 10000) && (selected_item_number < 10000 + NUM_OUT_PLACED_SPECIALS)) {
+			sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_item_number % 1000);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  State: %d",current_terrain.spec_id[selected_item_number % 1000]);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].top);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].left);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"[Redraw]");
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+			
+			sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].bottom);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+			sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].right);
+			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+		}
 	}
 }
 
@@ -3722,15 +3795,15 @@ bool isButtonHilited(int i, int j){
 				return(true);
 		}
 		if(j==2){ //third row
-			if(i==0 && overall_mode==59)
+			if(i==0 && overall_mode==40)
 				return(true);
-			if(i==1 && overall_mode==21)
+			if(i==1 && overall_mode==16)
 				return(true);
-			if(i==2 && overall_mode==16)
+			if(i==2 && overall_mode==59)
 				return(true);
-			if(i==3 && overall_mode==49)
+			if(i==3 && overall_mode==21)
 				return(true);
-			if(i==4 && overall_mode==50)
+			if(i==4 && overall_mode==70)
 				return(true);
 			if(i==6 && overall_mode==57)
 				return(true);
@@ -3741,12 +3814,6 @@ bool isButtonHilited(int i, int j){
 			return(false);
 		}
 		if(j==3){ //fourth row
-			if(i==0 && overall_mode==40)
-				return(true);
-			if(i==1 && overall_mode==41)
-				return(true);
-			if(i==2 && overall_mode==70)
-				return(true);
 			if(i==5 && overall_mode==30)
 				return(true);
 			if(i==6 && overall_mode==31)
@@ -3830,13 +3897,13 @@ bool isButtonHilited(int i, int j){
 			return(false);
 		}
 		if(j==2){ //third row
-			if(i==0 && overall_mode==59)
+			if(i==0 && overall_mode==40)
 				return(true);
-			if(i==1 && overall_mode==21)
+			if(i==1 && overall_mode==16)
 				return(true);
-			if(i==2 && overall_mode==16)
+			if(i==2 && overall_mode==59)
 				return(true);
-			if(i==3 && overall_mode==49)
+			if(i==3 && overall_mode==21)
 				return(true);
 			if(i==4 && overall_mode==50)
 				return(true);
@@ -4182,10 +4249,11 @@ Boolean spot_in_rect(location l,Rect r)
 //clears all of the loaded graphics out of the library
 Boolean clear_graphics_library()
 {
-	for (short i = 0; i < num_sheets_in_library; i++) {
+	//leave built-ins alone, removing them shouldn't ever be necessary
+	for (short i = num_builtin_sheets_in_library; i < num_sheets_in_library; i++) {
 		delete_graphic(&graphics_library[i]);
 	}
-	num_sheets_in_library = 0;
+	num_sheets_in_library = num_builtin_sheets_in_library;
 	return TRUE;
 }
 
@@ -4193,15 +4261,19 @@ Boolean clear_graphics_library()
 Boolean refresh_graphics_library()
 {
 	open_current_scenario_resources();
-	for (short i = 0; i < num_sheets_in_library; i++) {
+	short remaining_sheets = num_sheets_in_library;
+	for (short i = num_builtin_sheets_in_library; i < num_sheets_in_library; i++) {
+		remaining_sheets--;
 		delete_graphic(&graphics_library[i]);
 		graphics_library[i] = load_pict(graphics_library_index[i].which_sheet);
 		if (graphics_library[i] == NULL){
 			cant_draw_graphics_error(graphics_library_index[i],NULL,-1);
+			num_sheets_in_library = remaining_sheets;
 			return FALSE;
 		}
+		remaining_sheets++;
 	}
-	num_sheets_in_library = 0;
+	num_sheets_in_library = remaining_sheets;
 	return TRUE;
 }
 
@@ -4222,7 +4294,7 @@ Boolean load_sheet_into_library(graphic_id_type *new_sheet)
 		return FALSE;
 	
 	graphics_library[num_sheets_in_library] = NULL;
-	graphics_library[num_sheets_in_library] = load_pict(new_sheet->which_sheet);	
+	graphics_library[num_sheets_in_library] = load_pict(new_sheet->which_sheet);
 	if (graphics_library[num_sheets_in_library] == NULL)
 		return FALSE;
 	
@@ -4251,7 +4323,7 @@ short safe_get_index_of_sheet(graphic_id_type *sheet)
 	if (sheet->not_legit())
 		return -1;
 	
-	short index = get_index_of_sheet(sheet); 
+	short index = get_index_of_sheet(sheet);
 	if (index < 0) {
 		if (load_sheet_into_library(sheet) == FALSE) {
 			clear_graphics_library();
@@ -4263,6 +4335,84 @@ short safe_get_index_of_sheet(graphic_id_type *sheet)
 			return -1;
 	}
 	return index;
+}
+
+GWorldPtr import_image_file_to_GWorld(const FSSpec* fileSpec){
+	GraphicsImportComponent gi;
+	GetGraphicsImporterForFile (fileSpec, &gi );
+	if(gi==NIL){
+		give_error("Internal Error: Failed to find graphics importer (in import_image_file_to_GWorld)","",0);
+		return(NULL);
+	}
+	Rect naturalBounds;
+	GraphicsImportGetNaturalBounds (gi, &naturalBounds);
+	GWorldPtr temp;
+	NewGWorld(&temp,0,&naturalBounds, NIL, NIL, 0);
+	GraphicsImportSetGWorld (gi, temp, nil);
+	GraphicsImportDraw (gi);
+	CloseComponent(gi);
+	return(temp);
+}
+
+OSErr FSSpec_for_resource(CFStringRef resourceName, CFStringRef resourceType, CFStringRef resourceSubDir, FSSpec& spec){
+	OSErr err = fnfErr;
+	CFBundleRef mainBundle = CFBundleGetMainBundle();
+	if (mainBundle == NULL) return err;
+	
+	CFURLRef resourceURL = CFBundleCopyResourceURL(mainBundle, resourceName, resourceType, resourceSubDir);
+	
+	FSRef resourceRef;
+	Boolean ok = CFURLGetFSRef(resourceURL, &resourceRef);
+	CFRelease(resourceURL);
+	if (!ok) return err;
+	return FSGetCatalogInfo(&resourceRef, kFSCatInfoNone, NULL, NULL, &spec, NULL);
+}
+
+GWorldPtr load_image_resource(CFStringRef resourceName, CFStringRef resourceType, CFStringRef resourceSubDir){
+	FSSpec spec;
+	if(FSSpec_for_resource(resourceName, resourceType, resourceSubDir, spec) != noErr){
+		give_error("Internal Error: Failed to properly locate resource file (in load_image_resource)","",0);
+		return(NULL);
+	}
+	return(import_image_file_to_GWorld(&spec));
+}
+
+void import_image_resource_into_library(CFStringRef resourceName, CFStringRef resourceType, CFStringRef resourceSubDir, graphic_id_type new_sheet){
+	if (new_sheet.not_legit()){
+		give_error("Internal Error: Invalid graphic specification (in import_image_resource_into_library)","",0);
+		return;
+	}
+	if (get_index_of_sheet(&new_sheet) >= 0){
+		give_error("Internal Error: Attempting to load sheet which already exists (in import_image_resource_into_library)","",0);
+		return;
+	}
+	if (num_sheets_in_library >= MAX_NUM_SHEETS_IN_LIBRARY){
+		give_error("Internal Error: Graphics library full (in import_image_resource_into_library)!","",0);
+		return;
+	}
+	//std::cout << "import_image_resource_into_library: Inserting sheet " << new_sheet.which_sheet << " at index " << num_sheets_in_library << std::endl;
+	graphics_library[num_sheets_in_library] = NULL;
+	graphics_library[num_sheets_in_library] = load_image_resource(resourceName,resourceType,resourceSubDir);
+	
+	if (graphics_library[num_sheets_in_library] == NULL){
+		give_error("Internal Error: Failed to properly load image data (in import_image_resource_into_library)","",0);
+		return;
+	}
+	
+	graphics_library_index[num_sheets_in_library] = new_sheet;
+	num_sheets_in_library++;
+}
+
+void load_builtin_images(){
+	//enforce that builtin are at the bottom of the library
+	if(num_builtin_sheets_in_library!=0 || num_sheets_in_library!=0)
+		return;
+	markers = load_image_resource(CFSTR("markers"),CFSTR("png"),NULL);
+	import_image_resource_into_library(CFSTR("sheet701_patch"),CFSTR("png"),NULL,graphic_id_type(916,0,0));
+	import_image_resource_into_library(CFSTR("character"),CFSTR("png"),NULL,graphic_id_type(917,0,0));
+	townButtons = load_image_resource(CFSTR("town_buttons"),CFSTR("png"),NULL);
+	outdoorButtons = load_image_resource(CFSTR("outdoor_buttons"),CFSTR("png"),NULL);
+	num_builtin_sheets_in_library=num_sheets_in_library;
 }
 
 void put_rect_in_gworld(GWorldPtr line_gworld,Rect rect,short r,short g, short b)

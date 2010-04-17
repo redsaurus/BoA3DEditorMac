@@ -142,7 +142,12 @@ typedef struct {
 // The data for the location for an icon in memory.
 class graphic_id_type {
 public:
-	graphic_id_type();
+	graphic_id_type():
+	which_sheet(-1),which_icon(0),graphic_adjust(0){}
+	
+	graphic_id_type(short sheet, short icon, short adjust):
+	which_sheet(sheet),which_icon(icon),graphic_adjust(adjust){}
+	
 	void clear_graphic_id_type();
 	Boolean not_legit();
 	
@@ -1223,12 +1228,9 @@ public:
 	listNode* next;
 	void* data;
 	
-	listNode():next(NULL), data(NULL)
-	{}
-	listNode(listNode* n, void* d):next(n), data(d)
-	{}
-	void print()
-	{
+	listNode():next(NULL), data(NULL){}
+	listNode(listNode* n, void* d):next(n), data(d){}
+	void print(){
 		printf("listnode with data=%p and next=%p",data,next);
 	}
 };
@@ -1249,31 +1251,26 @@ private:
 	listNode* currentItem;
 	int indexOfCurrentItem;
 public:
-		linkedList()
-	{
+		linkedList(){
 			start=NULL;
 			numItems=0;
 			currentItem=NULL;
 			indexOfCurrentItem=-1;
 	}
-	~linkedList()
-	{
+	~linkedList(){
 		this->clear();
 	}
-	int size()
-	{
+	int size(){
 		return(numItems);
 	}
-	void push(void* newItem)
-	{
+	void push(void* newItem){
 		listNode* temp = new listNode(start,newItem);
 		start=temp;
 		currentItem=start;
 		indexOfCurrentItem=0;
 		numItems++;
 	}
-	void* pop()
-	{
+	void* pop(){
 		if(start == NULL)
 			return(NULL);
 		listNode* temp = start;
@@ -1288,8 +1285,7 @@ public:
 		numItems--;
 		return(data);
 	}
-	void* itemAtIndex(int i)
-	{
+	void* itemAtIndex(int i){
 		if(i<0 || i>=numItems)
 			return(NULL);
 		if(indexOfCurrentItem>=0){//we have a cached index, test if it's useful
@@ -1315,8 +1311,7 @@ public:
 		}
 		return(currentItem->data);
 	}
-	void clear()
-	{
+	void clear(){
 		if(numItems==0)
 			return;
 		currentItem=start;
@@ -1329,8 +1324,7 @@ public:
 		indexOfCurrentItem=-1;
 		start=NULL;
 	}
-	void print()
-	{
+	void print(){
 		printf("linkedList: there are %i nodes\n",numItems);
 		listNode* temp=start;
 		int i=0;
@@ -1362,16 +1356,13 @@ public:
 	//2 = terrain change
 	//3 = height change
 	
-	drawingChange(short xloc, short yloc, short nval, short oval, short t):x(xloc), y(yloc), newval(nval), oldval(oval), type(t)
-	{}
-	void invert()
-	{
+	drawingChange(short xloc, short yloc, short nval, short oval, short t):x(xloc), y(yloc), newval(nval), oldval(oval), type(t){}
+	void invert(){
 		short temp=oldval;
 		oldval=newval;
 		newval=temp;
 	}
-	void print()
-	{
+	void print(){
 		printf("change of type %i at (%i,%i) from %i to %i",type,x,y,oldval,newval);
 	}
 };
@@ -1793,7 +1784,7 @@ Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_ce
 Boolean place_outdoor_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
 Boolean place_corner_wall_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Boolean left_side_of_template,Rect *to_whole_area_rect,short lighting);
 void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect);
-void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect);
+void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,bool selected);
 void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *drawing_terrain, short square_x, short square_y, short t_to_draw, short floor_to_draw, short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect);
 void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height);
 void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_point_center_x, short at_point_center_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting);
@@ -1833,6 +1824,7 @@ Boolean refresh_graphics_library();
 Boolean load_sheet_into_library(graphic_id_type *new_sheet);
 short get_index_of_sheet(graphic_id_type *sheet);
 short safe_get_index_of_sheet(graphic_id_type *sheet);
+void load_builtin_images();
 //void win_draw_string(CGrafPtr dest_window,Rect dest_rect,char *str,short mode,short line_height,short r, short g, short b);
 void put_rect_in_gworld(GWorldPtr line_gworld,Rect rect,short r,short g, short b);
 void fill_rect_in_gworld(GWorldPtr line_gworld,Rect to_rect,short r,short g, short b);
@@ -1877,7 +1869,7 @@ void place_dlog_borders_around_rect(GWorldPtr to_gworld,WindowPtr win,
 void place_dlog_border_on_win(GWorldPtr to_gworld,WindowPtr win,
 	Rect border_to_rect,short horiz_or_vert,short bottom_or_top);
 void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pattern);
-void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y);
+void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y,bool selected);
 void cant_draw_graphics_error(graphic_id_type a,char *bonus_string,short bonus_num);
 void refresh_graphics_on_screen();
 

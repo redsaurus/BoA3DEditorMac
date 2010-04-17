@@ -125,6 +125,7 @@ short overall_mode = 0;
 // 22 - outdoor only - town entrance
 // 23 - copy terrain
 // 24 - change height rectangle (delta)
+// 25 - redraw special enc
 
 // regular select modes
 // 30 - place north entrance
@@ -165,6 +166,7 @@ short selected_item_number = -1;
 // codes for selected items
 // 7000 + x - creature x
 // 9000 + x - terrain script x
+// 10000 + x - special rectangle x
 // 11000 + x - items x
 item_type copied_item;
 creature_start_type copied_creature;

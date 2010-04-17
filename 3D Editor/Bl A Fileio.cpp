@@ -1607,7 +1607,8 @@ void load_campaign(FSSpec* file_to_load)
 		file_is_loaded = FALSE;
 		return;
 	}
-	open_current_scenario_resources();	
+	open_current_scenario_resources();
+	load_builtin_images();
 	set_up_terrain_buttons();
 }
 

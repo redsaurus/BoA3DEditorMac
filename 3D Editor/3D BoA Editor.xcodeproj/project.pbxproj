@@ -72,6 +72,12 @@
 		6A86A2940688BE3E009593BC /* global.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40806771A6F0030138E /* global.h */; };
 		6A86A2980688BE57009593BC /* tokntype.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40D06771A6F0030138E /* tokntype.h */; };
 		9D4864990CDCDAD100444D09 /* BoAScen.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D4864980CDCDAD100444D09 /* BoAScen.icns */; };
+		9DCD2F831179609B00D1D465 /* character.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DCD2F7E1179609B00D1D465 /* character.png */; };
+		9DCD2F841179609B00D1D465 /* markers.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DCD2F7F1179609B00D1D465 /* markers.png */; };
+		9DCD2F851179609B00D1D465 /* outdoor_buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DCD2F801179609B00D1D465 /* outdoor_buttons.png */; };
+		9DCD2F861179609B00D1D465 /* sheet701_patch.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DCD2F811179609B00D1D465 /* sheet701_patch.png */; };
+		9DCD2F871179609B00D1D465 /* town_buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DCD2F821179609B00D1D465 /* town_buttons.png */; };
+		9DCD2FEE1179659C00D1D465 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DCD2FED1179659C00D1D465 /* QuickTime.framework */; };
 		9DD2E4680CC079810078A447 /* libstdc++-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD2E4670CC079810078A447 /* libstdc++-static.a */; };
 		9DFCBBCA0CC0728000DD1669 /* global.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40806771A6F0030138E /* global.h */; };
 		9DFCBBCB0CC0728000DD1669 /* tokntype.h in Headers */ = {isa = PBXBuildFile; fileRef = 6A66C40D06771A6F0030138E /* tokntype.h */; };
@@ -89,12 +95,10 @@
 		9DFCBBD80CC0728000DD1669 /* sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40C06771A6F0030138E /* sound.cpp */; };
 		9DFCBBD90CC0728000DD1669 /* townout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A66C40E06771A6F0030138E /* townout.cpp */; };
 		9DFCBBDB0CC0728000DD1669 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
-		9DFCBBDD0CC0728000DD1669 /* 3D Editor Graphics.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */; };
 		9DFCBBDE0CC0728000DD1669 /* Bl A Editor.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2907AF567300D7E90C /* Bl A Editor.r */; };
 		9DFCBBE00CC0728000DD1669 /* BoAEdAPPL.icns in Resources */ = {isa = PBXBuildFile; fileRef = C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */; };
 		C76F042607B0F35400A7A55E /* BoAEdAPPL.icns in Resources */ = {isa = PBXBuildFile; fileRef = C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */; };
 		C7DE88D60775BF6000258194 /* 3D BoA Editor_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */; };
-		C7E5FD2607AF566300D7E90C /* 3D Editor Graphics.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */; };
 		C7E5FD2A07AF567300D7E90C /* Bl A Editor.r in Rez */ = {isa = PBXBuildFile; fileRef = C7E5FD2907AF567300D7E90C /* Bl A Editor.r */; };
 /* End PBXBuildFile section */
 
@@ -116,12 +120,17 @@
 		6A66C40E06771A6F0030138E /* townout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = townout.cpp; sourceTree = "<group>"; };
 		6A86A2800688BD08009593BC /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D4864980CDCDAD100444D09 /* BoAScen.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAScen.icns; sourceTree = "<group>"; };
+		9DCD2F7E1179609B00D1D465 /* character.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = character.png; sourceTree = "<group>"; };
+		9DCD2F7F1179609B00D1D465 /* markers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = markers.png; sourceTree = "<group>"; };
+		9DCD2F801179609B00D1D465 /* outdoor_buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = outdoor_buttons.png; sourceTree = "<group>"; };
+		9DCD2F811179609B00D1D465 /* sheet701_patch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sheet701_patch.png; sourceTree = "<group>"; };
+		9DCD2F821179609B00D1D465 /* town_buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = town_buttons.png; sourceTree = "<group>"; };
+		9DCD2FED1179659C00D1D465 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
 		9DD2E4670CC079810078A447 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
 		9DFCBBE60CC0728000DD1669 /* Info-Isaacs___BoA_Editor__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Isaacs___BoA_Editor__Upgraded_.plist"; sourceTree = "<group>"; };
 		9DFCBBE70CC0728100DD1669 /* 3D Blades of Avernum Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D Blades of Avernum Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C76F042507B0F35300A7A55E /* BoAEdAPPL.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = BoAEdAPPL.icns; sourceTree = "<group>"; };
 		C7DE88D50775BF6000258194 /* 3D BoA Editor_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "3D BoA Editor_Prefix.pch"; sourceTree = "<group>"; };
-		C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "3D Editor Graphics.r"; sourceTree = "<group>"; };
 		C7E5FD2907AF567300D7E90C /* Bl A Editor.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = "Bl A Editor.r"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -140,6 +149,7 @@
 			files = (
 				9DFCBBDB0CC0728000DD1669 /* Carbon.framework in Frameworks */,
 				9DD2E4680CC079810078A447 /* libstdc++-static.a in Frameworks */,
+				9DCD2FEE1179659C00D1D465 /* QuickTime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,9 +201,9 @@
 		20286C2CFDCF999611CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				9DCD2F7D1179609B00D1D465 /* image_resources */,
 				9D4864980CDCDAD100444D09 /* BoAScen.icns */,
 				C7E5FD2907AF567300D7E90C /* Bl A Editor.r */,
-				C7E5FD2507AF566300D7E90C /* 3D Editor Graphics.r */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -201,10 +211,23 @@
 		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				9DCD2FED1179659C00D1D465 /* QuickTime.framework */,
 				9DD2E4670CC079810078A447 /* libstdc++-static.a */,
 				20286C33FDCF999611CA2CEA /* Carbon.framework */,
 			);
 			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		9DCD2F7D1179609B00D1D465 /* image_resources */ = {
+			isa = PBXGroup;
+			children = (
+				9DCD2F7E1179609B00D1D465 /* character.png */,
+				9DCD2F7F1179609B00D1D465 /* markers.png */,
+				9DCD2F801179609B00D1D465 /* outdoor_buttons.png */,
+				9DCD2F811179609B00D1D465 /* sheet701_patch.png */,
+				9DCD2F821179609B00D1D465 /* town_buttons.png */,
+			);
+			path = image_resources;
 			sourceTree = "<group>";
 		};
 		C74258B507AF849F00B47EBF /* Headers */ = {
@@ -297,6 +320,11 @@
 			files = (
 				9DFCBBE00CC0728000DD1669 /* BoAEdAPPL.icns in Resources */,
 				9D4864990CDCDAD100444D09 /* BoAScen.icns in Resources */,
+				9DCD2F831179609B00D1D465 /* character.png in Resources */,
+				9DCD2F841179609B00D1D465 /* markers.png in Resources */,
+				9DCD2F851179609B00D1D465 /* outdoor_buttons.png in Resources */,
+				9DCD2F861179609B00D1D465 /* sheet701_patch.png in Resources */,
+				9DCD2F871179609B00D1D465 /* town_buttons.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,7 +343,6 @@
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C7E5FD2607AF566300D7E90C /* 3D Editor Graphics.r in Rez */,
 				C7E5FD2A07AF567300D7E90C /* Bl A Editor.r in Rez */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -324,7 +351,6 @@
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9DFCBBDD0CC0728000DD1669 /* 3D Editor Graphics.r in Rez */,
 				9DFCBBDE0CC0728000DD1669 /* Bl A Editor.r in Rez */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -518,6 +544,7 @@
 			buildSettings = {
 				ARCHS = ppc;
 				GCC_VERSION = 4.0;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Development;
@@ -526,6 +553,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ppc;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
 			};
 			name = "Shadow variable check";
 		};
@@ -536,6 +564,7 @@
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
 				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
 				WARNING_CFLAGS = "-Wno-write-strings";
@@ -546,6 +575,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = ppc;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
 			};
 			name = Default;
 		};

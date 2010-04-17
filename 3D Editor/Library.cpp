@@ -18,11 +18,6 @@
 
 extern short max_zone_dim[3];// = {64,48,32};
 
-graphic_id_type::graphic_id_type()
-{
-	clear_graphic_id_type();
-}
-
 void graphic_id_type::clear_graphic_id_type()
 {
 	which_sheet = -1;
