@@ -1002,7 +1002,7 @@ void cd_draw_item(short dlog_num,short item_num)
 				}
 				break;
 
-			case 3: case 4: case 7: case 8: case 9: 
+			case 3: case 4: case 7: case 8: case 9:
 				cd_erase_item(dlog_num,item_num);
 				if (dlg_item_type[item_index] == 4)
 					TextFace(0);
@@ -1093,7 +1093,7 @@ void cd_draw_item(short dlog_num,short item_num)
 
 	TextFont(0);
 	TextFace(0);
-	TextSize(12);
+	TextSize(0);
 	SetPort(old_port);
 }
 
