@@ -27,6 +27,9 @@ extern short overall_mode;
 extern char *attitude_types[4];
 extern  Boolean file_is_loaded;
 
+extern SelectionType::SelectionType_e selected_object_type;
+extern unsigned short selected_object_number;
+
 static creature_start_type store_placed_monst;
 static short store_which_placed_monst;
 static short store_which_placed_item;
@@ -1159,8 +1162,8 @@ Boolean edit_area_rect_str(short which_str,short mode)
 	
 	if (editing_town == FALSE)
 		CDST(840,2,current_terrain.info_rect_text[store_which_str]);
-		else CDST(840,2,town.info_rect_text[store_which_str]);
-		
+	else
+		CDST(840,2,town.info_rect_text[store_which_str]);
 
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);
@@ -1175,13 +1178,18 @@ Boolean save_out_strs()
 	Str255 str;
 	short i;
 	
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < NUM_OUT_DESCRIPTION_AREAS; i++){
 		CDGT(850,2 + i,(char *) str);
 		str[29] = 0;
 		sprintf((char *)current_terrain.info_rect_text[i],"%s",str);
-		if (str_do_delete[i] > 0)
+		if (str_do_delete[i] > 0){
 			current_terrain.info_rect[i].right = -1;
+			if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+				selected_object_type=SelectionType::None;
+				selected_object_number=0;
+			}
 		}
+	}
 	return TRUE;
 }
 
@@ -1190,17 +1198,18 @@ void put_out_strs_in_dlog()
 	Str255 str;
 	short i;
 	
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < NUM_OUT_DESCRIPTION_AREAS; i++) {
 		if ((current_terrain.info_rect[i].right <= 0) || (str_do_delete[i] > 0)) {
 			sprintf((char *) str,"Not yet placed.");
 			cd_activate_item(850,25 + i,0);
-			}
-			else sprintf((char *) str,"L = %d, T = %d, R = %d, B = %d",current_terrain.info_rect[i].left,
-				current_terrain.info_rect[i].top,current_terrain.info_rect[i].right,current_terrain.info_rect[i].bottom);
+		}
+		else
+			sprintf((char *) str,"L = %d, T = %d, R = %d, B = %d",current_terrain.info_rect[i].left,
+					current_terrain.info_rect[i].top,current_terrain.info_rect[i].right,current_terrain.info_rect[i].bottom);
 		cd_set_item_text(850,13 + i,(char *) str);
 		CDST(850,2 + i,current_terrain.info_rect_text[i]);
-		}
-
+	}
+	
 }
 
 void edit_out_strs_event_filter (short item_hit)
@@ -1219,7 +1228,7 @@ void edit_out_strs_event_filter (short item_hit)
 				CDST(850,2 + item_hit - 25,"");
 				str_do_delete[item_hit - 25] = 1;
 				put_out_strs_in_dlog();
-				}
+			}
 			break;
 		}
 }
@@ -1229,7 +1238,7 @@ void edit_out_strs()
 {
 	short out_strs_hit,i;
 	
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < NUM_OUT_DESCRIPTION_AREAS; i++)
 		str_do_delete[i] = 0;
 		
 	cd_create_dialog_parent_num(850,0);
@@ -1249,13 +1258,18 @@ Boolean save_town_strs()
 	Str255 str;
 	short i;
 	
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < NUM_TOWN_DESCRIPTION_AREAS; i++) {
 		CDGT(839,2 + i,(char *) str);
 		str[29] = 0;
 		sprintf((char *)town.info_rect_text[i],"%s",str);
-		if (str_do_delete[i] > 0)
+		if (str_do_delete[i] > 0){
 			town.room_rect[i].right = -1;
+			if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+				selected_object_type=SelectionType::None;
+				selected_object_number=0;
+			}
 		}
+	}
 	return TRUE;
 }
 
@@ -1264,7 +1278,7 @@ void put_town_strs_in_dlog()
 	Str255 str;
 	short i;
 	
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < NUM_TOWN_DESCRIPTION_AREAS; i++) {
 		if ((town.room_rect[i].right <= 0) || (str_do_delete[i] > 0)) {
 			sprintf((char *) str,"Not yet placed.");
 			cd_activate_item(839,41 + i,0);
@@ -1303,7 +1317,7 @@ void edit_town_strs()
 {
 	short town_strs_hit,i;
 	
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < NUM_TOWN_DESCRIPTION_AREAS; i++)
 		str_do_delete[i] = 0;
 		
 	cd_create_dialog_parent_num(839,0);

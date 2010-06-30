@@ -126,6 +126,8 @@ short overall_mode = 0;
 // 23 - copy terrain
 // 24 - change height rectangle (delta)
 // 25 - redraw special enc
+// 26 - redraw town entrance
+// 27 - redraw area description
 
 // regular select modes
 // 30 - place north entrance
@@ -162,12 +164,9 @@ short overall_mode = 0;
 // Numbers of current zone being edited
 
 // file selection editing files
-short selected_item_number = -1;
-// codes for selected items
-// 7000 + x - creature x
-// 9000 + x - terrain script x
-// 10000 + x - special rectangle x
-// 11000 + x - items x
+SelectionType::SelectionType_e selected_object_type = SelectionType::None;
+unsigned short selected_object_number;
+
 item_type copied_item;
 creature_start_type copied_creature;
 in_town_on_ter_script_type copied_ter_script;
@@ -318,9 +317,7 @@ void Initialize(void)
 	//	will always be different.  Don‚Äôt for each call of Random, or the sequence
 	//	will no longer be random.  Only needed once, here in the init.
 	//
-	//GetDateTime((unsigned long*) &qd.randSeed);
-	unsigned long randseed;
-	GetDateTime(&randseed);
+	unsigned long randseed=(unsigned long)CFAbsoluteTimeGetCurrent();
 	SetQDGlobalsRandomSeed(randseed);
 
 	//	Make a new window for drawing in, and it must be a color window.  

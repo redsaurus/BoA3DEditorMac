@@ -22,6 +22,7 @@
 #define	NUM_DLOG_B		53
 
 #define	MAX_TOWN_SIZE	64
+#define OUTDOOR_SIZE	48
 
 #define	TER_RECT_UL_X	20
 #define	TER_RECT_UL_Y	20
@@ -80,9 +81,13 @@
 #define NUM_TOWN_PLACED_CREATURES	80
 #define NUM_TOWN_PLACED_SPECIALS	60
 #define NUM_OUT_PLACED_SPECIALS	30
+#define NUM_OUT_TOWN_ENTRANCES	8
+#define NUM_TOWN_DESCRIPTION_AREAS 16
+#define NUM_OUT_DESCRIPTION_AREAS 8
 
 #define kNO_TOWN_SPECIALS	0xFF	// No Special encounter on town map
 #define kNO_OUT_SPECIALS	-1		// No special encounter on outdoor map
+#define kNO_OUT_TOWN_ENTRANCE	-1	// No town entrance on outdoor map
 
 #define kINVAL_TOWN_LOC_X	-1		// invalid town location
 #define kINVAL_TOWN_LOC_Y	-1
@@ -106,6 +111,25 @@ enum {
 	eSCRL_Bottom	= 0x02,
 	eSCRL_Right		= 0x01,
 };
+
+//use a wrapping namespace to simulate C++0x strongly typed enum
+//when possible this should be switched to an actual strongly type enum
+//by removing the namespace and changing 'enum SelectionType_e' to
+//'enum class SelectionType'
+namespace SelectionType{
+	enum SelectionType_e {
+		None,
+		//Town only:
+		Creature,
+		Item,
+		TerrainScript,
+		//Town or outdoor:
+		SpecialEncounter, 
+		AreaDescription,
+		//Outdoor only:
+		TownEntrance
+	};
+} //namespace SelectionType
 
 #define	inUpButton	kControlUpButtonPart
 #define	inDownButton	kControlDownButtonPart
@@ -335,12 +359,12 @@ public:
 	void port();
 
 	char name[20];
-	unsigned char floor[48][48],height[48][48];
-	short terrain[48][48];
+	unsigned char floor[OUTDOOR_SIZE][OUTDOOR_SIZE],height[OUTDOOR_SIZE][OUTDOOR_SIZE];
+	short terrain[OUTDOOR_SIZE][OUTDOOR_SIZE];
 	Rect special_rects[NUM_OUT_PLACED_SPECIALS];
 	short spec_id[NUM_OUT_PLACED_SPECIALS];
-	Rect exit_rects[8];
-	short exit_dests[8];
+	Rect exit_rects[NUM_OUT_TOWN_ENTRANCES];
+	short exit_dests[NUM_OUT_TOWN_ENTRANCES];
 
 	// signs
 	location sign_locs[8];
@@ -350,8 +374,8 @@ public:
 	out_wandering_type wandering[4],special_enc[4],preset[8];
 	location wandering_locs[4];
 
-	Rect info_rect[8];
-	char info_rect_text[8][30];
+	Rect info_rect[NUM_OUT_DESCRIPTION_AREAS];
+	char info_rect_text[NUM_OUT_DESCRIPTION_AREAS][30];
 
 	// scripts and special flags
 	char section_script[SCRIPT_NAME_LEN]; // the name of the default script
@@ -675,8 +699,8 @@ public:
 	char town_script[SCRIPT_NAME_LEN]; 
 	in_town_on_ter_script_type ter_scripts[NUM_TER_SCRIPTS];
 	
-	Rect room_rect[16];
-	char info_rect_text[16][30];
+	Rect room_rect[NUM_TOWN_DESCRIPTION_AREAS];
+	char info_rect_text[NUM_TOWN_DESCRIPTION_AREAS][30];
 	creature_start_type creatures[NUM_TOWN_PLACED_CREATURES];
 	short extra[20];
 	
@@ -1336,6 +1360,16 @@ public:
 			i++;
 		}
 	}
+};
+
+class undoStep : public printable {
+protected:
+	Boolean locked;
+public:
+	virtual void invert()=0;
+	virtual Boolean apply()=0;
+	Boolean isLocked() const { return(locked); }
+	void lock(){ locked = TRUE; }
 };
 
 //a drawing change object represents a change in one of the floor, terrain 

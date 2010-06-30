@@ -67,7 +67,8 @@ extern Rect small_edit_ter_rects[MAX_TOWN_SIZE][MAX_TOWN_SIZE];
 extern Rect left_text_lines[10];
 extern Rect right_text_lines[5];
 
-extern short selected_item_number;
+extern SelectionType::SelectionType_e selected_object_type;
+extern unsigned short selected_object_number;
 extern Boolean hintbook_mode;
 
 GWorldPtr dlg_buttons_gworld[NUM_BUTTONS][2];
@@ -972,7 +973,7 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 		// draw ter scripts
 		for (i = 0; i < NUM_TER_SCRIPTS; i++) {
 			if (town.ter_scripts[i].exists && same_point(town.ter_scripts[i].loc,loc_drawn)) {
-				draw_ter_script_3D(at_point_center_x,at_point_center_y,to_whole_area_rect,(selected_item_number-9000)==i);
+				draw_ter_script_3D(at_point_center_x,at_point_center_y,to_whole_area_rect,selected_object_type==SelectionType::TerrainScript && selected_object_number==i);
 			}
 		}
 	}
@@ -1930,14 +1931,10 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 			draw_creature_3D(i,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting);
 	
 	// draw selected instance 
-	if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS &&
-											town.preset_items[selected_item_number - 11000].item_loc.x == x && town.preset_items[selected_item_number - 11000].item_loc.y == y)) {
-		draw_item_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
-	}
-	if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES &&
-										   town.creatures[selected_item_number - 7000].start_loc.x == x && town.creatures[selected_item_number - 7000].start_loc.y == y)) {
-		draw_creature_3D(selected_item_number % 1000,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
-	}
+	if(selected_object_type==SelectionType::Creature && town.creatures[selected_object_number].start_loc.x == x && town.creatures[selected_object_number].start_loc.y == y)
+		draw_creature_3D(selected_object_number,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
+	if(selected_object_type==SelectionType::Item && town.preset_items[selected_object_number].item_loc.x == x && town.preset_items[selected_object_number].item_loc.y == y)
+		draw_item_3D(selected_object_number,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting,true);
 }
 
 void draw_ter_3D_large()
@@ -2437,7 +2434,7 @@ continue;*/
 															   town.special_rects[i], 1 + 4, 200, 200, 255, to_whole_area_rect);
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   town.special_rects[i], 2 + 4, 0, 0, 255, to_whole_area_rect);
-									if(i==(selected_item_number-10000)){
+									if(selected_object_type==SelectionType::SpecialEncounter && selected_object_number==i){
 										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 																   town.special_rects[i], -1 + 4, 255, 0, 255, to_whole_area_rect);
 										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
@@ -2454,26 +2451,45 @@ continue;*/
 								if (town.room_rect[i].right > 0) {
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   town.room_rect[i], 4 + 4, 0, 255, 0, to_whole_area_rect);
+									if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   town.room_rect[i], 2 + 4, 255, 0, 255, to_whole_area_rect);
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   town.room_rect[i], 3 + 4, 222, 0, 255, to_whole_area_rect);
+									}
 								}
 							}
 						}
-						// Outdoor mode: special encs and other rectangles
-						if (editing_town == FALSE) {
+						else{ // Outdoor mode: special encs and other rectangles
 							// town entry rects
-							for (i = 0; i < 8; i++) {
-								if ((current_terrain.exit_rects[i].right > 0) && (drawing_terrain->exit_dests[i] >= 0)) {
+							for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++) {
+								if(current_terrain.exit_rects[i].right != kNO_OUT_TOWN_ENTRANCE) {
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   drawing_terrain->exit_rects[i], 3 + 4, 255, 0, 255, to_whole_area_rect);
+									
+									if(selected_object_type==SelectionType::TownEntrance && selected_object_number==i){
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->exit_rects[i], 1 + 4, 255, 0, 255, to_whole_area_rect);
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->exit_rects[i], 2 + 4, 222, 0, 255, to_whole_area_rect);
+									}
 								}
 							}
 							
 							// special enc rects
 							for (i = 0; i < NUM_OUT_PLACED_SPECIALS; i++) {
-								if (drawing_terrain->spec_id[i] >= 0) {
+								if (drawing_terrain->spec_id[i] != kNO_OUT_SPECIALS) {
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   drawing_terrain->special_rects[i], 1 + 4, 200, 200, 255, to_whole_area_rect);
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   drawing_terrain->special_rects[i], 2 + 4, 0, 0, 255, to_whole_area_rect);
+									
+									if(drawing_terrain==&current_terrain && selected_object_type==SelectionType::SpecialEncounter && selected_object_number==i){
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->special_rects[i], -1 + 4, 255, 0, 255, to_whole_area_rect);
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->special_rects[i], 0 + 4, 222, 0, 255, to_whole_area_rect);
+									}
 								}
 							}
 							
@@ -2482,6 +2498,12 @@ continue;*/
 								if (current_terrain.info_rect[i].right > 0) {
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   drawing_terrain->info_rect[i], 4 + 4, 0, 255, 0, to_whole_area_rect);
+									if(drawing_terrain==&current_terrain && selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->info_rect[i], 2 + 4, 255, 0, 255, to_whole_area_rect);
+										maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
+																   drawing_terrain->info_rect[i], 3 + 4, 222, 0, 255, to_whole_area_rect);
+									}
 								}
 							}
 						}
@@ -2949,7 +2971,7 @@ void draw_ter_large()
 				// draw ter scripts
 				for (i = 0; i < NUM_TER_SCRIPTS; i++){
 					if (town.ter_scripts[i].exists)
-						draw_ter_script(i,loc_drawn,q,r,(selected_item_number-9000)==i);
+						draw_ter_script(i,loc_drawn,q,r,selected_object_type==SelectionType::TerrainScript && selected_object_number==i);
 				}
 				// draw creatures
 				for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++){
@@ -2962,12 +2984,10 @@ void draw_ter_large()
 						draw_item(i,loc_drawn,q,r);
 				}
 				// draw selected instance
-				if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
-					draw_creature(selected_item_number % 1000,loc_drawn,q,r,true);
-				}
-				if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
-					draw_item(selected_item_number % 1000,loc_drawn,q,r,true);
-				}
+				if(selected_object_type==SelectionType::Creature)
+					draw_creature(selected_object_number,loc_drawn,q,r,true);
+				if(selected_object_type==SelectionType::Item)
+					draw_item(selected_object_number,loc_drawn,q,r,true);
 			}
 								
 			// draw height
@@ -3099,7 +3119,7 @@ void draw_ter_large()
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,200,200,255);
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,0,255);
-					if(i==(selected_item_number-10000)){
+					if(selected_object_type==SelectionType::SpecialEncounter && selected_object_number==i){
 						InsetRect(&rectangle_draw_rect,-2,-2);
 						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
 						InsetRect(&rectangle_draw_rect,-1,-1);
@@ -3124,13 +3144,19 @@ void draw_ter_large()
 					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.room_rect[i].bottom - cen_y + 4 + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,4,4);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,255,0);
+					if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+						InsetRect(&rectangle_draw_rect,-2,-2);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
+						InsetRect(&rectangle_draw_rect,-1,-1);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					}
 				}
 			}
 		}
 		// Outdoor mode: special encs and other rectangles
-		if (editing_town == FALSE) {
+		else{
 			// town entry rects
-			for (i = 0; i < 8; i++){
+			for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++){
 				if ((current_terrain.exit_rects[i].right > 0) && (current_terrain.exit_dests[i] >= 0)) {
 					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].left - cen_x + 4);
 					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].right - cen_x + 4 + 1) - 1;
@@ -3138,6 +3164,12 @@ void draw_ter_large()
 					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].bottom - cen_y + 4 + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					if(selected_object_type==SelectionType::TownEntrance && selected_object_number==i){
+						InsetRect(&rectangle_draw_rect,-2,-2);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
+						InsetRect(&rectangle_draw_rect,-1,-1);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					}
 				}
 			}
 			// special enc rects
@@ -3151,6 +3183,12 @@ void draw_ter_large()
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,200,200,255);
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,0,255);
+					if(selected_object_type==SelectionType::SpecialEncounter && selected_object_number==i){
+						InsetRect(&rectangle_draw_rect,-2,-2);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
+						InsetRect(&rectangle_draw_rect,-1,-1);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					}
 				}
 			}	
 			// description rects
@@ -3162,6 +3200,12 @@ void draw_ter_large()
 					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].bottom - cen_y + 4 + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,4,4);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,255,0);
+					if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
+						InsetRect(&rectangle_draw_rect,-2,-2);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,222,0,255);
+						InsetRect(&rectangle_draw_rect,-1,-1);
+						put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
+					}
 				}
 			}
 		}
@@ -3488,158 +3532,225 @@ void place_left_text()
 	
 	if (editing_town){
 		// Erase and draw bottom text strs
-		if ((selected_item_number >= 7000) && (selected_item_number < 7000 + NUM_TOWN_PLACED_CREATURES)) {
-			sprintf((char *) draw_str,"Creature %d: %s",selected_item_number % 1000 + 6,
-					scen_data.scen_creatures[town.creatures[selected_item_number % 1000].number].name); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Edit This Creature  (Type %d, L%d)",
-					town.creatures[selected_item_number % 1000].number,
-					scen_data.scen_creatures[town.creatures[selected_item_number % 1000].number].level); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);	
-			
-			if (strlen(town.creatures[selected_item_number % 1000].char_script) <= 0){
-				if(strlen(scen_data.scen_creatures[town.creatures[selected_item_number % 1000].number].default_script) <=0)
-					sprintf((char *) draw_str,"  Script: basicnpc");
-				else
-					sprintf((char *) draw_str,"  Script: %s", scen_data.scen_creatures[town.creatures[selected_item_number % 1000].number].default_script);
-			}
-			else 
-				sprintf((char *) draw_str,"  Script: %s",town.creatures[selected_item_number % 1000].char_script); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Attitude: %s",attitude_types[town.creatures[selected_item_number % 1000].start_attitude - 2]); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Character ID: %d",town.creatures[selected_item_number % 1000].character_id); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Hidden Class: %d",town.creatures[selected_item_number % 1000].hidden_class); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);		
-			
-			if (town.creatures[selected_item_number % 1000].extra_item == 0)
-				town.creatures[selected_item_number % 1000].extra_item = -1;
-			
-			if (town.creatures[selected_item_number % 1000].extra_item < 0)
-				sprintf((char *) draw_str,"  Drop Item 1: None");
-			else 
-				sprintf((char *) draw_str,"  Drop Item 1: %s %%%d",scen_data.scen_items[town.creatures[selected_item_number % 1000].extra_item].full_name,
-						 town.creatures[selected_item_number % 1000].extra_item_chance_1); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);		
-			
-			if (town.creatures[selected_item_number % 1000].extra_item_2 == 0)
-				town.creatures[selected_item_number % 1000].extra_item_2 = -1;
-			
-			if (town.creatures[selected_item_number % 1000].extra_item_2 < 0)
-				sprintf((char *) draw_str,"  Drop Item 2: None");
-			else sprintf((char *) draw_str,"  Drop Item 2: %s %%%d",
-						 scen_data.scen_items[town.creatures[selected_item_number % 1000].extra_item_2].full_name,
-						 town.creatures[selected_item_number % 1000].extra_item_chance_2); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Personality: %d",
-					town.creatures[selected_item_number % 1000].personality); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Facing: %s",
-					facings[town.creatures[selected_item_number % 1000].facing]); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);		
-			
-		}
-		if ((selected_item_number >= 9000) && (selected_item_number < 9000 + NUM_TER_SCRIPTS)) {
-			sprintf((char *) draw_str,"Terrain Script %d:",selected_item_number % 1000); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-			
-			sprintf((char *) draw_str,"  Script: %s",
-					town.ter_scripts[selected_item_number % 1000].script_name); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
-			for (short i = 0; i < 8; i++) {
-				sprintf((char *) draw_str,"  Memory Cell %d: %d",
-						i,town.ter_scripts[selected_item_number % 1000].memory_cells[i]); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[i + 2],(char *) draw_str,2,10);		
-			}
-		}
-		if ((selected_item_number >= 10000) && (selected_item_number < 10000 + NUM_TOWN_PLACED_SPECIALS)) {
-			sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_item_number % 1000);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  State: %d",town.spec_id[selected_item_number % 1000]);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"  Top Boundary: %d",town.special_rects[selected_item_number % 1000].top);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Left Boundary: %d",town.special_rects[selected_item_number % 1000].left);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"[Redraw]");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"  Bottom Boundary: %d",town.special_rects[selected_item_number % 1000].bottom);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Right Boundary: %d",town.special_rects[selected_item_number % 1000].right);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-		}
-		if ((selected_item_number >= 11000) && (selected_item_number < 11000 + NUM_TOWN_PLACED_ITEMS)) {
-			sprintf((char *) draw_str,"Item %d",selected_item_number % 1000);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  %s",
-					scen_data.scen_items[town.preset_items[selected_item_number % 1000].which_item].full_name);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-			if (scen_data.scen_items[town.preset_items[selected_item_number % 1000].which_item].charges > 0) {
-				sprintf((char *) draw_str,"  Charges/Amount: %d",
-						town.preset_items[selected_item_number % 1000].charges);
+		switch(selected_object_type){
+			case SelectionType::None:
+				sprintf((char *) draw_str,"Editing Town/Dungeon %d",cur_town);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  %s",town.town_name);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				break;
+			case SelectionType::Creature:
+				sprintf((char *) draw_str,"Creature %d: %s",selected_object_number + 6,
+						scen_data.scen_creatures[town.creatures[selected_object_number].number].name); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
+				
+				sprintf((char *) draw_str,"  Edit This Creature  (Type %d, L%d)",
+						town.creatures[selected_object_number].number,
+						scen_data.scen_creatures[town.creatures[selected_object_number].number].level); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);	
+				
+				if (strlen(town.creatures[selected_object_number].char_script) <= 0){
+					if(strlen(scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script) <=0)
+						sprintf((char *) draw_str,"  Script: basicnpc");
+					else
+						sprintf((char *) draw_str,"  Script: %s", scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script);
+				}
+				else 
+					sprintf((char *) draw_str,"  Script: %s",town.creatures[selected_object_number].char_script); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
+				
+				sprintf((char *) draw_str,"  Attitude: %s",attitude_types[town.creatures[selected_object_number].start_attitude - 2]); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);		
+				
+				sprintf((char *) draw_str,"  Character ID: %d",town.creatures[selected_object_number].character_id); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);		
+				
+				sprintf((char *) draw_str,"  Hidden Class: %d",town.creatures[selected_object_number].hidden_class); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);		
+				
+				//TODO: what is this doing here?
+				if (town.creatures[selected_object_number].extra_item == 0)
+					town.creatures[selected_object_number].extra_item = -1;
+				
+				if (town.creatures[selected_object_number].extra_item < 0)
+					sprintf((char *) draw_str,"  Drop Item 1: None");
+				else 
+					sprintf((char *) draw_str,"  Drop Item 1: %s %%%d",scen_data.scen_items[town.creatures[selected_object_number].extra_item].full_name,
+							town.creatures[selected_object_number].extra_item_chance_1); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);		
+				
+				if (town.creatures[selected_object_number].extra_item_2 == 0)
+					town.creatures[selected_object_number].extra_item_2 = -1;
+				
+				if (town.creatures[selected_object_number].extra_item_2 < 0)
+					sprintf((char *) draw_str,"  Drop Item 2: None");
+				else sprintf((char *) draw_str,"  Drop Item 2: %s %%%d",
+							 scen_data.scen_items[town.creatures[selected_object_number].extra_item_2].full_name,
+							 town.creatures[selected_object_number].extra_item_chance_2);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Personality: %d",
+						town.creatures[selected_object_number].personality);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Facing: %s",
+						facings[town.creatures[selected_object_number].facing]);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			case SelectionType::Item:
+				sprintf((char *) draw_str,"Item %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  %s",
+						scen_data.scen_items[town.preset_items[selected_object_number].which_item].full_name);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				if (scen_data.scen_items[town.preset_items[selected_object_number].which_item].charges > 0) {
+					sprintf((char *) draw_str,"  Charges/Amount: %d",
+							town.preset_items[selected_object_number].charges);
+					char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
+				}
+				if (town.preset_items[selected_object_number].properties & 2)
+					sprintf((char *) draw_str,"  Property");
+				else sprintf((char *) draw_str,"  Not Property");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);
+				if (town.preset_items[selected_object_number].properties & 4)
+					sprintf((char *) draw_str,"  Contained");
+				else sprintf((char *) draw_str,"  Not Contained");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Drawing Shift X: %d",
+						town.preset_items[selected_object_number].item_shift.x);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Drawing Shift Y: %d",
+						town.preset_items[selected_object_number].item_shift.y);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Edit Properties");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
+				break;
+			case SelectionType::TerrainScript:
+				sprintf((char *) draw_str,"Terrain Script %d:",selected_object_number); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
+				
+				sprintf((char *) draw_str,"  Script: %s",
+						town.ter_scripts[selected_object_number].script_name); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
+				for (short i = 0; i < 8; i++) {
+					sprintf((char *) draw_str,"  Memory Cell %d: %d",
+							i,town.ter_scripts[selected_object_number].memory_cells[i]); 
+					char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[i + 2],(char *) draw_str,2,10);		
+				}
+				break;
+			case SelectionType::SpecialEncounter:
+				sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  State: %d",town.spec_id[selected_object_number]);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",town.special_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Left Boundary: %d",town.special_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",town.special_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Right Boundary: %d",town.special_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			case SelectionType::AreaDescription:
+				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				//use line 2, and effectively line 7 as well
+				sprintf((char *) draw_str,"  Description: %s",town.info_rect_text[selected_object_number]);
 				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
-			}
-			if (town.preset_items[selected_item_number % 1000].properties & 2)
-				sprintf((char *) draw_str,"  Property");
-			else sprintf((char *) draw_str,"  Not Property");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);
-			if (town.preset_items[selected_item_number % 1000].properties & 4)
-				sprintf((char *) draw_str,"  Contained");
-			else sprintf((char *) draw_str,"  Not Contained");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Drawing Shift X: %d",
-					town.preset_items[selected_item_number % 1000].item_shift.x);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Drawing Shift Y: %d",
-					town.preset_items[selected_item_number % 1000].item_shift.y);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Edit Properties");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
-		}
-		if (selected_item_number < 0) {
-			sprintf((char *) draw_str,"Editing Town/Dungeon %d",cur_town);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  %s",town.town_name);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);	
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",town.room_rect[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Left Boundary: %d",town.room_rect[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				//7 is taken up by possible overflow from 2
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",town.room_rect[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Right Boundary: %d",town.room_rect[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			default: //TownEntrance
+				break;
 		}
 	}
-	else {
-		if (selected_item_number < 0) {
-			sprintf((char *) draw_str,"Editing Outdoors"); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-			sprintf((char *) draw_str,"  %s",current_terrain.name); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
-			sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y); 
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
-		}
-		else if ((selected_item_number >= 10000) && (selected_item_number < 10000 + NUM_OUT_PLACED_SPECIALS)) {
-			sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_item_number % 1000);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  State: %d",current_terrain.spec_id[selected_item_number % 1000]);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].top);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].left);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"[Redraw]");
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-			
-			sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].bottom);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-			sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.special_rects[selected_item_number % 1000].right);
-			char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+	else{ //editing outdoors
+		switch(selected_object_type){
+			case SelectionType::None:
+				sprintf((char *) draw_str,"Editing Outdoors"); 
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  %s",current_terrain.name);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
+				break;
+			case SelectionType::SpecialEncounter:
+				sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  State: %d",current_terrain.spec_id[selected_object_number]);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.special_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.special_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.special_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.special_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			case SelectionType::AreaDescription:
+				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				//use line 2, and effectively line 7 as well
+				sprintf((char *) draw_str,"  Description: %s",current_terrain.info_rect_text[selected_object_number]);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.info_rect[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.info_rect[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.info_rect[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.info_rect[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			case SelectionType::TownEntrance:
+				sprintf((char *) draw_str,"Town Entrance %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Town: %d",current_terrain.exit_dests[selected_object_number]);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.exit_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.exit_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.exit_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.exit_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
+				break;
+			default: //other cases should never occur; do nothing
+				break;
 		}
 	}
 }
