@@ -899,8 +899,10 @@ void handle_action(Point the_point,EventRecord event)
 						switch (i) {
 							case 0:
 								choice = choose_text_res(-1,0,255,town.creatures[selected_object_number].number,0,"What sort of Creature?");
-								if (choice >= 0)
-									town.creatures[selected_object_number].number = choice;			
+								if (choice >= 0){
+									town.creatures[selected_object_number].number = choice;
+									need_redraw=TRUE;
+								}
 								break;
 							case 1:
 								edit_placed_monst(selected_object_number);
@@ -909,20 +911,24 @@ void handle_action(Point the_point,EventRecord event)
 								get_str_dlog(town.creatures[selected_object_number].char_script,"What script?",str_response,TRUE);
 								str_response[SCRIPT_NAME_LEN - 1] = 0;
 								strcpy(town.creatures[selected_object_number].char_script,str_response);
+								need_redraw=TRUE;
 								break;
 							case 3:
 								town.creatures[selected_object_number].start_attitude = 
 								(town.creatures[selected_object_number].start_attitude + 1) % 6;
 								if (town.creatures[selected_object_number].start_attitude < 2)
 									town.creatures[selected_object_number].start_attitude = 2;
+								need_redraw=TRUE;
 								break;
 							case 4:
 								town.creatures[selected_object_number].character_id = 
-								how_many_dlog(town.creatures[selected_object_number].character_id,0,19999,"What character id? (0-19999)");						
+								how_many_dlog(town.creatures[selected_object_number].character_id,0,19999,"What character id? (0-19999)");
+								need_redraw=TRUE;
 								break;
 							case 5:
 								town.creatures[selected_object_number].hidden_class = 
-								how_many_dlog(town.creatures[selected_object_number].hidden_class,0,19,"What hidden class? (0-19)");						
+								how_many_dlog(town.creatures[selected_object_number].hidden_class,0,19,"What hidden class? (0-19)");
+								need_redraw=TRUE;
 								break;
 							case 6:
 								choice = choose_text_res(-2,0,NUM_SCEN_ITEMS - 1,town.creatures[selected_object_number].extra_item, 0,"What sort of item?");
@@ -931,7 +937,8 @@ void handle_action(Point the_point,EventRecord event)
 										choice = -1;
 									town.creatures[selected_object_number].extra_item = choice;
 									town.creatures[selected_object_number].extra_item_chance_1 = 
-									how_many_dlog(town.creatures[selected_object_number].extra_item_chance_1,0,100,"What chance? (0-100)");						
+									how_many_dlog(town.creatures[selected_object_number].extra_item_chance_1,0,100,"What chance? (0-100)");
+									need_redraw=TRUE;
 								}
 								break;			
 							case 7:
@@ -941,16 +948,19 @@ void handle_action(Point the_point,EventRecord event)
 										choice = -1;
 									town.creatures[selected_object_number].extra_item_2 = choice;
 									town.creatures[selected_object_number].extra_item_chance_2 = 
-									how_many_dlog(town.creatures[selected_object_number].extra_item_chance_2,0,100,"What chance? (0-100)");						
+									how_many_dlog(town.creatures[selected_object_number].extra_item_chance_2,0,100,"What chance? (0-100)");
+									need_redraw=TRUE;
 								}
 								break;			
 							case 8:
 								town.creatures[selected_object_number].personality = 
-								how_many_dlog(town.creatures[selected_object_number].personality,0,3999,"What personality? (0-3999)");						
+								how_many_dlog(town.creatures[selected_object_number].personality,0,3999,"What personality? (0-3999)");
+								need_redraw=TRUE;
 								break;
 							case 9:
 								town.creatures[selected_object_number].facing = 
-								(town.creatures[selected_object_number].facing + 1) % 4;						
+								(town.creatures[selected_object_number].facing + 1) % 4;
+								need_redraw=TRUE;
 								break;
 						}
 						break;
@@ -959,8 +969,10 @@ void handle_action(Point the_point,EventRecord event)
 						switch (i) {
 							case 1:
 								choice = choose_text_res(-2,0,NUM_SCEN_ITEMS - 1,town.preset_items[selected_object_number].which_item,0,"What sort of item?");
-								if (choice >= 0)
-									town.preset_items[selected_object_number].which_item = choice;			
+								if (choice >= 0){
+									town.preset_items[selected_object_number].which_item = choice;
+									need_redraw=TRUE;
+								}
 								break;
 							case 2: 
 								if (town.preset_items[selected_object_number].charges > 0) {
@@ -968,26 +980,32 @@ void handle_action(Point the_point,EventRecord event)
 									how_many_dlog(town.preset_items[selected_object_number].charges,0,250,"How many charges?(0-255)");
 									if (town.preset_items[selected_object_number].charges <= 0)
 										town.preset_items[selected_object_number].charges = 1;
+									need_redraw=TRUE;
 								}
 								break;
 							case 5:
 								town.preset_items[selected_object_number].properties = 
 								town.preset_items[selected_object_number].properties ^ 2;
+								need_redraw=TRUE;
 								break;
 							case 6: //TODO: this doesn't work; should it?
 								town.preset_items[selected_object_number].properties = 
 								town.preset_items[selected_object_number].properties ^ 4;
+								need_redraw=TRUE;
 								break;
 							case 3: 
 								town.preset_items[selected_object_number].item_shift.x =
 								how_many_dlog(town.preset_items[selected_object_number].item_shift.x,-5,5,"Horizontal Pixel Offset (-5..5)");
+								need_redraw=TRUE;
 								break;
 							case 4: 
 								town.preset_items[selected_object_number].item_shift.y =
 								how_many_dlog(town.preset_items[selected_object_number].item_shift.y,-5,5,"Vertical Pixel Offset (-5..5)");
+								need_redraw=TRUE;
 								break;
 							case 7:
 								edit_item_properties(selected_object_number);
+								need_redraw=TRUE;
 								break;
 						}
 						break;
@@ -998,10 +1016,12 @@ void handle_action(Point the_point,EventRecord event)
 								get_str_dlog(town.ter_scripts[selected_object_number].script_name,"What script?",str_response,TRUE);
 								str_response[SCRIPT_NAME_LEN - 1] = 0;
 								strcpy(town.ter_scripts[selected_object_number].script_name,str_response);
+								need_redraw=TRUE;
 								break;
 							case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
 								town.ter_scripts[selected_object_number].memory_cells[i - 2] = 
 								how_many_dlog(town.ter_scripts[selected_object_number].memory_cells[i - 2],-30000,30000,"Put what in this memory cell?");						
+								need_redraw=TRUE;
 								break;
 							default:
 								break;
@@ -1020,6 +1040,7 @@ void handle_action(Point the_point,EventRecord event)
 										current_terrain.spec_id[selected_object_number] = 
 										how_many_dlog(current_terrain.spec_id[selected_object_number],0,255,"Set special encounter outdoor state number:");
 									}
+									need_redraw=TRUE;
 									break;
 								case 3:
 									if(editing_town){
@@ -1165,6 +1186,7 @@ void handle_action(Point the_point,EventRecord event)
 								case 1:
 									current_terrain.spec_id[selected_object_number] = 
 									how_many_dlog(current_terrain.exit_dests[selected_object_number],0,200,"Set town number:");
+									need_redraw=TRUE;
 									break;
 								case 3:
 									current_terrain.exit_rects[selected_object_number].top = 
@@ -1566,7 +1588,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				selected_object_number=0;
 				selected_object_type=SelectionType::None;
 			}
-			break;		
+			break;
 		case 41: // 41 - delete instance
 			// Unused //
 			overall_mode = 40;
