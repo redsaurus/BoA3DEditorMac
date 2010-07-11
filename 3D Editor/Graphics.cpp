@@ -946,10 +946,13 @@ void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to
 	if(rects_touch(&to_rect,to_whole_area_rect)){
 		if(selected){
 			Rect temp_rect = ter_script_icon_from;
-			ZeroRectCorner(&temp_rect);
-			OffsetRect(&temp_rect, 2, 2);
-			//TODO: the bordders added next tend to go nuts on the lower right edge of the icon, maybe should clean out tint_area first?
-			rect_draw_some_item(src_gworld,ter_script_icon_from,tint_area,temp_rect,0,0);
+			OffsetRect(&temp_rect, 2-temp_rect.left, 2-temp_rect.top);
+			GrafPtr old_port;
+			GetPort(&old_port);
+			SetPort(tint_area);
+			EraseRect(&tint_rect);
+			SetPort(old_port);
+			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(tint_area), &ter_script_icon_from, &temp_rect, srcCopy, NULL);
 			ter_script_icon_from = temp_rect;
 			InsetRect(&ter_script_icon_from, -2, -2);
 			InsetRect(&to_rect, -2, -2);
