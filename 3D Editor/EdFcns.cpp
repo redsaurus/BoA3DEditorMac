@@ -984,13 +984,11 @@ void handle_action(Point the_point,EventRecord event)
 								}
 								break;
 							case 5:
-								town.preset_items[selected_object_number].properties = 
-								town.preset_items[selected_object_number].properties ^ 2;
+								town.preset_items[selected_object_number].properties ^= item_type::property_bit;
 								need_redraw=TRUE;
 								break;
-							case 6: //TODO: this doesn't work; should it?
-								town.preset_items[selected_object_number].properties = 
-								town.preset_items[selected_object_number].properties ^ 4;
+							case 6:
+								town.preset_items[selected_object_number].properties ^= item_type::contained_bit;
 								need_redraw=TRUE;
 								break;
 							case 3: 
@@ -1539,7 +1537,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 							}
 							break;
 						case SelectionType::AreaDescription:
-							if(item_to_try>=NUM_TOWN_DESCRIPTION_AREAS){
+							if(item_to_try>=NUM_OUT_DESCRIPTION_AREAS){
 								which_type=SelectionType::TownEntrance;
 								item_to_try=0;
 							}
@@ -1574,7 +1572,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 							}
 							break;
 						case SelectionType::TownEntrance:
-							if(current_terrain.spec_id[item_to_try]!=kNO_OUT_TOWN_ENTRANCE && loc_touches_rect(spot_hit, current_terrain.exit_rects[item_to_try])){
+							if(current_terrain.exit_dests[item_to_try]!=kNO_OUT_TOWN_ENTRANCE && loc_touches_rect(spot_hit, current_terrain.exit_rects[item_to_try])){
 								selected_object_number=item_to_try;
 								selected_object_type=which_type;
 								play_sound(37);
@@ -1790,7 +1788,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			edit_town_entry(spot_hit);
 			reset_drawing_mode(); 
 			break;		
-		case 70:
+		case 70: //place terrain script
 			create_new_ter_script("dummy",spot_hit,NULL);
 			reset_drawing_mode(); 				
 			break;
@@ -1853,7 +1851,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				if (editing_town == TRUE) {
 					for (i = 0; i < NUM_TOWN_PLACED_SPECIALS; i++) {
 						if (town.spec_id[i] == kNO_TOWN_SPECIALS) {
-							town.spec_id[i] = i+10;//(unsigned char)edit_special_num(0,i+10);
+							town.spec_id[i] = i+10;
 							town.special_rects[i] = working_rect;
 							selected_object_type=SelectionType::SpecialEncounter;
 							selected_object_number=i;
@@ -1868,7 +1866,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				if (editing_town == FALSE) {
 					for (i = 0; i < 30; i++){
 						if (current_terrain.spec_id[i] < 0) {
-							current_terrain.spec_id[i] = edit_special_num(0,i);
+							current_terrain.spec_id[i] = i+10;//edit_special_num(0,i);
 							current_terrain.special_rects[i] = working_rect;
 							selected_object_type=SelectionType::SpecialEncounter;
 							selected_object_number=i;
@@ -2004,24 +2002,30 @@ void swap_terrain()
 	short a,b,c,i,j;
 	short ter;
 	change_ter(&a,&b,&c);
-	if (a < 0) return;
+	if(a < 0)
+		return;
 	
-	for (i = 0; i < ((editing_town) ? max_zone_dim[town_type] : 48); i++){
-		for (j = 0; j < ((editing_town) ? max_zone_dim[town_type] : 48); j++) {
-			if (current_drawing_mode > 0) {
+	int changingContainers=(scen_data.scen_terrains[b].special==40)-(scen_data.scen_terrains[a].special==40);
+	
+	for(i = 0; i < ((editing_town) ? max_zone_dim[town_type] : 48); i++){
+		for(j = 0; j < ((editing_town) ? max_zone_dim[town_type] : 48); j++){
+			if(current_drawing_mode > 0){ //replace terrain
 				ter = (editing_town) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
-				if ((ter == a) && (get_ran(1,1,100) <= c)) {
-					if (editing_town)
+				if((ter == a) && (get_ran(1,1,100) <= c)){
+					if(editing_town){
 						t_d.terrain[i][j] = b;
+						if(changingContainers)
+							set_items_containment(i,j,changingContainers);
+					}
 					else 
 						current_terrain.terrain[i][j] = b;
 					appendChangeToLatestStep(new drawingChange(i,j,b,a,2));
 				}
 			}
-			else {
-				ter = (editing_town) ? t_d.floor[i][j] : current_terrain.floor[i][j];
-				if ((ter == a) && (get_ran(1,1,100) <= c)) {
-					if (editing_town)
+			else{ //replace floor
+				ter =(editing_town) ? t_d.floor[i][j] : current_terrain.floor[i][j];
+				if((ter == a) && (get_ran(1,1,100) <= c)){
+					if(editing_town)
 						t_d.floor[i][j] = b;
 					else 
 						current_terrain.floor[i][j] = b;
@@ -2461,15 +2465,7 @@ void handle_keystroke(char chr,char chr2,EventRecord event){
 			performRedo();
 			break;
 		case 'J': //jump to selected object
-			{
-				location loc=selected_instance_location();
-				if((cur_viewing_mode == 0 && (abs(loc.x-cen_x)>4 || abs(loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(loc))){
-					cen_x = loc.x;
-					cen_y = loc.y;
-					draw_terrain();
-					draw_function_buttons(1);
-				}
-			}
+			jumpToSelectedInstance();
 			break;
 		default:
 			if (('a' <= chr) && (chr <= 'z')) {
@@ -2577,6 +2573,11 @@ Boolean is_water(short i,short j)
 	return answer;		
 }
 
+//\return true if the indicated space is a container, taking into account barrels and crates
+bool is_container(short x, short y){
+	return((scen_data.scen_terrains[t_d.terrain[x][y]].special==40) || is_crate(x,y) || is_barrel(x,y));
+}
+
 
 // prob is 0 - 20, 0 no, 20 always
 void shy_change_circle_terrain(location center,short radius,short terrain_type,short probability)
@@ -2638,8 +2639,7 @@ void change_circle_height(location center,short radius,short lower_or_raise,shor
 
 //This is a scan-line flood-fill algorithm to replace all connected spaces of old_floor with new_floor
 //squares that touch corners are not considered connected
-int flood_fill_floor(short new_floor, short old_floor, int x, int y)
-{
+int flood_fill_floor(short new_floor, short old_floor, int x, int y){
 	int minx=x, maxx=x;
 	if(floors_match(new_floor,old_floor))
 		return(-1);
@@ -2716,9 +2716,9 @@ int flood_fill_floor(short new_floor, short old_floor, int x, int y)
 	return(maxx);
 }
 
-int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y)
-{
+int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y){
 	int minx=x, maxx=x;
+	int changingContainers=(scen_data.scen_terrains[new_terrain].special==40)-(scen_data.scen_terrains[old_terrain].special==40);
 	if(new_terrain==old_terrain)
 		return(-1);
 	short i,max_size=((editing_town == TRUE) ? max_zone_dim[town_type] : 48);
@@ -2755,6 +2755,8 @@ int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y)
 			t_d.terrain[i][y]=new_terrain;
 		else
 			current_terrain.terrain[i][y]=new_terrain;
+		if(editing_town && changingContainers)
+			set_items_containment(i, y, changingContainers);
 		appendChangeToLatestStep(new drawingChange(i,y,new_terrain,old_terrain,2));
 	}
 	if(y>0){
@@ -2784,7 +2786,7 @@ int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y)
 	return(maxx);
 }
 
-//Changs the terrain in rectangle r to terrain_type with probability that a each space is 
+//Changes the terrain in rectangle r to terrain_type with probability that a each space is 
 //changed. If hollow is true, only the edges of the rectangle are changed
 void change_rect_terrain(Rect r,short terrain_type,short probability,Boolean hollow)
 // prob is 0 - 20, 0 no, 20 always
@@ -2848,6 +2850,7 @@ void paste_terrain(location l,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hi
 			y = j-l.y;
 			if(editing_town){
 				if(pasteT){
+					set_items_containment(i,j);
 					appendChangeToLatestStep(new drawingChange(i,j,clipboard.terrain[x][y],t_d.terrain[i][j],2));
 					t_d.terrain[i][j]=clipboard.terrain[i-l.x][j-l.y];
 				}
@@ -2967,6 +2970,9 @@ void set_terrain(location l,short terrain_type)
 	}
 	
 	l2 = l;
+	int changingContainers=(scen_data.scen_terrains[terrain_type].special==40)-(scen_data.scen_terrains[old_terrain].special==40);
+	if(changingContainers)
+		set_items_containment(i,j,changingContainers);
 	appendChangeToLatestStep(new drawingChange(i,j,terrain_type,old_terrain,current_drawing_mode==0?1:2));
 	
 	adjust_space(l);
@@ -2993,53 +2999,55 @@ void set_terrain(location l,short terrain_type)
 	if(current_drawing_mode>0){//if we just placed a floor, it can't be a sign
 		Boolean sign_error_received = FALSE;
 		ter_info = scen_data.scen_terrains[terrain_type];
-		if (ter_info.special == 39) { // town mode, is a sign
-			if (editing_town == TRUE) { /// it's a sign
-				for (i = 0; i < 15; i++){ // find is this sign has already been assigned
-					if (which_sign < 0) {
-						if ((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y))
+		if(ter_info.special == 39){ // town mode, is a sign
+			if(editing_town == TRUE){ /// it's a sign
+				for(i = 0; i < 15; i++){ // find is this sign has already been assigned
+					if(which_sign < 0){
+						if((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y))
 							which_sign = i;
 					}
 				}
-				if (which_sign < 0) { // if not assigned, pick a new sign
-					for (i = 0; i < 15; i++) 
-						if ((town.sign_locs[i].x > 64) || (town.sign_locs[i].x < 0) )
+				if(which_sign < 0) { // if not assigned, pick a new sign
+					for(i = 0; i < 15; i++){
+						if(town.sign_locs[i].x == kNO_SIGN)
 							which_sign = i;
+					}
 				}
 				
-				if (which_sign >= 0) {
+				if(which_sign >= 0){
 					town.sign_locs[which_sign] = l;
 					edit_sign(which_sign);
 					sign_error_received = FALSE;
 				}
-				else {
-					if (sign_error_received == FALSE) {
+				else{
+					if(sign_error_received == FALSE){
 						give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
 						sign_error_received = TRUE;
 					}
 				}
 				mouse_button_held = FALSE;
 			}
-			if (editing_town == FALSE) { // outdoor mode, it's a sign
-				for (i = 0; i < 8; i++){ // find is this sign has already been assigned
-					if (which_sign < 0) {
-						if ((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y))
+			if(editing_town == FALSE){ // outdoor mode, it's a sign
+				for(i = 0; i < 8; i++){ // find is this sign has already been assigned
+					if(which_sign < 0){
+						if((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y))
 							which_sign = i;
 					}
 				}
-				if (which_sign < 0) { // if not assigned, pick a new sign
-					for (i = 0; i < 8; i++) 
-						if ((current_terrain.sign_locs[i].x > 64) || (current_terrain.sign_locs[i].x < 0) )
+				if(which_sign < 0){ // if not assigned, pick a new sign
+					for(i = 0; i < 8; i++){
+						if(current_terrain.sign_locs[i].x == kNO_SIGN)
 							which_sign = i;
+					}
 				}
 				
-				if (which_sign >= 0) {
+				if(which_sign >= 0){
 					current_terrain.sign_locs[which_sign] = l;
 					edit_sign(which_sign);
 					sign_error_received = FALSE;
 				}
-				else {
-					if (sign_error_received == FALSE) {
+				else{
+					if(sign_error_received == FALSE){
 						give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
 						sign_error_received = TRUE;
 					}
@@ -3051,7 +3059,7 @@ void set_terrain(location l,short terrain_type)
 			if (editing_town == TRUE) {
 				for (i = 0; i < 15; i++){ // find is this spot has a sign atrtached to it, and erase it
 					if ((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y)) {
-						town.sign_locs[i].x = town.sign_locs[i].y = 255;
+						town.sign_locs[i].x = town.sign_locs[i].y = kNO_SIGN;
 						town.sign_text[i][0] = 0;
 					}
 				}
@@ -3059,7 +3067,7 @@ void set_terrain(location l,short terrain_type)
 			if (editing_town == FALSE) {
 				for (i = 0; i < 8; i++){// find is this spot has a sign attached to it, and erase it
 					if ((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y)) {
-						current_terrain.sign_locs[i].x = current_terrain.sign_locs[i].y = 255;
+						current_terrain.sign_locs[i].x = current_terrain.sign_locs[i].y = kNO_SIGN;
 						current_terrain.sign_text[i][0] = 0;
 					}
 				}
@@ -3462,8 +3470,13 @@ Boolean town_fix_hills(location l)
 	} //handle the case where there is a slope where none is now needed:
 	else if ((t_d.terrain[lx][ly] >= 74) && (t_d.terrain[lx][ly] <= 121))
 		t_d.terrain[lx][ly] = 0;
-	if(store_ter != t_d.terrain[lx][ly])
+	if(store_ter != t_d.terrain[lx][ly]){
+		//the fact that doing this can affect containers is yet another reason that auto-hills is evil
+		int changingContainers=(scen_data.scen_terrains[t_d.terrain[lx][ly]].special==40)-(scen_data.scen_terrains[store_ter].special==40);
+		if(changingContainers)
+			set_items_containment(lx,ly,changingContainers);
 		appendChangeToLatestStep(new drawingChange(lx,ly,t_d.terrain[lx][ly],store_ter,2));
+	}
 	return(store_ter != t_d.terrain[lx][ly]);
 }
 
@@ -4081,7 +4094,6 @@ void delete_selected_instance(){
 	}
 	selected_object_type=SelectionType::None;
 	selected_object_number=0;
-	set_all_items_containment();
 }
 
 //copies the selected creature, terrain script, or item for later pasting
@@ -4110,7 +4122,6 @@ void copy_selected_instance()
 		default: //other cases have already been ruled out
 			break;
 	}
-	set_all_items_containment();
 }
 
 //copies and then deletes the selected creature, terrain script or item.
@@ -4127,20 +4138,16 @@ void cut_selected_instance(){
 
 void paste_selected_instance(location create_loc){	
 	// select creature
-	if (copied_creature.number >= 0) {
+	if (copied_creature.number >= 0)
 		create_new_creature(copied_creature.number,create_loc,&copied_creature);
-	}
 	
 	// select ter script
-	if (copied_ter_script.exists) {
+	if (copied_ter_script.exists) 
 		create_new_ter_script("dummyname",create_loc,&copied_ter_script);
-	}
 	
 	// select item
-	if (copied_item.which_item >= 0) {
+	if (copied_item.which_item >= 0)
 		create_new_item(copied_item.which_item,create_loc,FALSE,&copied_item);
-	}					
-	set_all_items_containment();
 }
 
 // looks to make sure that the selected item is still legal. If not, undoes it.
@@ -4201,7 +4208,6 @@ void check_selected_item_number(){
 			}
 			break;
 	}
-	set_all_items_containment();
 }
 
 void clear_selected_copied_objects(){
@@ -4288,13 +4294,20 @@ void shift_selected_instance(short dx,short dy){
 		case SelectionType::Item:
 			if(selected_object_number<NUM_TOWN_PLACED_ITEMS){
 				loc = town.preset_items[selected_object_number].item_loc;
+				bool wasContainer=is_container(loc.x,loc.y);
 				loc.x += dx;
 				loc.y += dy;
 				if(!loc_in_active_area(loc))
 					return;
 				town.preset_items[selected_object_number].item_loc =loc;
 				shift_item_locs(loc);
-				set_all_items_containment();
+				
+				if(wasContainer!=is_container(loc.x,loc.y)){
+					if(wasContainer) //the item was in a container and moved out
+						town.preset_items[selected_object_number].properties&=~item_type::contained_bit;
+					else //the item was not in a container, and moved into one
+						town.preset_items[selected_object_number].properties|=item_type::contained_bit;
+				}
 			}
 			break;
 		case SelectionType::TerrainScript:
@@ -4372,6 +4385,23 @@ void rotate_selected_instance(int dir)
 	}
 }
 
+void setSelection(SelectionType::SelectionType_e type, unsigned short num, bool jumpTo){
+	selected_object_type=type;
+	selected_object_number=num;
+	if(jumpTo)
+		jumpToSelectedInstance();
+}
+
+void jumpToSelectedInstance(){
+	location loc=selected_instance_location();
+	if((cur_viewing_mode == 0 && (abs(loc.x-cen_x)>4 || abs(loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(loc))){
+		cen_x = loc.x;
+		cen_y = loc.y;
+		draw_terrain();
+		draw_function_buttons(1);
+	}
+}
+
 void create_navpoint(location spot_hit)
 {
 	short i;
@@ -4400,8 +4430,8 @@ void delete_navpoint(location spot_hit)
 void frill_terrain()
 {
 	short i,j;
-	short terrain_type;
-	unsigned char floor_type;
+	short terrain_type, old_terrain_type;
+	unsigned char floor_type, old_floor_type;
 	int edge_correct = 0;
 	//if the edge floor repeats to infinity, don't add frills to edge spaces, to avoid weird looking rows
 	if(town.external_floor_type == -1)
@@ -4409,8 +4439,8 @@ void frill_terrain()
 	
 	for (i = edge_correct; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; i++){
 		for (j = edge_correct; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; j++) {
-			terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
-			floor_type = (editing_town == TRUE) ? t_d.floor[i][j] : current_terrain.floor[i][j];
+			old_terrain_type = terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
+			old_floor_type = floor_type = (editing_town == TRUE) ? t_d.floor[i][j] : current_terrain.floor[i][j];
 			
 			// cave type floors
 			if ((floor_type == 0) && (get_ran(1,1,20) < 4))
@@ -4460,13 +4490,13 @@ void frill_terrain()
 void unfrill_terrain()
 {
 	short i,j;
-	short terrain_type;
-	unsigned char floor_type;
+	short terrain_type, old_terrain_type;
+	unsigned char floor_type, old_floor_type;
 	
 	for (i = 0; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); i++){
 		for (j = 0; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); j++) {
-			terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
-			floor_type = (editing_town == TRUE) ? t_d.floor[i][j] : current_terrain.floor[i][j];
+			old_terrain_type = terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
+			old_floor_type = floor_type = (editing_town == TRUE) ? t_d.floor[i][j] : current_terrain.floor[i][j];
 			
 			if (floor_type == 3)
 				floor_type = 0;
@@ -4589,10 +4619,8 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 			if (property)
 				town.preset_items[i].properties += 2;
 			
-			//set_all_items_containment();
-			town.preset_items[i].properties |= (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-												(is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) || 
-												(scen_data.scen_terrains[t_d.terrain[(int)town.preset_items[i].item_loc.x][(int)town.preset_items[i].item_loc.y]].special==40))<<2;
+			if(is_container(create_loc.x, create_loc.y))
+			   town.preset_items[i].properties |= item_type::contained_bit;
 			shift_item_locs(create_loc);
 			
 			return TRUE;
@@ -5023,29 +5051,51 @@ void clean_walls()
 }
 
 // returns true if it's a ter which can be easily rubbed out
-Boolean is_dumb_terrain(short ter)
-{
+Boolean is_dumb_terrain(short ter){
 	return(!ter);
 }
 
 // Goes to all items and sets whether they are currently contained in an object or not
-void set_all_items_containment()
-{
-	for (short i = 0; i < NUM_TOWN_PLACED_ITEMS; i++)
-		if (town.preset_items[i].which_item >= 0) {
-			short ter = t_d.terrain[ (short) town.preset_items[i].item_loc.x][ (short) town.preset_items[i].item_loc.y];
+void set_all_items_containment(){
+	for(short i = 0; i < NUM_TOWN_PLACED_ITEMS; i++){
+		if(town.preset_items[i].which_item >= 0){
+			short ter = t_d.terrain[ (short)town.preset_items[i].item_loc.x][ (short)town.preset_items[i].item_loc.y];
 			
-			if (( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) 
+			if(( is_crate(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y)) 
 				|| (is_barrel(town.preset_items[i].item_loc.x,town.preset_items[i].item_loc.y))
 				|| (scen_data.scen_terrains[ter].special == 40))
 							town.preset_items[i].properties = town.preset_items[i].properties | 4;
             else 
                 town.preset_items[i].properties = town.preset_items[i].properties & 251;
-		} 
+		}
+	}
 }
 
-void set_up_lights()
-{
+//mode is used to describe whether a container was added, removed, or whether the function should figure everything out by itself
+//mode = -1: a container terrain was removed
+//mode = 0: auto detect whether there is a container or not
+//mode = 1: a container terrain was added
+void set_items_containment(int x, int y, int mode){
+	bool container=false;
+	if(mode){ //know that a container terrain changed
+		if(is_crate(x,y) || is_barrel(x,y))
+			return; //if there is a crate or barrel already present, containment hasn't changed
+		container = (mode==1);
+	}
+	else //need to find out about presence of containers
+		container = is_container(x, y);
+	
+	for(short i = 0; i < NUM_TOWN_PLACED_ITEMS; i++){
+		if(town.preset_items[i].which_item>=0 && town.preset_items[i].item_loc.x==x && town.preset_items[i].item_loc.y==y){
+			if(container) //mark the item contained
+				town.preset_items[i].properties|=item_type::contained_bit;
+			else //mark the item uncontained
+				town.preset_items[i].properties&=~item_type::contained_bit;
+		}
+	}
+}
+
+void set_up_lights(){
 	short i,j,rad;
 	location where,l;
 	Boolean where_lit[64][64],store_edit;

@@ -1,5 +1,8 @@
 // global.h
 
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
 // The comments are partial, intermittent, and may be wrong.
 
 #define EXILE_BIG_GUNS 1
@@ -88,6 +91,7 @@
 #define kNO_TOWN_SPECIALS	0xFF	// No Special encounter on town map
 #define kNO_OUT_SPECIALS	-1		// No special encounter on outdoor map
 #define kNO_OUT_TOWN_ENTRANCE	-1	// No town entrance on outdoor map
+#define kNO_SIGN	-1				// No sign in town or outdoors
 
 #define kINVAL_TOWN_LOC_X	-1		// invalid town location
 #define kINVAL_TOWN_LOC_Y	-1
@@ -319,7 +323,7 @@ public:
 	// 43			waterfall - south
 	// 44			waterfall - west
 	// 45			destroyed by quickfire	
-} ;
+};
 
 class out_wandering_type {
 public:
@@ -350,7 +354,7 @@ public:
 	short start_state_when_fled;
 	short random_move_chance; // chance (0-100) that this creature will move randomly at
 		// any move instead of doing what it wants
-} ;
+};
 
 class outdoor_record_type {
 public:
@@ -382,7 +386,7 @@ public:
 	short is_on_surface;
 	
 	short extra[10];	// extra[0]: region number
-} ;
+};
 
 class creature_type {
 public:
@@ -563,7 +567,7 @@ public:
 	unsigned char extra[4];
 	char full_name[30],name[20];
 	short augment_item;
-} ;
+};
 
 class item_type {
 public:
@@ -581,7 +585,13 @@ public:
 	unsigned char properties; 
 		// bit 0 - ident   1 - property   2 - contained   3 - cursed  4 - used today
 	location item_shift;
-	} ;
+	
+	static unsigned char identified_bit;
+	static unsigned char property_bit;
+	static unsigned char contained_bit;
+	static unsigned char cursed_bit;
+	static unsigned char usedToday_bit;
+};
 
 
 class creature_start_type {
@@ -641,7 +651,7 @@ public:
 	
 	location field_loc;
 	short field_type;
-} ;
+};
 
 // when a terrain spot has a script, the details for that script are remembered in
 // this record. It a terrain spot has a script, it MUST has a corresponding
@@ -708,7 +718,7 @@ public:
 
 	short exit_specs[4];
 	short spec_on_entry,spec_on_entry_if_dead;
-} ;
+};
 
 class big_tr_type {
 public:
@@ -719,7 +729,7 @@ public:
 	short terrain[64][64];
 	unsigned char floor[64][64],height[64][64];
 	unsigned char lighting[64][64];
-} ;
+};
 
 class ave_tr_type {
 public:
@@ -730,7 +740,7 @@ public:
 	short terrain[48][48];
 	unsigned char floor[48][48],height[48][48];
 	unsigned char lighting[48][48];
-} ;
+};
 	
 class tiny_tr_type {
 public:
@@ -741,7 +751,7 @@ public:
 	short terrain[32][32];
 	unsigned char floor[32][32],height[32][32];
 	unsigned char lighting[32][32];
-} ;	
+};	
 
 
 typedef struct {
@@ -757,7 +767,7 @@ public:
 	floor_type_type scen_floors[256];
 	terrain_type_type scen_terrains[512];
 	creature_type scen_creatures[256];
-} ;
+};
 
 //town i's name is stored in town_names[i]
 //outdoor section i,j's name is stored in
@@ -780,7 +790,7 @@ public:
 	location boat_loc,boat_loc_in_sec,boat_sector;
 	short which_town;
 	Boolean exists,property;
-} ;
+};
 class horse_record_type {
 public:
 	horse_record_type();
@@ -789,7 +799,7 @@ public:
 	location horse_loc,horse_loc_in_sec,horse_sector;
 	short which_town;
 	Boolean exists,property;
-	} ;
+};
 	
 class scenario_data_type {
 public:
@@ -839,7 +849,7 @@ public:
 
 	location last_out_edited;
 	short last_town_edited;
-} ;
+};
 
 // general script records
 
@@ -1589,7 +1599,7 @@ short cd_get_active(short dlog_num, short item_num);
 void cd_get_item_text(short dlog_num, short item_num, char *str);
 void cd_retrieve_text_edit_str(short dlog_num,short item_num, char *str);
 void cd_set_text_edit_str(short dlog_num, short item_num, char *str);
-void cd_set_item_text(short dlog_num, short item_num, char *str);
+void cd_set_item_text(short dlog_num, short item_num, const char *str);
 void cd_set_item_num(short dlog_num, short item_num, short num);
 void cd_set_led(short dlog_num,short item_num,short state);
 void cd_set_flag(short dlog_num,short item_num,short flag);
@@ -1672,6 +1682,8 @@ void check_selected_item_number();
 location selected_instance_location();
 void shift_selected_instance(short dx,short dy);
 void rotate_selected_instance(int dir);
+void setSelection(SelectionType::SelectionType_e type, unsigned short num, bool jumpTo=false);
+void jumpToSelectedInstance();
 void create_navpoint(location spot_hit);
 void delete_navpoint(location spot_hit);
 void frill_terrain();
@@ -1693,6 +1705,7 @@ void clean_walls();
 Boolean is_dumb_terrain(short ter);
 short get_height(short x, short y,short out_or_town);
 void set_all_items_containment();
+void set_items_containment(int x, int y, int mode=0);
 void set_up_lights();
 Boolean old_can_see_in(location p1,location p2,short check_light,short check_travel);
 void old_can_see(location p1,location p2,short check_light,short check_travel,Boolean *see_to,Boolean *see_in);
@@ -1724,7 +1737,8 @@ short get_ne_corner(short sector_offset_x, short sector_offset_y, short x, short
 void set_ne_corner(short sector_offset_x, short sector_offset_y, short x, short y, short value);
 void set_up_corner_and_sight_map();
 void find_out_about_corner_walls(outdoor_record_type* drawing_terrain, short x, short y, short current_size, short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
-void find_out_about_corner_walls_being_hidden(outdoor_record_type *drawing_terrain, short sector_offset_x, short sector_offset_y, short x, short y, short current_size, Boolean see_in_neighbors[3][3], Boolean see_to_neighbors[3][3], /*Boolean see_to, */short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
+void find_out_about_corner_walls_being_hidden(outdoor_record_type *drawing_terrain, short sector_offset_x, short sector_offset_y, short x, short y, short current_size, Boolean see_in_neighbors[3][3], 
+											  Boolean see_to_neighbors[3][3], /*Boolean see_to, */short *nw_corner, short *ne_corner, short *se_corner, short *sw_corner);
 Boolean is_wall_drawn(outdoor_record_type *drawing_terrain, short sector_offset_x, short sector_offset_y, short x, short y);
 Boolean clean_up_from_scrolling( int map_size, short dx, short dy );
 void paste_terrain(location l,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hit);
@@ -1911,10 +1925,9 @@ void refresh_graphics_on_screen();
 void fancy_choice_dialog_event_filter (short item_hit);
 short fancy_choice_dialog(short which_dlog,short parent);
 Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_num) ;
-void give_error(char *text1, char *text2,short parent_num);
+void give_error(const char *text1, const char *text2,short parent_num);
 void display_strings_event_filter (short item_hit);
-void display_strings(char *text1, char *text2,
-char *title,short sound_num,short graphic_num,short parent_num);
+void display_strings(const char *text1,const char *text2,const char *title,short sound_num,short graphic_num,short parent_num);
 void choose_text_res_event_filter (short item_hit);
 void put_text_res();
 short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,char *title);
@@ -2021,3 +2034,5 @@ void edit_scen_intro_pic();
 void pick_town_event_filter (short item_hit, int which_dlg);
 void edit_item_properties_event_filter (short item_hit);
 void edit_item_properties(short which_i);
+
+#endif

@@ -1925,7 +1925,7 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 	
 	// draw items
 	for (i = 0; i < NUM_TOWN_PLACED_ITEMS; i++)
-		if (town.preset_items[i].which_item >= 0 && town.preset_items[i].item_loc.x == x && town.preset_items[i].item_loc.y == y)
+		if (town.preset_items[i].which_item >= 0 && town.preset_items[i].item_loc.x == x && town.preset_items[i].item_loc.y == y && (cur_viewing_mode==10 || !(town.preset_items[i].properties&item_type::contained_bit)))
 			draw_item_3D(i,at_point_center_x,at_point_center_y,x,y,to_whole_area_rect,lighting);
 	
 	// draw creatures
@@ -2466,7 +2466,7 @@ continue;*/
 						else{ // Outdoor mode: special encs and other rectangles
 							// town entry rects
 							for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++) {
-								if(current_terrain.exit_rects[i].right != kNO_OUT_TOWN_ENTRANCE) {
+								if(current_terrain.exit_dests[i] != kNO_OUT_TOWN_ENTRANCE) {
 									maybe_draw_part_of_3D_rect(drawing_terrain,center_of_current_square_x,center_of_current_square_y,x,y,
 															   drawing_terrain->exit_rects[i], 3 + 4, 255, 0, 255, to_whole_area_rect);
 									
@@ -5111,8 +5111,7 @@ Boolean is_field_type(short i,short j,short field_type)
 }
 
 //places the given field type at the given coordinates
-void make_field_type(short i,short j,short field_type)
-{
+void make_field_type(short i,short j,short field_type){
 	short k;
 	
 	if (is_field_type(i,j,field_type) == TRUE)
@@ -5125,106 +5124,85 @@ void make_field_type(short i,short j,short field_type)
 			return;
 		}
 	}
-			//sprintf(str,"Field error  %d %d %d",i,j,field_type);
-			//give_error(str,"",0);
-			//give_error("Each town can have at most 60 fields and special effects (webs, barrels, blood stains, etc.). To place more, use the eraser first.","",0);
+	//sprintf(str,"Field error  %d %d %d",i,j,field_type);
+	//give_error(str,"",0);
+	//give_error("Each town can have at most 60 fields and special effects (webs, barrels, blood stains, etc.). To place more, use the eraser first.","",0);
 }
 
 //removes the given field type at the given coordinates if it is there
-void take_field_type(short i,short j,short field_type)
-{
+void take_field_type(short i,short j,short field_type){
 	short k;
-	for (k = 0; k < NUM_TOWN_PLACED_FIELDS; k++)
+	for (k = 0; k < NUM_TOWN_PLACED_FIELDS; k++){
 		if ((town.preset_fields[k].field_type == field_type) &&
 			(town.preset_fields[k].field_loc.x == i) &&
 			(town.preset_fields[k].field_loc.y == j)) {
 			town.preset_fields[k].field_type = -1;
 			return;
 		}
+	}
 }
 
-Boolean is_web(short i,short j)
-{
+Boolean is_web(short i,short j){
 	return is_field_type(i,j,5);
 }
-void make_web(short i,short j)
-{
+void make_web(short i,short j){
 	make_field_type(i,j,5);
 }
-void take_web(short i,short j)
-{
+void take_web(short i,short j){
 	take_field_type(i,j,5);
 }
-Boolean is_crate(short i,short j)
-{
+Boolean is_crate(short i,short j){
 	return is_field_type(i,j,6);
 }
-void make_crate(short i,short j)
-{
+void make_crate(short i,short j){
 	make_field_type(i,j,6);
 }
-void take_crate(short i,short j)
-{
+void take_crate(short i,short j){
 	take_field_type(i,j,6);
 }
-Boolean is_barrel(short i,short j)
-{
+Boolean is_barrel(short i,short j){
 	return is_field_type(i,j,7);
 }
-void make_barrel(short i,short j)
-{
+void make_barrel(short i,short j){
 	make_field_type(i,j,7);
 }
-void take_barrel(short i,short j)
-{
+void take_barrel(short i,short j){
 	take_field_type(i,j,7);
 }
-Boolean is_fire_barrier(short i,short j)
-{
+Boolean is_fire_barrier(short i,short j){
 	return is_field_type(i,j,4);
 }
-void make_fire_barrier(short i,short j)
-{
+void make_fire_barrier(short i,short j){
 	make_field_type(i,j,4);
 }
-void take_fire_barrier(short i,short j)
-{
+void take_fire_barrier(short i,short j){
 	take_field_type(i,j,4);
 }
-Boolean is_force_barrier(short i,short j)
-{
+Boolean is_force_barrier(short i,short j){
 	return is_field_type(i,j,3);
 }
-void make_force_barrier(short i,short j)
-{
+void make_force_barrier(short i,short j){
 	make_field_type(i,j,3);
 }
-void take_force_barrier(short i,short j)
-{
+void take_force_barrier(short i,short j){
 	take_field_type(i,j,3);
 }
-Boolean is_blocked(short i,short j)
-{
+Boolean is_blocked(short i,short j){
 	return is_field_type(i,j,1);
 }
-void make_blocked(short i,short j)
-{
+void make_blocked(short i,short j){
 	make_field_type(i,j,1);
 }
-void take_blocked(short i,short j)
-{
+void take_blocked(short i,short j){
 	take_field_type(i,j,1);
 }
-Boolean is_sfx(short i,short j,short type)
-{
+Boolean is_sfx(short i,short j,short type){
 	return is_field_type(i,j,type + 14);
 }
-void make_sfx(short i,short j,short type)
-{
+void make_sfx(short i,short j,short type){
 	make_field_type(i,j,type + 14);
 }
-void take_sfx(short i,short j,short type)
-{
+void take_sfx(short i,short j,short type){
 	take_field_type(i,j,type + 14);
 }
 

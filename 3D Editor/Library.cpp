@@ -393,6 +393,12 @@ void item_type::port()
 	flip_short(&which_item);
 }
 
+unsigned char item_type::identified_bit(0x1);
+unsigned char item_type::property_bit(0x2);
+unsigned char item_type::contained_bit(0x4);
+unsigned char item_type::cursed_bit(0x8);
+unsigned char item_type::usedToday_bit(0x10);
+
 preset_field_type::preset_field_type()
 {
 	clear_preset_field_type();

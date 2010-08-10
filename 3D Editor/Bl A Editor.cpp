@@ -215,7 +215,7 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 
 //MW specified argument and return type.
 int main(void)
-{
+{	
 	/*MaxApplZone();
 	MoreMasters();*/
 	using_osx = SWIsOSX();
@@ -587,6 +587,9 @@ void handle_campaign_menu(int item_hit)
 {
 	switch (item_hit) {
 		case 1: // edit town
+			if(editing_town)
+				return; //if already editing a town, do nothing
+			//TODO: set change_made_outdoors based on state of undo stack
 			small_any_drawn = FALSE;
 			cen_x = max_zone_dim[town_type] / 2; cen_y = max_zone_dim[town_type] / 2;
 			current_drawing_mode = current_height_mode = 0;
@@ -601,6 +604,9 @@ void handle_campaign_menu(int item_hit)
 			redraw_screen();
 			break;
 		case 2: // outdoor section
+			if(!editing_town)
+				return; //if already editing outdoors, do nothing
+			//TODO: set change_made_town based on state of undo stack
 			small_any_drawn = FALSE;
 			cen_x = 24; cen_y = 24;
 			current_drawing_mode = current_height_mode = 0;
@@ -651,6 +657,11 @@ void handle_campaign_menu(int item_hit)
 		case 12: // reload scen script
 			if (fancy_choice_dialog(871,0) == 2)
 				break;
+			scen_data.clear_scen_item_data_type();
+			if (load_core_scenario_data() == FALSE) {
+				file_is_loaded = FALSE;
+				return;
+			}
 			char file_name[256];
 			get_name_of_current_scenario(file_name);
 			if (load_individual_scenario_data(file_name,TRUE) == FALSE) {
@@ -802,6 +813,7 @@ void handle_town_menu(int item_hit)
 			redraw_screen();
 			break;
 		case 12:
+			//TODO: should this continue to exist?
 			set_all_items_containment();
 			draw_terrain();
 			change_made_town = TRUE; 

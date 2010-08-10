@@ -752,7 +752,7 @@ void cd_set_text_edit_num(short dlog_num, short item_num, short num)
 	SelectDialogItemText ((DialogPtr) dlgs[dlg_index], item_num,32767,32767);
 }
 
-void cd_set_item_text(short dlog_num, short item_num, char *str)
+void cd_set_item_text(short dlog_num, short item_num, const char *str)
 {
 	short dlg_index,item_index;
 	if (cd_get_indices(dlog_num,item_num,&dlg_index,&item_index) < 0)
