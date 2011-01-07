@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>.bas</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>BoAScen.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Blades of Avernum Scenario</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSTypeIsPackage</key>
+			<false/>
+			<key>NSPersistentStoreTypeKey</key>
+			<string>Binary</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>.bas</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>BoAScen.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Blades of Avernum Scenario</string>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>BoAX</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSTypeIsPackage</key>
+			<false/>
+			<key>NSPersistentStoreTypeKey</key>
+			<string>Binary</string>
+		</dict>
+	</array>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleGetInfoString</key>
+	<string>v1.0.9</string>
+	<key>CFBundleIconFile</key>
+	<string>BoAEdAPPL.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.spidweb.BoA3DEditor</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.9</string>
+	<key>CFBundleSignature</key>
+	<string>blED</string>
+	<key>CFBundleVersion</key>
+	<string></string>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>http://127.0.0.1/~christopher/SparkleTest/Mac_BoA_3D_Editor.xml</string>
+	<key>SUPublicDSAKeyFile</key>
+	<string>3D_BoA_su_dsa_pub.pem</string>
+</dict>
+</plist>

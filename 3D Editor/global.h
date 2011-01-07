@@ -19,7 +19,7 @@
 #define	NIL				0L
 
 
-#define	NUM_BUTTONS		15
+#define	NUM_BUTTONS		13
 #define	NUM_P_PER_TOWN		20
 
 #define	NUM_DLOG_B		53
@@ -98,6 +98,14 @@
 
 #define SDF_RANGE_X	300
 #define SDF_RANGE_Y	30
+
+const static struct endianness_t{
+	bool isLittle;
+	endianness_t(){
+		uint16_t test=0xFF00;
+		isLittle=((uint8_t*)(&test))[0]==0;
+	}
+} endianness;
 
 // patch to change the mouse click behavior on the dialog button/radio button
 // mode selector for cd_press_button()
@@ -786,6 +794,7 @@ class boat_record_type {
 public:
 	boat_record_type();
 	void clear_boat_record_type();
+	void port();
 	
 	location boat_loc,boat_loc_in_sec,boat_sector;
 	short which_town;
@@ -795,6 +804,7 @@ class horse_record_type {
 public:
 	horse_record_type();
 	void clear_horse_record_type();
+	void port();
 	
 	location horse_loc,horse_loc_in_sec,horse_sector;
 	short which_town;
@@ -901,7 +911,7 @@ public:
 	script_type();
 	~script_type();
 	void flush_data();
-	Boolean load_script(short type_of_script_to_load,char *script_to_load,short file_location);
+	Boolean load_script(short type_of_script_to_load,const char *script_to_load,short file_location);
 	Boolean IsWhiteSpace(char c);
 	Boolean IsIdentifier(char c);
 	Boolean IsNumber(char c);
@@ -1512,7 +1522,7 @@ Boolean same_point(location l1,location l2);
 void EdSysBeep();
 
 // Bl A Fileio
-void open_Appl_resource( char * rsrc_file );
+void open_Appl_resource( const char * rsrc_file );
 bool init_directories( void );
 void save_campaign();
 void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_south,short plus_east,short on_surface);
@@ -1534,7 +1544,7 @@ Boolean import_boa_outdoors();
 void EdSysBeep(short duration);
 void get_name_of_current_scenario(char *name);
 void extract_old_scen_text();
-Boolean copy_script(char *script_source_name,char *script_dest_name);
+Boolean copy_script(const char *script_source_name,const char *script_dest_name);
 void init_warriors_grove();
 void import_blades_of_exile_scenario();
 void port_boe_scenario_data();
@@ -1552,11 +1562,11 @@ void boe_flip_spec_node(old_blades_special_node_type *spec);
 void port_scenario_script(Str255 script_name,long directory_id);
 void port_a_special_node(old_blades_special_node_type *node,short node_num,short file_id,short node_type);
 void get_bl_str(char *str,short str_type,short str_num);
-void add_short_string_to_file(short file_id,char *str1,short num,char *str2);
-void add_big_string_to_file(short file_id,char *str1,short num1,char *str2,short num2,char *str3,short num3,char *str4);
-void add_string_to_file(short file_id,char *str);
+void add_short_string_to_file(short file_id,const char *str1,short num,const char *str2);
+void add_big_string_to_file(short file_id,const char *str1,short num1,const char *str2,short num2,const char *str3,short num3,const char *str4);
+void add_string_to_file(short file_id,const char *str);
 void add_cr(short file_id);
-void add_string(short file_id,char *str);
+void add_string(short file_id,const char *str);
 void handle_messages(short file_id,short node_type,short message_1,short message_2);
 void port_town_script(Str255 script_name,long directory_id,short which_town);
 void trunc_str(char *str);
@@ -1569,7 +1579,7 @@ void open_current_scenario_resources();
 void close_current_scenario_resources();
 Boolean SelectSaveFileToOpen(FSSpecPtr defaultLocationfssPtr,FSSpec *file_picked, bool BoAScen);
 void kludge_correct_old_bad_data();
-bool get_user_pref_bool_value(int which);
+bool get_user_pref_bool_value(int which, bool write_default_if_missing);
 void write_user_pref_bool_value(int which, bool value);
 bool get_should_play_sounds();
 void write_should_play_sounds(bool play);
@@ -1598,7 +1608,7 @@ void cd_activate_item(short dlog_num, short item_num, short status);
 short cd_get_active(short dlog_num, short item_num);
 void cd_get_item_text(short dlog_num, short item_num, char *str);
 void cd_retrieve_text_edit_str(short dlog_num,short item_num, char *str);
-void cd_set_text_edit_str(short dlog_num, short item_num, char *str);
+void cd_set_text_edit_str(short dlog_num, short item_num, const char *str);
 void cd_set_item_text(short dlog_num, short item_num, const char *str);
 void cd_set_item_num(short dlog_num, short item_num, short num);
 void cd_set_led(short dlog_num,short item_num,short state);
@@ -1719,7 +1729,7 @@ Boolean move_block(location l, short direction);
 void clear_selected_copied_objects();
 void set_drawing_mode(short new_mode);
 void reset_drawing_mode();
-Boolean create_new_ter_script(char* ter_script_name,location create_loc,in_town_on_ter_script_type* script_to_make);
+Boolean create_new_ter_script(const char* ter_script_name,location create_loc,in_town_on_ter_script_type* script_to_make);
 void recursive_clean_terrain(location l);
 void recursive_adjust_space_height_raise(location l);
 void recursive_adjust_space_height_lower(location l);
@@ -1807,9 +1817,9 @@ Boolean loc_in_active_area(location loc);
 Boolean loc_in_rect(location loc,Rect r);
 Boolean loc_touches_rect(location loc,Rect r);
 terrain_type_type get_ter(short which_ter);
-void ASB (char *theStr);
-void ASB_big (char *str1,char *str2,char *str3,char *str4,short num,char *str5);
-void ASB_big_color (char *str1,char *str2,char *str3,char *str4,short num,char *str5,short dummy);
+void ASB (const char *theStr);
+void ASB_big (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5);
+void ASB_big_color (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5,short dummy);
 void CenterRectInRect (Rect *rectA, Rect *rectB);
 
 // Graphics.c
@@ -1857,10 +1867,10 @@ void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gwor
   char masked,short main_win);
 void place_right_buttons(short mode);
 void draw_function_buttons(int mode);
-void set_string(char *string,char *string2);
+void set_string(const char *string,const char *string2);
 void undo_clip();
 Boolean container_there(location l);
-void char_win_draw_string(GrafPtr dest_window,Rect dest_rect,char *str,short mode,short line_height);
+void char_win_draw_string(GrafPtr dest_window,Rect dest_rect,const char *str,short mode,short line_height);
 void win_draw_string(GrafPtr dest_window,Rect dest_rect,Str255 str,short mode,short line_height);
 void c2p(Str255 str) ;
 void p2c(Str255 str);
@@ -1888,6 +1898,12 @@ void add_border_to_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short
 Boolean is_field_type(short i,short j,short field_type);
 void make_field_type(short i,short j,short field_type);
 void take_field_type(short i,short j,short field_type);
+Boolean is_oblique_mirror(short i,short j);
+void make_oblique_mirror(short i,short j);
+void take_oblique_mirror(short i,short j);
+Boolean is_facing_mirror(short i,short j);
+void make_facing_mirror(short i,short j);
+void take_facing_mirror(short i,short j);
 Boolean is_web(short i,short j);
 void make_web(short i,short j);
 void take_web(short i,short j);
@@ -1918,30 +1934,30 @@ void place_dlog_border_on_win(GWorldPtr to_gworld,WindowPtr win,
 	Rect border_to_rect,short horiz_or_vert,short bottom_or_top);
 void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pattern);
 void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y,bool selected);
-void cant_draw_graphics_error(graphic_id_type a,char *bonus_string,short bonus_num);
+void cant_draw_graphics_error(graphic_id_type a,const char *bonus_string,short bonus_num);
 void refresh_graphics_on_screen();
 
 // keydlgs
 void fancy_choice_dialog_event_filter (short item_hit);
 short fancy_choice_dialog(short which_dlog,short parent);
-Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_num) ;
+Boolean cre(short val,short min,short max, const char *text1, const char *text2,short parent_num) ;
 void give_error(const char *text1, const char *text2,short parent_num);
 void display_strings_event_filter (short item_hit);
 void display_strings(const char *text1,const char *text2,const char *title,short sound_num,short graphic_num,short parent_num);
 void choose_text_res_event_filter (short item_hit);
 void put_text_res();
-short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,char *title);
+short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,const char *title);
 void edit_special_num_event_filter (short item_hit);
 short edit_special_num(short mode,short what_start);
 void how_many_dlog_event_filter (short item_hit);
-short how_many_dlog(short what_start,short minimum,short maximum,char *what_text);
+short how_many_dlog(short what_start,short minimum,short maximum,const char *what_text);
 void get_str_dlog_event_filter (short item_hit);
-void get_str_dlog(char *start_str,char *header_str,char *response,Boolean string_string = FALSE);
+void get_str_dlog(char *start_str,const char *header_str,char *response,Boolean string_string = FALSE);
 void make_cursor_sword() ;
 void set_cursor(short which_c) ;
 void restore_cursor();
 short choice_dialog(short pic,short num);
-Boolean string_not_clean(char *str,short max_length,short strict_file_naming,char *beginning_of_error,short parent_num);
+Boolean string_not_clean(char *str,short max_length,short strict_file_naming,const char *beginning_of_error,short parent_num);
 
 // Library
 void flip_short(short *s);

@@ -13,6 +13,16 @@
 
 // Just FYI.
 
+/*
+ Some changes arise from the existence of little-endian (Intel) Macs. When the 
+ editor is compiled for an i386 target, it becomes little endian as well, and so 
+ it must be do the correct byte swapping. As a result, the editor has been 
+ generalized so that it should be able to handle scenarios stored with either 
+ endianness, although no small-endian scenarios actually exist; it is not known 
+ whether the game itself is actually capable of handling them (and the existance 
+ of critical bugs in the editor's byte-swapping logic suggests that likely cannot). 
+ */
+
 //#include <Carbon/Carbon.h>	// included in pre-compiled header
 //#include <Memory.h>
 //#include <Quickdraw.h>
@@ -70,11 +80,13 @@ FSSpec current_scenario_file_info;
 
 extern FSSpec default_directory;
 
+//This variable _appears_ to only be used during BoE porting
+//(It is set during BoA file operations, but never read.)
 static Boolean cur_scen_is_mac = TRUE;
 
 static ave_tr_type ave_t;
 static tiny_tr_type tiny_t;
-static Boolean currently_editing_windows_scenario = FALSE;
+static Boolean current_scenario_is_little_endian = TRUE;
 
 // data for BoA
 static town_record_type warrior_grove_town;
@@ -95,7 +107,7 @@ static old_blades_town_record_type boe_town;
 static old_blades_outdoor_record_type boe_outdoor;
 static old_blades_talking_record_type boe_talk_data;
 
-static char *old_blades_button_strs[150] = {"Done ","Ask"," "," ","Keep", "Cancel","+","-","Buy","Leave",
+static const char *old_blades_button_strs[150] = {"Done ","Ask"," "," ","Keep", "Cancel","+","-","Buy","Leave",
 						"Get","1","2","3","4","5","6","Cast"," "," ",
 						" "," "," ","Buy","Sell","Other Spells","Buy x10"," "," ","Save",
 						"Race","Train","Items","Spells","Heal Party","1","2","3","4","5",
@@ -364,7 +376,7 @@ OSErr GetApplicationPackageFSSpecFromBundle(FSSpecPtr theFSSpecPtr)
 	return FSGetCatalogInfo(&myBundleRef, kFSCatInfoNone, NULL, NULL, theFSSpecPtr, NULL);
 }
 
-void open_Appl_resource( char * rsrc_file )
+void open_Appl_resource( const char * rsrc_file )
 {
 	FSSpec appl_Spec;
 	FSSpec res_Spec;
@@ -461,49 +473,35 @@ bool check_BoAFilesFolder( void )
 //these functions store and retrieve values to and from 
 //the application's preferences for the user's settings
 
-#define NUM_BOOL_KEYS 4
-char* BOOL_PREF_KEYS[NUM_BOOL_KEYS] = {"PlaySounds", "UseStrictAdjustsIn2D", "AlwaysShowHeightsIn2D", "AllowArrowKeyNavigation"};
-bool BOOL_PREF_DEFAULT_VALUES[NUM_BOOL_KEYS] = {FALSE,FALSE,FALSE,TRUE};
+#define NUM_BOOL_KEYS 5
+CFStringRef BOOL_PREF_KEYS[NUM_BOOL_KEYS] = {CFSTR("PlaySounds"), CFSTR("UseStrictAdjustsIn2D"), CFSTR("AlwaysShowHeightsIn2D"), CFSTR("AllowArrowKeyNavigation"), CFSTR("SUEnableAutomaticChecks")};
+bool BOOL_PREF_DEFAULT_VALUES[NUM_BOOL_KEYS] = {FALSE,FALSE,FALSE,TRUE,TRUE};
 
-bool get_user_pref_bool_value(int which)
+bool get_user_pref_bool_value(int which, bool write_default_if_missing)
 {
 	if(which<0 || which>NUM_BOOL_KEYS)
 		return(FALSE);
-	CFNumberRef use = ((CFNumberRef)CFPreferencesCopyAppValue( CFStringCreateWithCString( NULL, BOOL_PREF_KEYS[which], kCFStringEncodingMacRoman ), kCFPreferencesCurrentApplication ));
-	//CFStringRef path = ((CFStringRef)CFPreferencesCopyAppValue( CFStringCreateWithCString( NULL, "AppleNavServices:GetFile:0:Path", kCFStringEncodingMacRoman ), kCFPreferencesCurrentApplication ));
-
-	if(use==NULL){
+	Boolean found = false;
+	Boolean result = CFPreferencesGetAppBooleanValue(BOOL_PREF_KEYS[which],kCFPreferencesCurrentApplication,&found);
+	if(!found && write_default_if_missing){
 		write_user_pref_bool_value(which,BOOL_PREF_DEFAULT_VALUES[which]);
 		return(BOOL_PREF_DEFAULT_VALUES[which]);
 	}
-	else{
-		SInt16 val=0;
-		CFNumberGetValue(use,kCFNumberSInt16Type,&val);
-		CFRelease(use);
-		return(val==1);
-	}
+	return(result);
 };
 
 void write_user_pref_bool_value(int which, bool value)
 {
 	if(which<0 || which>NUM_BOOL_KEYS)
 		return;
-	SInt16 val;
-	if(value)
-		val=1;
-	else
-		val=0;
-	CFNumberRef numVal = CFNumberCreate( NULL, kCFNumberSInt16Type, &val );
-	CFStringRef key = CFStringCreateWithCString( NULL, BOOL_PREF_KEYS[which], kCFStringEncodingMacRoman );
-	CFPreferencesSetAppValue( key , numVal, kCFPreferencesCurrentApplication );
+	CFBooleanRef cfval=(value?kCFBooleanTrue:kCFBooleanFalse);
+	CFPreferencesSetAppValue( BOOL_PREF_KEYS[which] , cfval, kCFPreferencesCurrentApplication );
 	CFPreferencesAppSynchronize (kCFPreferencesCurrentApplication);
-	CFRelease(key);
-	CFRelease(numVal);
 }
 
 bool get_should_play_sounds()
 {
-	return(get_user_pref_bool_value(0));
+	return(get_user_pref_bool_value(0,true));
 }
 
 void write_should_play_sounds(bool play)
@@ -513,7 +511,7 @@ void write_should_play_sounds(bool play)
 
 bool get_should_use_strict_adjusts()
 {
-	return(get_user_pref_bool_value(1));
+	return(get_user_pref_bool_value(1,true));
 }
 
 void write_should_use_strict_adjusts(bool use)
@@ -523,7 +521,7 @@ void write_should_use_strict_adjusts(bool use)
 
 bool get_always_show_heights()
 {
-	return(get_user_pref_bool_value(2));
+	return(get_user_pref_bool_value(2,true));
 }
 
 void write_always_show_heights(bool show)
@@ -533,7 +531,7 @@ void write_always_show_heights(bool show)
 
 bool get_allow_arrow_key_navigation()
 {
-	return(get_user_pref_bool_value(3));
+	return(get_user_pref_bool_value(3,true));
 }
 
 void write_allow_arrow_key_navigation(bool allow)
@@ -635,7 +633,7 @@ bool init_directories_with_user_input( void )
 	return result;
 }
 
-void open_BOA_resources( char * theResFile )
+void open_BOA_resources( const char * theResFile )
 {
 	Str255 resFile;
 	char msg[256];
@@ -670,7 +668,7 @@ bool init_directories( void )
 	open_BOA_resources( "Item Graphics" );
 	open_BOA_resources( "Scen Icon Graphics" );
 	open_BOA_resources( "Blades of Avernum Sounds" );
-	open_BOA_resources( "Blades of Avernum Ed Graphics" );
+	//open_BOA_resources( "Blades of Avernum Ed Graphics" );
 	open_Appl_resource( "3D Editor Graphics.rsrc" );
 
 	return true;
@@ -774,7 +772,7 @@ void save_campaign()
 	scenario.last_out_edited = cur_out;
 
 	// now, if editing windows scenario, we need to write it in a windows friendly way.
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 
 	len = sizeof(scenario_data_type); // scenario data
@@ -785,7 +783,7 @@ void save_campaign()
 		return;
 	}	
 
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	SetFPos(scen_f,1,scen_ptr_move);
@@ -794,13 +792,13 @@ void save_campaign()
 	num_outdoors = scenario.out_width * scenario.out_height;
 	for (i = 0; i < num_outdoors; i++){
 		if (i == out_num) {
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 
 			len = sizeof(outdoor_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &current_terrain); 
 
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 
 			if (error != 0)
@@ -826,16 +824,16 @@ void save_campaign()
 	for (k = 0; k < scenario.num_towns; k++){
 		if (k == cur_town) {
 			// write towns
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			len = sizeof(town_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &town); 
 
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			if (error != 0)
 				abortSave(scen_f,dummy_f,66);
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
 				case 0:
@@ -867,7 +865,7 @@ void save_campaign()
 					FSWrite(dummy_f, &len, (char *) &tiny_t);
 					break;
 			}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			switch (temp_scenario.town_size[k]) {
 				case 0: len = (long) ( sizeof(big_tr_type)); break;
@@ -1006,7 +1004,7 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 
 	// now, if editing windows scenario, we need to write it in a windows friendly
 	// way.
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 
 	len = sizeof(scenario_data_type); // scenario data
@@ -1015,7 +1013,7 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 		return;
 	}	
 
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	SetFPos(scen_f,1,scen_ptr_move);
@@ -1079,15 +1077,15 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 	for (k = 0; k < scenario.num_towns; k++)
 		if (k == cur_town) {
 			// write towns
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			len = sizeof(town_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &town); 
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			if (error != 0)
 				abortSave(scen_f,dummy_f,66);
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
 				case 0:
@@ -1121,7 +1119,7 @@ void save_change_to_outdoor_size(short plus_north,short plus_west,short plus_sou
 					FSWrite(dummy_f, &len, (char *) &tiny_t);
 					break;
 			}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			
 			SetFPos(scen_f,3,save_town_size);
@@ -1235,7 +1233,7 @@ void save_remove_town()
 	scenario.last_out_edited = cur_out;
 	
 	// now, if editing windows scenario, we need to write it in a windows friendly way.
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	len = (long)sizeof(scenario_data_type); // scenario data
@@ -1248,7 +1246,7 @@ void save_remove_town()
 		return;
 	}
 	
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	SetFPos(scen_f,fsFromStart,scen_ptr_move);
@@ -1257,13 +1255,13 @@ void save_remove_town()
 	num_outdoors = scenario.out_width * scenario.out_height;
 	for (i = 0; i < num_outdoors; i++){
 		if (i == out_num) {
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 			
 			len = sizeof(outdoor_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &current_terrain); 
 			
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 			
 			if (error != 0) {
@@ -1402,7 +1400,7 @@ void save_change_to_town_size(int old_town_size)
 	scenario.last_out_edited = cur_out;
 	
 	// now, if editing windows scenario, we need to write it in a windows friendly way.
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	len = (long)sizeof(scenario_data_type); // scenario data
@@ -1415,7 +1413,7 @@ void save_change_to_town_size(int old_town_size)
 		return;
 	}	
 	
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 	
 	SetFPos(scen_f,fsFromStart,scen_ptr_move);
@@ -1424,13 +1422,13 @@ void save_change_to_town_size(int old_town_size)
 	num_outdoors = scenario.out_width * scenario.out_height;
 	for (i = 0; i < num_outdoors; i++){
 		if (i == out_num) {
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 			
 			len = sizeof(outdoor_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &current_terrain); 
 			
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				current_terrain.port();
 			
 			if (error != 0) {
@@ -1457,16 +1455,16 @@ void save_change_to_town_size(int old_town_size)
 	for (k = 0; k < temp_scenario.num_towns; k++)
 		if (k == cur_town) {
 			// write towns
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			len = sizeof(town_record_type);
 			error = FSWrite(dummy_f, &len, (char *) &town); 
 			
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				town.port();
 			if (error != 0) 
 				abortSave(scen_f,dummy_f,66);
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			switch (scenario.town_size[cur_town]) {
 				case 0:
@@ -1498,7 +1496,7 @@ void save_change_to_town_size(int old_town_size)
 					FSWrite(dummy_f, &len, (char *) &tiny_t);
 					break;
 			}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			
 			//SetFPos(scen_f,3,save_town_size);
@@ -1575,11 +1573,11 @@ void load_campaign(FSSpec* file_to_load)
 		return;
 	}
 	
-	currently_editing_windows_scenario = scenario.scenario_platform();
+	current_scenario_is_little_endian = scenario.scenario_platform();
 	
 	FSClose(file_id);
 
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		scenario.port();
 		
 	clear_graphics_library();
@@ -1681,7 +1679,7 @@ void load_outdoor_borders(location which_out)
 			error = FSRead(file_id, &len, (char *) &store_out);
 			if (error != 0) {FSClose(file_id);oops_error(78);return;}
 			
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				store_out.port();
 			
 			if (i == 0 && k == 0) {
@@ -1760,7 +1758,7 @@ void load_outdoors(location which_out,short mode)
 	error = FSRead(file_id, &len, (char *) &store_out);
 	if (error != 0) {FSClose(file_id);oops_error(78);return;}
 
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		store_out.port();
 
 	if (mode == 0){
@@ -1832,7 +1830,7 @@ void load_all_outdoor_names(FSSpec* to_open)
 			file_is_loaded = FALSE;
 			return;
 		}
-		if (temp_scen.scenario_platform())
+		if (temp_scen.scenario_platform() != endianness.isLittle)
 			temp_scen.port();
 		zone_names.out_width=temp_scen.out_width;
 		zone_names.out_height=temp_scen.out_height;
@@ -1845,7 +1843,7 @@ void load_all_outdoor_names(FSSpec* to_open)
 			error = FSRead(file_id, &len, (char *) &store_out);
 			if (error != 0) {FSClose(file_id);oops_error(78);return;}
 			
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				store_out.port();
 			strcpy(&zone_names.section_names[out_sec_num][0],&store_out.name[0]);
 			len_to_jump+=sizeof(outdoor_record_type);;
@@ -1889,14 +1887,14 @@ void load_town(short which_town)
 	error = FSRead(file_id, &len , (char *) &town);
 	if (error != 0) {FSClose(file_id);oops_error(82);return;}
 
-	if (currently_editing_windows_scenario)
+	if (current_scenario_is_little_endian != endianness.isLittle)
 		town.port();
 	switch (scenario.town_size[which_town]) {
 		case 0:
 			len =  sizeof(big_tr_type);
 			error = FSRead(file_id, &len, (char *) &t_d);
 			if (error != 0) {FSClose(file_id); oops_error(83);return;}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				t_d.port();
 			break;
 			
@@ -1904,31 +1902,32 @@ void load_town(short which_town)
 			len = sizeof(ave_tr_type);
 			error = FSRead(file_id, &len, (char *) &ave_t);
 			if (error != 0) {FSClose(file_id); oops_error(84);return;}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				ave_t.port();
-			for (i = 0; i < 48; i++)
+			for (i = 0; i < 48; i++){
 				for (j = 0; j < 48; j++) {
 					t_d.terrain[i][j] = ave_t.terrain[i][j];
 					t_d.floor[i][j] = ave_t.floor[i][j];
 					t_d.height[i][j] = ave_t.height[i][j];
 					t_d.lighting[i][j] = ave_t.lighting[i][j];					
-					}
+				}
+			}
 			break;
 			
 		case 2:
 			len = sizeof(tiny_tr_type);
 			error = FSRead(file_id,&len , (char *) &tiny_t);
 			if (error != 0) {FSClose(file_id); oops_error(85);return;}
-			if (currently_editing_windows_scenario)
+			if (current_scenario_is_little_endian != endianness.isLittle)
 				tiny_t.port();
-				for (i = 0; i < 32; i++){
-					for (j = 0; j < 32; j++) {
-						t_d.terrain[i][j] = tiny_t.terrain[i][j];
-						t_d.floor[i][j] = tiny_t.floor[i][j];
-						t_d.height[i][j] = tiny_t.height[i][j];
-						t_d.lighting[i][j] = tiny_t.lighting[i][j];					
-					}
+			for (i = 0; i < 32; i++){
+				for (j = 0; j < 32; j++) {
+					t_d.terrain[i][j] = tiny_t.terrain[i][j];
+					t_d.floor[i][j] = tiny_t.floor[i][j];
+					t_d.height[i][j] = tiny_t.height[i][j];
+					t_d.lighting[i][j] = tiny_t.lighting[i][j];					
 				}
+			}
 			break;
 	}
 	clear_selected_copied_objects();
@@ -1968,7 +1967,7 @@ void load_all_town_names(FSSpec* to_open)
 		file_is_loaded = FALSE;
 		return;
 	}
-	if (temp_scen.scenario_platform())
+	if (temp_scen.scenario_platform() != endianness.isLittle)
 		temp_scen.port();
 	zone_names.out_width=temp_scen.out_width;
 	zone_names.out_height=temp_scen.out_height;
@@ -1984,7 +1983,7 @@ void load_all_town_names(FSSpec* to_open)
 		
 		error = FSRead(file_id, &len , (char *) &temp_town);
 		if (error != 0) {FSClose(file_id);oops_error(82);return;}
-		if (currently_editing_windows_scenario)
+		if (current_scenario_is_little_endian != endianness.isLittle)
 			temp_town.port();
 		strcpy(&zone_names.town_names[i][0],&temp_town.town_name[0]);
 		switch (temp_scen.town_size[i]) {
@@ -2126,7 +2125,7 @@ Boolean create_basic_scenario(char *scen_name_short,char *scen_name_with_ext,cha
 	if (error != 0) {
 		oops_error(100);
 		return FALSE;
-		}
+	}
 		
 	strcpy((char *) message,scen_name_with_ext);
 	c2p(message);
@@ -2136,11 +2135,11 @@ Boolean create_basic_scenario(char *scen_name_short,char *scen_name_with_ext,cha
 	if ((error != 0) && (error != dupFNErr)) {
 		oops_error(101);
 		return FALSE;
-		}
+	}
 	if ((error = FSpOpenDF(&new_scen_file,3,&scen_file_id)) != 0) {
 		oops_error(102);
 		return FALSE;
-		}	
+	}	
 	
 	// now we have folder and have created scenario file. clear
 	// records and start building.
@@ -2151,59 +2150,93 @@ Boolean create_basic_scenario(char *scen_name_short,char *scen_name_with_ext,cha
 	scenario.clear_scenario_data_type();
 	
 	if (on_surface) {
-		for (i = 0; i < 48; i++)
+		for (i = 0; i < 48; i++){
 			for (j = 0; j < 48; j++)
 				ave_t.floor[i][j] = 37;
-		for (i = 0; i < 48; i++)
+		}
+		for (i = 0; i < 48; i++){
 			for (j = 0; j < 48; j++)
 				current_terrain.floor[i][j] = 37;
 		}
+	}
 	
 	current_terrain.is_on_surface = on_surface;
 	town.is_on_surface = on_surface;
 	
-	sprintf(scenario.scen_name,scen_full_name);
+	sprintf(scenario.scen_name,"%s",scen_full_name);
 	scenario.out_width = out_width;
 	scenario.out_height = out_height;
 
 	if (use_warriors_grove) {
 		scenario.what_start_loc_in_town.x = 24;
 		scenario.what_start_loc_in_town.y = 24;
-		}
+	}
 			
 	len = sizeof(scenario_data_type); // write scenario data
+	if(scenario.scenario_platform() != endianness.isLittle)
+		scenario.port();
 	if ((error = FSWrite(scen_file_id, &len, (char *) &scenario)) != 0) {
 		oops_error(103);
 		return FALSE;
-		}		
+	}
+	if(scenario.scenario_platform() != endianness.isLittle){
+		scenario.port();
+		if(use_warriors_grove)
+			warrior_grove_out.port();
+		if(!use_warriors_grove || num_outdoors>1)
+			current_terrain.port();
+	}
 
 	num_outdoors = scenario.out_width * scenario.out_height;
 	for (i = 0; i < num_outdoors; i++) {// write outdoor sections
 		len = sizeof(outdoor_record_type);
 		if (( i == 0) && (use_warriors_grove))
 			FSWrite(scen_file_id, &len, (char *) &warrior_grove_out); 
-			else FSWrite(scen_file_id, &len, (char *) &current_terrain); 
-		}	
+		else
+			FSWrite(scen_file_id, &len, (char *) &current_terrain); 
+	}
+	if(scenario.scenario_platform() != endianness.isLittle){
+		if(use_warriors_grove)
+			warrior_grove_out.port();
+		if(!use_warriors_grove || num_outdoors>1)
+			current_terrain.port();
+	}
 
 	
 	// write towns	
 	if (use_warriors_grove) {
+		if(scenario.scenario_platform() != endianness.isLittle){
+			warrior_grove_town.port();
+			warrior_grove_terrain.port();
+		}
 		len = sizeof(town_record_type);
 		FSWrite(scen_file_id, &len, (char *) &warrior_grove_town); 
 		len = sizeof(ave_tr_type);
-		FSWrite(scen_file_id, &len, (char *) &warrior_grove_terrain); 
+		FSWrite(scen_file_id, &len, (char *) &warrior_grove_terrain);
+		if(scenario.scenario_platform() != endianness.isLittle){
+			warrior_grove_town.port();
+			warrior_grove_terrain.port();
 		}
-		else {
-			len = sizeof(town_record_type);
-			FSWrite(scen_file_id, &len, (char *) &town); 
-			len = sizeof(ave_tr_type);
-			FSWrite(scen_file_id, &len, (char *) &ave_t); 
-			}	
+	}
+	else {
+		if(scenario.scenario_platform() != endianness.isLittle){
+			town.port();
+			ave_t.port();
+		}
+		len = sizeof(town_record_type);
+		FSWrite(scen_file_id, &len, (char *) &town); 
+		len = sizeof(ave_tr_type);
+		FSWrite(scen_file_id, &len, (char *) &ave_t);
+		if(scenario.scenario_platform() != endianness.isLittle){
+			town.port();
+			ave_t.port();
+		}
+	}	
 
 	// now, everything is moved over. Delete the original, and rename the dummy
 	FSClose(scen_file_id);		
 	current_scenario_file_info = new_scen_file;
-	currently_editing_windows_scenario = FALSE;
+	current_scenario_is_little_endian = endianness.isLittle;
 
 	// copy over the basic needed scripts and give right names.
 	copy_script("trap.txt","trap.txt");
@@ -2230,7 +2263,7 @@ Boolean import_boa_town()
 	FSSpec path;
 	long len,len_to_jump = 0,store;
 	OSErr error;
-	Boolean this_is_windows_scenario;
+	Boolean this_is_little_endian_scenario;
 	
 	if (SelectSaveFileToOpen(&default_directory,&path,true) == FALSE)
 		return FALSE;
@@ -2249,8 +2282,8 @@ Boolean import_boa_town()
 		return(FALSE);
 	}
 	
-	this_is_windows_scenario = temp_scenario.scenario_platform();
-	if (this_is_windows_scenario)
+	this_is_little_endian_scenario = temp_scenario.scenario_platform();
+	if (this_is_little_endian_scenario != endianness.isLittle)
 		temp_scenario.port();
 	
 	which_town = get_a_number(842,0,0,temp_scenario.num_towns - 1);
@@ -2290,7 +2323,7 @@ Boolean import_boa_town()
 	error = FSRead(file_id, &len , (char *) &town);
 	if (error != 0) {FSClose(file_id);oops_error(203);}
 
-	if (this_is_windows_scenario)
+	if (this_is_little_endian_scenario != endianness.isLittle)
 		town.port();
 	//short old_size=scenario.town_size[cur_town];
 	scenario.town_size[cur_town]=temp_scenario.town_size[which_town];
@@ -2300,7 +2333,7 @@ Boolean import_boa_town()
 			len =  sizeof(big_tr_type);
 			error = FSRead(file_id, &len, (char *) &t_d);
 			if (error != 0) {FSClose(file_id); oops_error(204);}
-			if (this_is_windows_scenario)
+			if (this_is_little_endian_scenario != endianness.isLittle)
 				t_d.port();
 			break;
 			
@@ -2308,7 +2341,7 @@ Boolean import_boa_town()
 			len = sizeof(ave_tr_type);
 			error = FSRead(file_id, &len, (char *) &ave_t);
 			if (error != 0) {FSClose(file_id); oops_error(205);}
-			if (this_is_windows_scenario)
+			if (this_is_little_endian_scenario != endianness.isLittle)
 				ave_t.port();
 			for (i = 0; i < 48; i++){
 				for (j = 0; j < 48; j++) {
@@ -2324,7 +2357,7 @@ Boolean import_boa_town()
 			len = sizeof(tiny_tr_type);
 			error = FSRead(file_id,&len , (char *) &tiny_t);
 			if (error != 0) {FSClose(file_id); oops_error(206);}
-			if (this_is_windows_scenario)
+			if (this_is_little_endian_scenario != endianness.isLittle)
 				tiny_t.port();
 			for (i = 0; i < 32; i++){
 				for (j = 0; j < 32; j++) {
@@ -2361,14 +2394,14 @@ Boolean import_boa_outdoors()
 	len = (long) sizeof(scenario_data_type);
 	if ((error = FSRead(file_id, &len, (char *) &temp_scenario)) != 0){
 		FSClose(file_id); oops_error(301); return(FALSE);
-		}
+	}
 	if (temp_scenario.scenario_platform() < 0) {
 		give_error("This file is not a legitimate Blades of Avernum scenario.","",0);
 		return(FALSE);
-		}
+	}
 	
 	this_is_windows_scenario = temp_scenario.scenario_platform();
-	if (this_is_windows_scenario)
+	if (this_is_windows_scenario != endianness.isLittle)
 		temp_scenario.port();
 	
 	load_all_outdoor_names(&path);
@@ -2376,7 +2409,7 @@ Boolean import_boa_outdoors()
 	short which_section = pick_out(dummy_loc,temp_scenario.out_width,temp_scenario.out_height);
 	if (which_section < 0) {
 		FSClose(file_id); return(FALSE);
-		}
+	}
 	location spot_hit = {which_section / 100,which_section % 100};
  	which_section = spot_hit.y * temp_scenario.out_width + spot_hit.x;
 
@@ -2392,7 +2425,7 @@ Boolean import_boa_outdoors()
 	
 	error = FSRead(file_id, &len , (char *) &current_terrain);
 
-	if (this_is_windows_scenario)
+	if (this_is_windows_scenario != endianness.isLittle)
 		current_terrain.port();
 	load_all_outdoor_names(NULL);
 	strcpy(&zone_names.section_names[cur_out.x + cur_out.y*scenario.out_width][0],&current_terrain.name[0]);
@@ -2601,7 +2634,7 @@ void EdSysBeep(short duration)
 
 // given a script name, copies that script from the directory the editor is in to 
 // the directory of the current, active scenario
-Boolean copy_script(char *script_source_name,char *script_dest_name)
+Boolean copy_script(const char *script_source_name,const char *script_dest_name)
 {
 
 	Str255 file_name,dest_file_name;
@@ -2627,7 +2660,7 @@ Boolean copy_script(char *script_source_name,char *script_dest_name)
 	if (file_length == 0) {
 		FSClose(file_id);
 		return TRUE;
-		}
+	}
 		
 	error = FSClose(file_id);
 	if (error != 0) {return FALSE;}
@@ -2657,7 +2690,7 @@ Boolean copy_script(char *script_source_name,char *script_dest_name)
 	if ((error = FSWrite(file_id, &file_length, text_block)) != 0) {
 		FSClose(file_id);
 		return FALSE;
-		}	
+	}	
 	
 	error = FSClose(file_id);
 	if (error != 0) {return FALSE;}
@@ -2681,28 +2714,34 @@ void init_warriors_grove()
 	Str255 grove_file = "warriorgrove.bas";
 	
 	c2p(grove_file);
-	error = HOpen(start_volume,start_dir,
-		  grove_file,1,&file_id);
+	error = HOpen(start_volume,start_dir, grove_file,1,&file_id);
 	
 	len = (long) sizeof(scenario_data_type);
 	if ((error = FSRead(file_id, &len, (char *) &scenario)) != 0){
 		FSClose(file_id); return;
-		}
+	}
 
 	len = (long) sizeof(outdoor_record_type);
 	if ((error = FSRead(file_id, &len, (char *) &warrior_grove_out)) != 0){
 		FSClose(file_id); return;
-		}
+	}
 
 	len = (long) sizeof(town_record_type);
 	if ((error = FSRead(file_id, &len, (char *) &warrior_grove_town)) != 0){
 		FSClose(file_id); return;
-		}
+	}
 
 	len = (long) sizeof(ave_tr_type);
 	if ((error = FSRead(file_id, &len, (char *) &warrior_grove_terrain)) != 0){
 		FSClose(file_id); return;
-		}
+	}
+	
+	if(scenario.scenario_platform() != endianness.isLittle){
+		scenario.port();
+		warrior_grove_out.port();
+		warrior_grove_town.port();
+		warrior_grove_terrain.port();
+	}
 
 	FSClose(file_id);
 }
@@ -2869,7 +2908,7 @@ void import_blades_of_exile_scenario()
 		return ;
 	}	
 	current_scenario_file_info = new_scen_file;
-	currently_editing_windows_scenario = FALSE;
+	current_scenario_is_little_endian = endianness.isLittle; //TODO: is this correct?
 	
 	// initialize data and write scenario data
 	current_terrain.clear_outdoor_record_type();
@@ -5592,7 +5631,7 @@ void get_bl_str(char *str,short str_type,short str_num)
 			str[i] = '_';
 }
 
-void add_short_string_to_file(short file_id,char *str1,short num,char *str2)
+void add_short_string_to_file(short file_id,const char *str1,short num,const char *str2)
 {
 	char message[400];
 	
@@ -5603,7 +5642,7 @@ void add_short_string_to_file(short file_id,char *str1,short num,char *str2)
 	add_string_to_file(file_id,message);
 	add_cr(file_id);
 }
-void add_big_string_to_file(short file_id,char *str1,short num1,char *str2,short num2,char *str3,short num3,char *str4)
+void add_big_string_to_file(short file_id,const char *str1,short num1,const char *str2,short num2,const char *str3,short num3,const char *str4)
 {
 	char message[400];
 	
@@ -5620,13 +5659,13 @@ void add_big_string_to_file(short file_id,char *str1,short num1,char *str2,short
 	add_cr(file_id);
 }
 
-void add_string(short file_id,char *str)
+void add_string(short file_id,const char *str)
 {
 	add_string_to_file(file_id,str);
 	add_cr(file_id);
 }
 
-void add_string_to_file(short file_id,char *str)
+void add_string_to_file(short file_id,const char *str)
 {
 	if (strlen(str) == 0)
 		return;
@@ -5639,8 +5678,8 @@ void add_string_to_file(short file_id,char *str)
 			str[i] = '"';
 		}
 	}*/
-	long len = (long) (strlen((char *)str));
-	FSWrite(file_id, &len, (char *) str);
+	long len = (long) (strlen(str));
+	FSWrite(file_id, &len, str);
 }
 
 void add_cr(short file_id)

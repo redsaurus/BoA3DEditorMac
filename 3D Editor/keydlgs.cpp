@@ -84,7 +84,7 @@ short fancy_choice_dialog(short which_dlog,short parent)
 }
 
 //cre = check range error
-Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_num) 
+Boolean cre(short val,short min,short max, const char *text1, const char *text2,short parent_num) 
 {
 	if ((val < min) || (val > max)) {
 		give_error(text1,text2,parent_num);
@@ -93,7 +93,7 @@ Boolean cre(short val,short min,short max,char *text1, char *text2,short parent_
 	return FALSE;
 }
 
-Boolean string_not_clean(char *str,short max_length,short strict_file_naming,char *beginning_of_error,short parent_num)
+Boolean string_not_clean(char *str,short max_length,short strict_file_naming,const char *beginning_of_error,short parent_num)
 {
 	char error_str[256];
 	Boolean error = FALSE;
@@ -227,7 +227,7 @@ void put_text_res()
 //   -6 - floor
 //   -7 - town names
 //   -8 - outdoor section names
-short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,char *title)
+short choose_text_res(short res_list,short first_t,short last_t,short cur_choice,short parent_num,const char *title)
 {
 	short item_hit;
 
@@ -304,7 +304,7 @@ void how_many_dlog_event_filter (short item_hit)
 }
 
 // what_start - starting value
-short how_many_dlog(short what_start,short minimum,short maximum,char *what_text)
+short how_many_dlog(short what_start,short minimum,short maximum,const char *what_text)
 {
 	short item_hit;
 			
@@ -340,7 +340,7 @@ void get_str_dlog_event_filter (short item_hit)
 }
 
 // strict_string - If true, only alphanumeric characters
-void get_str_dlog(char *start_str,char *header_str,char *response,Boolean strict_string)
+void get_str_dlog(char *start_str,const char *header_str,char *response,Boolean strict_string)
 {
 	short item_hit;
 	

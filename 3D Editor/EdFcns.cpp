@@ -62,6 +62,7 @@ extern in_town_on_ter_script_type copied_ter_script;
 extern short current_cursor;
 extern short ticks_to_wait;
 extern bool allow_arrow_key_navigation;
+extern Boolean scroll_dialog_lock;
 big_tr_type t_d;
 big_tr_type clipboard;
 Rect clipboardSize;
@@ -228,6 +229,11 @@ bool process_scroll_click( int map_size, Point the_point, bool ctrlKey, bool shf
 // execute scroll
 bool handle_scroll( int map_size, int scrl, bool ctrlKey, bool shftKey )
 {
+	//Check to see whether there's a dialog already open
+	//If so, abort right away to prevent a potential 
+	//crash due to trying to open another
+	if(scroll_dialog_lock)
+		return false;
 	short dx = 0;		// displacement
 	short dy = 0;
 	
@@ -814,9 +820,17 @@ void handle_action(Point the_point,EventRecord event)
 						object_sticky_draw = shftKey;
 						set_cursor(0);
 						break;		
-					case 406:	//some as yet unused buttons
+					case 406:
+						set_string("Place NE/SW mirror","Select location");
+						overall_mode = 73;
+						object_sticky_draw = shftKey;
+						set_cursor(0);
 						break;
 					case 407:
+						set_string("Place NW/SE mirror","Select location");
+						overall_mode = 74;
+						object_sticky_draw = shftKey;
+						set_cursor(0);
 						break;
 					case 408:
 						break;
@@ -1182,8 +1196,14 @@ void handle_action(Point the_point,EventRecord event)
 						if(selected_object_number<NUM_OUT_TOWN_ENTRANCES){
 							switch (i) {
 								case 1:
-									current_terrain.spec_id[selected_object_number] = 
-									how_many_dlog(current_terrain.exit_dests[selected_object_number],0,200,"Set town number:");
+									{
+										int temp = get_a_number(856,current_terrain.exit_dests[selected_object_number],0,scenario.num_towns - 1);
+										if(temp==-1)
+											break;//the user cancelled the action
+										if (cre(temp,-1,scenario.num_towns - 1,"The town number you gave was out of range. It must be from 0 to the number of towns in the scenario - 1. ","",0))
+											break;
+										current_terrain.exit_dests[selected_object_number] = temp;
+									}
 									need_redraw=TRUE;
 									break;
 								case 3:
@@ -1296,7 +1316,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 		((spot_hit.x < 0) || (spot_hit.x > 47) || (spot_hit.y < 0) || (spot_hit.y > 47)))
 		return ;
 	
-	if(alt_hit && overall_mode!=73) {
+	if(alt_hit) {
 		cen_x = spot_hit.x;
 		cen_y = spot_hit.y;
 		if(cur_viewing_mode == 1) {
@@ -1772,7 +1792,9 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			take_fire_barrier(spot_hit.x,spot_hit.y); 
 			take_barrel(spot_hit.x,spot_hit.y); 
 			take_crate(spot_hit.x,spot_hit.y); 
-			take_web(spot_hit.x,spot_hit.y); 
+			take_web(spot_hit.x,spot_hit.y);
+			take_facing_mirror(spot_hit.x,spot_hit.y);
+			take_oblique_mirror(spot_hit.x,spot_hit.y);
 			for (i = 0; i < 8; i++){
 				take_sfx(spot_hit.x,spot_hit.y,i);
 			}
@@ -1801,7 +1823,17 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			scenario.start_in_what_town = cur_town;
 			scenario.what_start_loc_in_town = spot_hit;
 			reset_drawing_mode(); 
-			break;	
+			break;
+		case 73: //place NW/SE mirror
+			make_facing_mirror(spot_hit.x,spot_hit.y);
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
+			break;
+		case 74: //place NE/SW mirror
+			make_oblique_mirror(spot_hit.x,spot_hit.y);
+			if(!object_sticky_draw)
+				reset_drawing_mode(); 
+			break;
 		case 5://paste terrain
 			location templ;
 			templ.x=spot_hit.x;
@@ -4629,7 +4661,7 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 	return FALSE;
 }
 
-Boolean create_new_ter_script(char *ter_script_name,location create_loc,in_town_on_ter_script_type *script_to_make)
+Boolean create_new_ter_script(const char *ter_script_name,location create_loc,in_town_on_ter_script_type *script_to_make)
 {
 	short i;
 	
@@ -4697,7 +4729,7 @@ void place_items_in_town()
 	short i,j,k,x;
 	Boolean place_failed = FALSE;
 	
-	for (i=town.in_town_rect.left; i < town.in_town_rect.right;i++){//max_zone_dim[town_type]
+	for (i=town.in_town_rect.left; i < town.in_town_rect.right;i++){
 		for (j = town.in_town_rect.top; j < town.in_town_rect.bottom;j++) {
 			l.x = i; l.y = j;
 			
@@ -4742,7 +4774,7 @@ void create_town_entry(Rect rect_hit){
 void edit_town_entry(location spot_hit){
 	short x,y;
 	
-	for (x = 0; x < 8; x++){
+	for (x = 0; x < NUM_OUT_TOWN_ENTRANCES; x++){
 		if(current_terrain.exit_dests[x]!=kNO_OUT_TOWN_ENTRANCE && (loc_touches_rect(spot_hit,current_terrain.exit_rects[x]))) {
 			y = get_a_number(856,current_terrain.exit_dests[x],0,scenario.num_towns - 1);
 			if(y==-1)
@@ -6245,11 +6277,14 @@ Boolean clean_up_from_scrolling( int map_size, short dx, short dy )
 			return FALSE;
 		
 		if (change_made_outdoors == TRUE) {
+			scroll_dialog_lock = TRUE;
 			if ( save_check(990) == FALSE ) {	// canceled
 				cen_x = cen_x_save;				// recover center position
 				cen_y = cen_y_save;
+				scroll_dialog_lock = FALSE;
 				return TRUE;
 			}
+			scroll_dialog_lock = FALSE;
 		}
 		
 		clear_selected_copied_objects();

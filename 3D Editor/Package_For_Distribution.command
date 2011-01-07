@@ -5,10 +5,15 @@
 #product is expected to be an application bundle 
 #	in $BUILD_DIR/$PRODUCT_DIR
 BUILD_DIR="build"
-PRODUCT_DIR="Deployment"
+PRODUCT_DIR="Release"
 #created archives will be written to
 #	$BUILD_DIR/$OUPUT_DIR
 OUPUT_DIR="Current"
+#use this key to generate update signature
+PRIVATE_KEY_PATH="/Volumes/Vault/Home/3D_BoA_su_dsa_priv.pem"
+
+APPCAST_URL_BASE="http://127.0.0.1/~christopher/SparkleTest"
+SIGNING_SCRIPT="../../sign_update.rb"
 
 #move to the directory the command file was run from
 cd "$(dirname "$0")"
@@ -31,8 +36,17 @@ then
 	echo "No built product found, aborting"
 	exit
 fi
-APPNAME=`ls | sed -n 's/\([^.]*\).app/\1/p'`
+APPNAME=`ls -1 | sed -n 's/\([^.]*\).app$/\1/p'`
 echo "Product name is: $APPNAME"
+HUMAN_VERSION=`grep -m 1 -A 1 'CFBundleShortVersionString' "$APPNAME.app/Contents/Info.plist" | tail -n 1 | sed "s|[	]*<string>\([0-9\.]*\)</string>|\1|"`
+SVN_REVISION=`grep -m 1 -A 1 'CFBundleVersion' "$APPNAME.app/Contents/Info.plist" | tail -n 1 | sed "s|[	]*<string>\([0-9\.]*\)</string>|\1|"`
+echo "Version is $HUMAN_VERSION($SVN_REVISION)"
+
+PRODUCT_ARCHIVE_NAME="3D Editor v$HUMAN_VERSION (Mac).tgz"
+SOURCE_ARCHIVE_NAME="3D Editor Source v$HUMAN_VERSION (Mac).tgz"
+APPCAST_ENTRY="v$HUMAN_VERSION.xml"
+RELEASE_NOTES="rnotes_$HUMAN_VERSION.html"
+
 #create the output directory if necessary
 cd ..
 if [ ! -d "$OUPUT_DIR" ] 
@@ -42,22 +56,30 @@ then
 fi
 #move to the output directory
 cd $OUPUT_DIR/
+
 #erase old output if present
-if [ -f "$APPNAME.tgz" ] 
+if [ -f "$PRODUCT_ARCHIVE_NAME" ] 
 then 
-	rm "$APPNAME.tgz"
-	echo "Erased old $APPNAME.tgz"
+	rm "$PRODUCT_ARCHIVE_NAME"
+	echo "Erased old $PRODUCT_ARCHIVE_NAME"
 fi
-if [ -f "$APPNAME Source Code.tgz" ] 
+if [ -f "$SOURCE_ARCHIVE_NAME" ] 
 then 
-	rm "$APPNAME Source Code.tgz"
-	echo "Erased old $APPNAME Source Code.tgz"
+	rm "$SOURCE_ARCHIVE_NAME"
+	echo "Erased old $SOURCE_ARCHIVE_NAME"
 fi
+if [ -f "$APPCAST_ENTRY" ] 
+then 
+	rm "$APPCAST_ENTRY"
+	echo "Erased old $APPCAST_ENTRY"
+fi
+#do _not_ erase release notes, since we only generate a skeleton, and someone may have filled it in
+
 #back to the product directory
 cd ../$PRODUCT_DIR/
 #make a compressed copy of the product
 echo "Compressing product..."
-tar -czf "../$OUPUT_DIR/$APPNAME.tgz" "./$APPNAME.app"
+tar -czf "../$OUPUT_DIR/$PRODUCT_ARCHIVE_NAME" "./$APPNAME.app"
 #make a copy of the source code
 #move mack up to the original directory
 cd ../..
@@ -72,10 +94,50 @@ then
 fi
 #go to the output directory
 cd ./$BUILD_DIR/$OUPUT_DIR/
-#make a compressed copy of the copy
+#make a compressed copy of the code
 echo "Compressing source code..."
-tar -czf "./$APPNAME Source Code.tgz" "./$APPNAME Source Code"
+tar -czf "./$SOURCE_ARCHIVE_NAME" "./$APPNAME Source Code"
 #delete the uncompressed copy
 echo "Deleting temporary source code copy..."
 rm -r "./$APPNAME Source Code"
+
+#generate appcast entry
+if [ -f "$PRIVATE_KEY_PATH" ]
+then	
+	UPDATE_SIZE=`stat -f %z "$PRODUCT_ARCHIVE_NAME"`
+	PUBDATE=`date "+%a, %d %b %Y %T"`
+	#SIGNATURE=`"$SIGNING_SCRIPT" "$PRODUCT_ARCHIVE_NAME" "$PRIVATE_KEY_PATH"`
+	SIGNATURE=`openssl dgst -sha1 -binary < "$PRODUCT_ARCHIVE_NAME" | openssl dgst -dss1 -sign "$PRIVATE_KEY_PATH" | openssl enc -base64`
+	ESCAPED_URL=`echo "$APPCAST_URL_BASE/Versions/$PRODUCT_ARCHIVE_NAME" | sed 's| |%20|g'`
+	
+	echo '			<item>' > $APPCAST_ENTRY
+	echo "				<title>Version $HUMAN_VERSION</title>" >> $APPCAST_ENTRY
+	echo "					<sparkle:releaseNotesLink>" >> $APPCAST_ENTRY
+	echo "						$APPCAST_URL_BASE/ReleaseNotes/rnotes_$HUMAN_VERSION.html" >> $APPCAST_ENTRY
+	echo "					</sparkle:releaseNotesLink>" >> $APPCAST_ENTRY
+	echo "					<pubDate>$PUBDATE</pubDate>" >> $APPCAST_ENTRY
+	echo "					<enclosure url=\"$ESCAPED_URL\" sparkle:version=\"$SVN_REVISION\" sparkle:shortVersionString=\"$HUMAN_VERSION\" length=\"$UPDATE_SIZE\" type=\"application/octet-stream\" sparkle:dsaSignature=\"$SIGNATURE\" />" >> $APPCAST_ENTRY
+	echo '			</item>' >> $APPCAST_ENTRY
+	
+	echo "Wrote appcast entry data to $APPCAST_ENTRY"
+else
+	echo "Unable to locate Sparkle private key at $PRIVATE_KEY_PATH, aborting appcast entry generation"
+	exit 1
+fi
+
+#generate release notes skeleton
+echo '<html>' > $RELEASE_NOTES
+echo '	<head>' >> $RELEASE_NOTES
+echo '		<meta http-equiv="content-type" content="text/html;charset=utf-8">' >> $RELEASE_NOTES
+echo '		<title>3D Blades of Avernum Editor</title>' >> $RELEASE_NOTES
+echo '		<meta name="robots" content="anchors">' >> $RELEASE_NOTES
+echo '		<link href="rnotes.css" type="text/css" rel="stylesheet" media="all">' >> $RELEASE_NOTES
+echo '	</head>' >> $RELEASE_NOTES
+echo '	<body>' >> $RELEASE_NOTES
+echo '		<br/>' >> $RELEASE_NOTES
+echo '	</body>' >> $RELEASE_NOTES
+echo '</html>' >> $RELEASE_NOTES
+
+echo "Wrote release notes skeleton to $RELEASE_NOTES"
+
 echo "Finished"

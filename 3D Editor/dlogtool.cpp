@@ -111,8 +111,8 @@ static short button_type[140] = {1,1,4,5,1,12,0,0,1,1, // how big the button is?
 						 1,1,1,2,1,2,2,2,2,1, // 100
 						 2,2,2,2,2,2,2,2,2,2,
 						 2,2,2,2,2,2,2,2,0,0,
-						 1,1,1,1,1,1,0,0,0,0};
-char *button_strs[140] = {"Done ","Ask"," "," ","Keep", " ","+","-","Buy","Leave", // text on the button? what text
+						 1,1,1,1,1,1,0,0,2,0};
+const char *button_strs[140] = {"Done ","Ask"," "," ","Keep", " ","+","-","Buy","Leave", // text on the button? what text
 						"Get","1","2","3","4","5","6","Cast"," "," ",
 						" "," "," ","Buy","Sell","Other Spells","Buy x10"," "," ","Save",
 						"Race","Train","Items","Spells","Heal Party","1","2","3","4","5",
@@ -125,7 +125,7 @@ char *button_strs[140] = {"Done ","Ask"," "," ","Keep", " ","+","-","Buy","Leave
 				/*100*/		"Destroy","Pay","Free","Next Tip","Touch", "Select Icon","Create/Edit","Clear Special","Edit Abilities","Choose",
 						"Go Back","Create New","General","One Shots","Affect PCs","If-Thens","Town Specs","Out Specs","Advanced","Weapon Abil",
 						"General Abil.","NonSpell Use","Spell Usable","Reagents","Missiles","Abilities","Pick Picture","Animated","Enter","Burn",
-						"Insert","Remove","Accept","Refuse","Open","Close","Sit","Stand","",""};
+						"Insert","Remove","Accept","Refuse","Open","Close","Sit","Stand","Don't Save",""};
 static short button_left_adj[140] = {2,0,0,0,6,0,0,0,0,5,
 							0,0,0,0,0,0,0,4,0,0,
 							0,0,0,0,0,5,0,0,0,6,
@@ -139,7 +139,7 @@ static short button_left_adj[140] = {2,0,0,0,6,0,0,0,0,5,
 							2,6,6,3,6,7,3,0,0,3, // 100
 							0,5,3,3,3,3,3,4,4,0,
 							6,4,4,2,2,3,6,5,0,0,
-							4,4,4,4,6,4,0,0,0,0
+							4,4,4,4,6,4,0,0,5,0
 							};
 static char button_def_key[140] = {0,0,20,21,'k', 24,0,0,0,0,
 							'g','1','2','3','4', '5','6',0,0,0,
@@ -712,7 +712,7 @@ short cd_retrieve_text_edit_num(short dlog_num, short item_num)
 
 
 // NOTE!!! Expects a c string
-void cd_set_text_edit_str(short dlog_num, short item_num, char *str)
+void cd_set_text_edit_str(short dlog_num, short item_num, const char *str)
 {
 	short dlg_index;
 	short the_type;

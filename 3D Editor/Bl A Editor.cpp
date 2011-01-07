@@ -46,6 +46,7 @@
 //#include <QDOffscreen.h>
 //#include <Palettes.h>
 
+#include <Sparkle/SUCarbonAPI.h>
 #include "global.h"
 
 extern Rect terrain_rects[516]; //was 264
@@ -56,6 +57,7 @@ Boolean dialog_not_toast = FALSE;
 WindowPtr	mainPtr;
 EventHandlerRef scrollHandler;
 EventHandlerRef scrollHandler2;
+Boolean scroll_dialog_lock = FALSE;
 Boolean mouse_button_held = FALSE;
 Boolean play_sounds = TRUE;
 short cen_x, cen_y;
@@ -160,6 +162,8 @@ short overall_mode = 0;
 // 70 - place, edit terrain script
 // 71 - place outdoor start point
 // 72 - place town start point
+// 73 - place NE/SW mirror
+// 74 - place NW/SE mirror
 
 // Numbers of current zone being edited
 
@@ -215,7 +219,7 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 
 //MW specified argument and return type.
 int main(void)
-{	
+{
 	/*MaxApplZone();
 	MoreMasters();*/
 	using_osx = SWIsOSX();
@@ -264,11 +268,13 @@ int main(void)
 
 	Handle menu_bar_handle = GetNewMBar(128);
 	if (menu_bar_handle == NIL) {
-		SysBeep(50); SysBeep(50); SysBeep(50);
+		printf("Failed to locate main menubar; exiting\n");
 		ExitToShell();
 	}
 	SetMenuBar(menu_bar_handle);
 	DisposeHandle(menu_bar_handle);
+	
+	SUSparkleInitializeForCarbon();
 	init_user_prefs();
 	//apple_menu = GetMenuHandle(500);
 	//AppendResMenu(apple_menu, 'DRVR');
@@ -354,6 +360,11 @@ void Initialize(void)
 	
 	undo = linkedList();
 	redo = linkedList();
+	
+	load_builtin_images();
+	
+	const MenuCommand kSparkleUpdate = FOUR_CHAR_CODE('sCUP');
+	SetMenuItemCommandID (GetMenuHandle(500),2,kSparkleUpdate);
 }
 
 //initializes values according to user's preferences
@@ -368,6 +379,7 @@ void init_user_prefs()
 	CheckMenuItem (GetMenuHandle(570),11,always_draw_heights);
 	allow_arrow_key_navigation = get_allow_arrow_key_navigation();
 	CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
+	CheckMenuItem (GetMenuHandle(570),13,get_user_pref_bool_value(4,false));
 }
 
 void Set_Window_Drag_Bdry()
@@ -524,6 +536,13 @@ void handle_apple_menu(int item_hit)
 	switch (item_hit) {
 		case 1:
 			fancy_choice_dialog(1062,0);
+			break;
+		case 2:
+			if (change_made_town || change_made_outdoors) {
+				if (save_check(881) == FALSE)
+					break;							
+			}
+			SUSparkleCheckForUpdates(true);
 			break;
 		default:
 			//GetMenuItemText (apple_menu,item_hit,desk_acc_name);
@@ -1083,7 +1102,6 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 				dx=pow(-1,dx<0);
 			if(abs(dy)>1000)
 				dy=pow(-1,dy<0);
-			//printf("dx=%li,dy=%li ",dx,dy);
 			float dir=pi/2;
 			if(dx!=0){
 				dir = atan(float(abs(dy))/abs(dx));
@@ -1092,7 +1110,6 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 				dir=pi-dir;
 			if(dy<0)
 				dir=(2*pi)-dir;
-			//printf("%f deg.\n",(180.0*dir)/pi);
 			float smallAngle=.2694;
 			float largeAngle=1.0147;
 			if(modifiers&shiftKey){
@@ -1125,7 +1142,6 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 					scrl|=eSCRL_Right;
 			}
 			handle_scroll( (editing_town) ? max_zone_dim[town_type] : 48, scrl, false, false );
-			//printf("done handling scroll (view)\n");
 		}
 	}
 	return(result);

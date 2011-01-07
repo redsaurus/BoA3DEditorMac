@@ -230,23 +230,24 @@ void outdoor_record_type::port()
 {
 	short i,j;
 	
-	for (i = 0; i < 48; i++)
-		for (j = 0; j < 48; j++)
+	for (i = 0; i < OUTDOOR_SIZE; i++)
+		for (j = 0; j < OUTDOOR_SIZE; j++)
 			flip_short(&terrain[i][j]);
 	for (i = 0; i < NUM_OUT_PLACED_SPECIALS; i++) 
 		flip_rect(&special_rects[i]);
 	for (i = 0; i < NUM_OUT_PLACED_SPECIALS; i++) 
 		flip_short(&spec_id[i]);
-	for (i = 0; i < 8; i++) 
+	for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++) 
 		flip_rect(&exit_rects[i]);
-	for (i = 0; i < 8; i++) 
+	for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++) 
 		flip_short(&exit_dests[i]);
 	for (i = 0; i < 4; i++) {
 		wandering[i].port();
 		special_enc[i].port();
-		preset[i].port();		
 	}
-	for (i = 0; i < 8; i++) 
+	for (i = 0; i < 8; i++)
+		preset[i].port();
+	for (i = 0; i < NUM_OUT_DESCRIPTION_AREAS; i++)
 		flip_rect(&info_rect[i]);
 	flip_short(&is_on_surface);
 	for (i = 0; i < 10; i++) 
@@ -585,7 +586,7 @@ void town_record_type::port()
 	
 	for (i =0 ; i < NUM_TER_SCRIPTS; i++) 
 		ter_scripts[i].port();
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < NUM_TOWN_DESCRIPTION_AREAS; i++)
 		flip_rect(&room_rect[i]);
 	for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++) 
 		creatures[i].port();
@@ -700,10 +701,24 @@ scenario_data_type::scenario_data_type()
 
 void scenario_data_type::clear_scenario_data_type()
 {
-	flag1 = 97;
-	flag2 = 215;
-	flag3 = 7;
-	flag4 = 33;
+	//In theory one could use the native byte ordering. 
+	//For now, however, the convention is that all scenarios 
+	//should be stored in big-endian format
+	
+	//if(endianness.isLittle){
+	//	flag1 = 199;
+	//	flag2 = 61;
+	//	flag3 = 2;
+	//	flag4 = 53;
+	//}
+	//else{
+	//	big-endian
+		flag1 = 97;
+		flag2 = 215;
+		flag3 = 7;
+		flag4 = 33;
+	//}
+	
 	ver[0] = 1; 
 	ver[1] = 0; 
 	ver[2] = 0; 
@@ -780,14 +795,14 @@ void scenario_data_type::clear_scenario_data_type()
 short scenario_data_type::scenario_platform()
 {
 	if ((flag1 == 97) &&
-		(flag2 = 215) &&
-		(flag3 = 7) &&
-		(flag4 = 33))
+		(flag2 == 215) &&
+		(flag3 == 7) &&
+		(flag4 == 33))
 		return 0;
 	if ((flag1 == 199) &&
-		(flag2 = 61) &&
-		(flag3 = 2) &&
-		(flag4 = 53))
+		(flag2 == 61) &&
+		(flag3 == 2) &&
+		(flag4 == 53))
 		return 1;
 	return -1;
 }
@@ -818,6 +833,11 @@ void scenario_data_type::port()
 			flip_short(&storage_shortcuts[i].item_num[j]);
 			flip_short(&storage_shortcuts[i].item_odds[j]);
 		}
+	}
+	
+	for (i = 0; i < 30; i++)  {
+		scen_boats[i].port();
+		scen_horses[i].port();
 	}
 	
 	flip_short(&last_town_edited);	
@@ -888,6 +908,10 @@ void boat_record_type::clear_boat_record_type()
 	property = FALSE;
 }
 
+void boat_record_type::port(){
+	flip_short(&which_town);
+}
+
 horse_record_type::horse_record_type()
 {
 	clear_horse_record_type();
@@ -904,16 +928,13 @@ void horse_record_type::clear_horse_record_type()
 	property = FALSE;
 }
 
+void horse_record_type::port(){
+	flip_short(&which_town);
+}
+
 void flip_short(short *s)
 {
-	char store,*s1, *s2;
-	
-	s1 = (char *) s;
-	s2 = s1 + 1;
-	store = *s1;
-	*s1 = *s2;
-	*s2 = store;
-	
+	*(unsigned short*)s = ((*(unsigned short*)s >> 8) & 0xFF) | ((*(unsigned short*)s & 0xFF) << 8);
 }
 
 void alter_rect(Rect *r)
@@ -934,5 +955,5 @@ void flip_rect(Rect *s)
 	flip_short(&(s->bottom));
 	flip_short(&(s->left));
 	flip_short(&(s->right));
-	alter_rect(s);
+	//alter_rect(s); //It's unclear why this line was ever here, and it was causing horrible errors
 }

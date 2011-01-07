@@ -25,7 +25,7 @@ void RedAlert_c (char *theStr)
 	display_error_dialog(new_str,TRUE);
 }
 
-void ASB (char *theStr)
+void ASB (const char *theStr)
 {
 	Str255 new_str;
 	
@@ -34,7 +34,7 @@ void ASB (char *theStr)
 	display_error_dialog(new_str,FALSE);
 }
 
-void ASB_big (char *str1,char *str2,char *str3,char *str4,short num,char *str5)
+void ASB_big (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5)
 {
 	Str255 str;
 	
@@ -45,7 +45,7 @@ void ASB_big (char *str1,char *str2,char *str3,char *str4,short num,char *str5)
 	display_error_dialog(str,FALSE);
 }
 
-void ASB_big_color (char *str1,char *str2,char *str3,char *str4,short num,char *str5,short dummy)
+void ASB_big_color (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5,short dummy)
 {
 	Str255 str;
 	

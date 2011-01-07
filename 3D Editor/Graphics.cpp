@@ -119,8 +119,8 @@ static short num_builtin_sheets_in_library = 0;
 
 static char current_string[256] = "";
 char current_string2[256] = "";
-char *attitude_types[4] = {"Friendly","Neutral","Hostile, Type A","Hostile, Type B"};
-static char *facings[4] = {"North","West","South","East"};
+const char *attitude_types[4] = {"Friendly","Neutral","Hostile, Type A","Hostile, Type B"};
+static const char *facings[4] = {"North","West","South","East"};
 
 static short small_what_drawn[64][64];
 static short small_what_floor_drawn[64][64];
@@ -204,7 +204,7 @@ void load_main_screen()
 	Str255 fn1 = "\pGeneva";
 	//	Str255 fn2 = "\pDungeon Bold";
 	Str255 fn3 = "\pPalatino";
-	short i,j;	
+	//short i,j;	
 	
 	GetFNum(fn1,&geneva_font_num);
 	if (geneva_font_num == 0)
@@ -220,46 +220,41 @@ void load_main_screen()
 	creature_buttons_size.bottom=1+22*(1+TER_BUTTON_HEIGHT_3D);
 	creature_buttons_size.right=210;
 	
-	NewGWorld(&creature_buttons_gworld, 0,&creature_buttons_size, NIL, NIL, 0);
+	NewGWorld(&creature_buttons_gworld, 0,&creature_buttons_size, NIL, NIL, kNativeEndianPixMap);
 	
 	item_buttons_size.top=0;
 	item_buttons_size.left=0;
 	item_buttons_size.bottom=1+42*(1+TER_BUTTON_SIZE);
 	item_buttons_size.right=210;
 	
-	NewGWorld(&item_buttons_gworld, 0,&item_buttons_size, NIL, NIL, 0);
-	NewGWorld(&floor_buttons_gworld, 0,&terrain_buttons_rect, NIL, NIL, 0);
+	NewGWorld(&item_buttons_gworld, 0,&item_buttons_size, NIL, NIL, kNativeEndianPixMap);
+	NewGWorld(&floor_buttons_gworld, 0,&terrain_buttons_rect, NIL, NIL, kNativeEndianPixMap);
 	
 	terrain_buttons_size.top=0;
 	terrain_buttons_size.left=0;
 	terrain_buttons_size.bottom=1+43*(1+TER_BUTTON_HEIGHT_3D);
 	terrain_buttons_size.right=210;
 	
-	NewGWorld(&terrain_buttons_gworld, 0,&terrain_buttons_size, NIL, NIL, 0);
-	NewGWorld(&function_buttons_gworld, 0,&function_buttons_rect, NIL, NIL, 0);
+	NewGWorld(&terrain_buttons_gworld, 0,&terrain_buttons_size, NIL, NIL, kNativeEndianPixMap);
+	NewGWorld(&function_buttons_gworld, 0,&function_buttons_rect, NIL, NIL, kNativeEndianPixMap);
 	
 	SetPort((GrafPtr) function_buttons_gworld);
 	TextFont(geneva_font_num);
 	TextSize(10);
 	TextFace(bold);
 	SetPort(GetWindowPort(mainPtr));
-	NewGWorld(&ter_draw_gworld, 0,&terrain_rect_gr_size, NIL, NIL, 0);
+	NewGWorld(&ter_draw_gworld, 0,&terrain_rect_gr_size, NIL, NIL, kNativeEndianPixMap);
 	
-	NewGWorld(&tint_area, 16,&tint_rect, NIL, NIL, 0);
+	NewGWorld(&tint_area, 16,&tint_rect, NIL, NIL, kNativeEndianPixMap);
 	
-	for (i = 0; i < NUM_BUTTONS; i++){
-		for (j = 0; j < 2; j++)
-			dlg_buttons_gworld[i][j] = load_pict(2000 + (2 * i) + j);
-	}
-	for (i = 0; i < 14; i++)
+	//for (i = 0; i < NUM_BUTTONS; i++){
+	//	for (j = 0; j < 2; j++)
+	//		dlg_buttons_gworld[i][j] = load_pict(2000 + (2 * i) + j);
+	//}
+	for(short i = 0; i < 14; i++)
 	    bg[i] = GetPixPat (128 + i);
 	//	for (i = 0; i < 29; i++) 
 	//	    map_pat[i] = GetPixPat (200 + i);
-	
-	//these items are now in seperate sheets, much neater and easier to maintain
-	/*markers = load_pict(915);
-	townButtons = load_pict(918);
-	outdoorButtons = load_pict(919);*/
 		
 	mixed_gworld = load_pict(903);
 	if (dlog_horiz_border_bottom_gworld == NULL)
@@ -268,8 +263,6 @@ void load_main_screen()
 		dlog_horiz_border_top_gworld = load_pict(841);//(51);
 	if (dlog_vert_border_gworld == NULL)
 		dlog_vert_border_gworld = load_pict(840);//(850);
-	if (pattern_gworld == NULL)
-		pattern_gworld = load_pict(701);//(850);
 }
 
 void redraw_screen()
@@ -410,10 +403,6 @@ void set_up_terrain_buttons()
 						do_this_item = FALSE;
 					break;
 			}
-			//It seems one of the terrain graphics sheets is covered up by (same resource number as) an editor graphic.
-			//So I had to copy that sheet into 3D editor graphics and make this horrible hack (in multiple places!)
-			if(a.which_sheet == 701)
-				a.which_sheet = 916;
 		}
 		else {
 			short sbar_pos;
@@ -527,19 +516,21 @@ GWorldPtr load_pict(int picture_to_get)
 	char good;
 	
     current_pic_handle = GetPicture (picture_to_get);
-	if (current_pic_handle == NIL)  {// ack! no picture there! or no memory
-									 //SysBeep(50); 
+	if (current_pic_handle == NULL)  {// ack! no picture there! or no memory
+									 //SysBeep(50);
 		return NULL;}
-	pic_rect = ( **( current_pic_handle) ).picFrame;
+	//Using QDGetPictureBounds is VERY IMPORTANT!!!
+	//It knows hpw to do proper byte swapping so that little-endian code can display big-endian pictures
+	QDGetPictureBounds(current_pic_handle, &pic_rect);
 	pic_wd = pic_rect.right - pic_rect.left;
-	pic_hgt = pic_rect.bottom - pic_rect.top;  
+	pic_hgt = pic_rect.bottom - pic_rect.top;
 	GetGWorld (&origPort, &origDev);
 	check_error = NewGWorld (&myGWorld, 0,
 							 &pic_rect,
-							 NULL, NULL, 0);
+							 NULL, NULL, kNativeEndianPixMap);
 	if (check_error != noErr)  { // ack!  no memory for gworld
 		ReleaseResource ((Handle) current_pic_handle);
-		//SysBeep(50); 
+		//SysBeep(50);
 		return NULL;}
 	
 	SetGWorld(myGWorld, NULL);
@@ -548,7 +539,7 @@ GWorldPtr load_pict(int picture_to_get)
 	good = LockPixels (offPMHandle);
 	if (good == FALSE)  { // it's hard to imagine an error here
 		ReleaseResource ((Handle) current_pic_handle);
-		//SysBeep(50); 
+		//SysBeep(50);
 		return NULL;}
 	SetRect (&pic_rect, 0, 0, pic_wd, pic_hgt);
 	DrawPicture (current_pic_handle, &pic_rect);
@@ -669,11 +660,6 @@ Boolean place_icon_into_3D_sidebar(graphic_id_type icon, Rect to_rect, short uns
 	Rect from_rect;
 	graphic_id_type a = icon;
 	
-	//It seems one of the terrain graphics sheets is covered up by (same resource number as) an editor graphic.
-	//So I had to copy that sheet into 3D editor graphics and make this horrible hack (in multiple places!)
-	if(a.which_sheet == 701)
-		a.which_sheet = 916;
-	
 	OffsetRect(&to_rect,(unscaled_offset_x * TER_BUTTON_SIZE) / PICT_BOX_WIDTH_3D,
 			   (unscaled_offset_y * TER_BUTTON_SIZE) / PICT_BOX_HEIGHT_3D);
 	
@@ -706,10 +692,6 @@ Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_
 		return TRUE;
 	
 	a = icon;
-	//It seems one of the terrain graphics sheets is covered up by (same resource number as) an editor graphic.
-	//So I had to copy that sheet into 3D editor graphics and make this horrible hack (in multiple places!)
-	if(a.which_sheet == 701)
-		a.which_sheet = 916;
 	
 	short index = safe_get_index_of_sheet(&a);
 	if (index < 0) {
@@ -740,10 +722,6 @@ Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_poin
 		return TRUE;
 	
 	a = icon;
-	//It seems one of the terrain graphics sheets is covered up by (same resource number as) an editor graphic.
-	//So I had to copy that sheet into 3D editor graphics and make this horrible hack (in multiple places!)
-	if(a.which_sheet == 701)
-		a.which_sheet = 916;
 	
 	short index = safe_get_index_of_sheet(&a);
 	if (index < 0) {
@@ -1876,6 +1854,12 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 		}
 	}
 	// draw barrels, etc
+	if (field_of_type[8]) { //facing mirror
+		a.which_sheet = 790;
+		a.which_icon = 12;
+		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+	}
 	if (field_of_type[7]) {
 		a.which_sheet = 707;
 		a.which_icon = 5;
@@ -1905,6 +1889,12 @@ void draw_town_objects_3D(short x, short y, short at_point_center_x, short at_po
 		a.which_icon = 6;
 			place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
 										 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
+	}
+	if (field_of_type[2]) { //oblique mirror
+		a.which_sheet = 790;
+		a.which_icon = 13;
+		place_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y
+									 - scen_data.scen_terrains[t_d.terrain[x][y]].height_adj,to_whole_area_rect,lighting);
 	}
 	// draw stains
 	for (short j = 0; j < 8; j++) {
@@ -2962,6 +2952,16 @@ void draw_ter_large()
 				if (is_force_barrier(loc_drawn.x,loc_drawn.y)) {
 					a.which_sheet = 686;
 					a.which_icon = 41;
+					place_terrain_icon_into_ter_large(a,q,r);
+				}
+				if (is_oblique_mirror(loc_drawn.x,loc_drawn.y)) {
+					a.which_sheet = 689;
+					a.which_icon = 13;
+					place_terrain_icon_into_ter_large(a,q,r);
+				}
+				if (is_facing_mirror(loc_drawn.x,loc_drawn.y)) {
+					a.which_sheet = 689;
+					a.which_icon = 12;
 					place_terrain_icon_into_ter_large(a,q,r);
 				}
 				for (short j = 0; j < 8; j++){
@@ -4101,7 +4101,7 @@ void draw_function_buttons(int mode){
 
 //sets the paor of strings displayed to the user
 //below the function buttons
-void set_string(char *string,char *string2)
+void set_string(const char *string,const char *string2)
 {
 	strcpy((char *)current_string,string);
 	strcpy((char *)current_string2,string2);
@@ -4152,7 +4152,7 @@ void win_draw_string_outline(CGrafPtr dest_window,Rect dest_rect,char *str,short
 	SetPort(old_port);
 }
 
-void char_win_draw_string(GrafPtr dest_window,Rect dest_rect,char *str,short mode,short line_height)
+void char_win_draw_string(GrafPtr dest_window,Rect dest_rect,const char *str,short mode,short line_height)
 {
 	Str255 store_s;
 	strcpy((char *) store_s,str);
@@ -4461,7 +4461,7 @@ GWorldPtr import_image_file_to_GWorld(const FSSpec* fileSpec){
 	Rect naturalBounds;
 	GraphicsImportGetNaturalBounds (gi, &naturalBounds);
 	GWorldPtr temp;
-	NewGWorld(&temp,0,&naturalBounds, NIL, NIL, 0);
+	NewGWorld(&temp,0,&naturalBounds, NIL, NIL, kNativeEndianPixMap);
 	GraphicsImportSetGWorld (gi, temp, nil);
 	GraphicsImportDraw (gi);
 	CloseComponent(gi);
@@ -4517,15 +4517,50 @@ void import_image_resource_into_library(CFStringRef resourceName, CFStringRef re
 	num_sheets_in_library++;
 }
 
-void load_builtin_images(){
-	//enforce that builtin are at the bottom of the library
+void load_builtin_images(){	
+	const unsigned int numberedSheetsCount = 2; //3
+	static const struct{
+		CFStringRef filename;
+		short sheetNumber;
+	} numberedSheets[numberedSheetsCount]={
+//		{CFSTR("sheet701_patch"),916},
+		{CFSTR("character"),917},
+		{CFSTR("sw_logo"),3001}
+	}; //all images are assumed to be PNGs
+	
+	static const CFStringRef buttonFiles[NUM_BUTTONS][2]={
+		{CFSTR("sq_wood_button"),CFSTR("sq_wood_button_dn")},
+		{CFSTR("wood_button"),CFSTR("wood_button_dn")},
+		{CFSTR("long_wood_button"),CFSTR("long_wood_button_dn")},
+		{CFSTR("help_button"),CFSTR("help_button_dn")},
+		{CFSTR("left_arrow_button"),CFSTR("left_arrow_button_dn")},
+		{CFSTR("right_arrow_button"),CFSTR("right_arrow_button_dn")},
+		{CFSTR("up_arrow_button"),CFSTR("up_arrow_button_dn")},
+		{CFSTR("down_arrow_button"),CFSTR("down_arrow_button_dn")},
+		{CFSTR("green_LED"),CFSTR("red_LED")},
+		{CFSTR("green_LED_button"),CFSTR("red_LED_button")},
+		{CFSTR("black_LED_button"),CFSTR("blank_LED_button")},
+		{CFSTR("done_button"),CFSTR("done_button_dn")},
+		{CFSTR("cancel_button"),CFSTR("cancel_button_dn")},
+	};
+	
+	//enforce that builtins are at the bottom of the library
 	if(num_builtin_sheets_in_library!=0 || num_sheets_in_library!=0)
 		return;
 	markers = load_image_resource(CFSTR("markers"),CFSTR("png"),NULL);
-	import_image_resource_into_library(CFSTR("sheet701_patch"),CFSTR("png"),NULL,graphic_id_type(916,0,0));
-	import_image_resource_into_library(CFSTR("character"),CFSTR("png"),NULL,graphic_id_type(917,0,0));
 	townButtons = load_image_resource(CFSTR("town_buttons"),CFSTR("png"),NULL);
 	outdoorButtons = load_image_resource(CFSTR("outdoor_buttons"),CFSTR("png"),NULL);
+	pattern_gworld = load_image_resource(CFSTR("editor_textures"),CFSTR("png"),NULL);
+	
+	for(unsigned int i=0; i<numberedSheetsCount; i++)
+		import_image_resource_into_library(numberedSheets[i].filename,CFSTR("png"),NULL,graphic_id_type(numberedSheets[i].sheetNumber,0,0));
+	
+	for (short i = 0; i < NUM_BUTTONS; i++){
+		for (short j = 0; j < 2; j++){
+			dlg_buttons_gworld[i][j] = load_image_resource(buttonFiles[i][j],CFSTR("png"),NULL);
+		}
+	}
+	
 	num_builtin_sheets_in_library=num_sheets_in_library;
 }
 
@@ -5142,6 +5177,24 @@ void take_field_type(short i,short j,short field_type){
 	}
 }
 
+Boolean is_oblique_mirror(short i,short j){
+	return is_field_type(i,j,2);
+}
+void make_oblique_mirror(short i,short j){
+	make_field_type(i,j,2);
+}
+void take_oblique_mirror(short i,short j){
+	take_field_type(i,j,2);
+}
+Boolean is_facing_mirror(short i,short j){
+	return is_field_type(i,j,8);
+}
+void make_facing_mirror(short i,short j){
+	make_field_type(i,j,8);
+}
+void take_facing_mirror(short i,short j){
+	take_field_type(i,j,8);
+}
 Boolean is_web(short i,short j){
 	return is_field_type(i,j,5);
 }
@@ -5319,7 +5372,7 @@ void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pa
 	SetPort(old_port);	
 }
 
-void cant_draw_graphics_error(graphic_id_type a,char *bonus_string,short bonus_num)
+void cant_draw_graphics_error(graphic_id_type a,const char *bonus_string,short bonus_num)
 {
 	char error[256];
 	char error2[256];

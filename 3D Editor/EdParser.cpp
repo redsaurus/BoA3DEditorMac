@@ -529,7 +529,7 @@ short script_type::IsLocationFunction (char * string, int length, short *value)
 // 6 - Creature
 // 7 - Terrain Spot		
 // file_location: 0 - in main data folder, 1 - in scenario folder
-Boolean script_type::load_script(short type_of_script_to_load,char *script_to_load,short file_location)
+Boolean script_type::load_script(short type_of_script_to_load,const char *script_to_load,short file_location)
 {
 	// first, flush out old crap.
 	type_of_script = -1;
