@@ -46,7 +46,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleGetInfoString</key>
-	<string>v1.0.9</string>
+	<string>v1.1.0</string>
 	<key>CFBundleIconFile</key>
 	<string>BoAEdAPPL.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -58,7 +58,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.9</string>
+	<string>1.1.0</string>
 	<key>CFBundleSignature</key>
 	<string>blED</string>
 	<key>CFBundleVersion</key>
@@ -66,7 +66,7 @@
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>http://127.0.0.1/~christopher/SparkleTest/Mac_BoA_3D_Editor.xml</string>
+	<string>http://svn.hallsofchaos.net/3D_BoA_Editor/Mac_BoA_3D_Editor.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>3D_BoA_su_dsa_pub.pem</string>
 </dict>

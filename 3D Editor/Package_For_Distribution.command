@@ -12,8 +12,7 @@ OUPUT_DIR="Current"
 #use this key to generate update signature
 PRIVATE_KEY_PATH="/Volumes/Vault/Home/3D_BoA_su_dsa_priv.pem"
 
-APPCAST_URL_BASE="http://127.0.0.1/~christopher/SparkleTest"
-SIGNING_SCRIPT="../../sign_update.rb"
+APPCAST_URL_BASE="http://svn.hallsofchaos.net/3D_BoA_Editor"
 
 #move to the directory the command file was run from
 cd "$(dirname "$0")"
@@ -125,19 +124,22 @@ else
 	exit 1
 fi
 
+if [ ! -f "$RELEASE_NOTES" ]
+then
 #generate release notes skeleton
-echo '<html>' > $RELEASE_NOTES
-echo '	<head>' >> $RELEASE_NOTES
-echo '		<meta http-equiv="content-type" content="text/html;charset=utf-8">' >> $RELEASE_NOTES
-echo '		<title>3D Blades of Avernum Editor</title>' >> $RELEASE_NOTES
-echo '		<meta name="robots" content="anchors">' >> $RELEASE_NOTES
-echo '		<link href="rnotes.css" type="text/css" rel="stylesheet" media="all">' >> $RELEASE_NOTES
-echo '	</head>' >> $RELEASE_NOTES
-echo '	<body>' >> $RELEASE_NOTES
-echo '		<br/>' >> $RELEASE_NOTES
-echo '	</body>' >> $RELEASE_NOTES
-echo '</html>' >> $RELEASE_NOTES
-
-echo "Wrote release notes skeleton to $RELEASE_NOTES"
+	echo '<html>' > $RELEASE_NOTES
+	echo '	<head>' >> $RELEASE_NOTES
+	echo '		<meta http-equiv="content-type" content="text/html;charset=utf-8">' >> $RELEASE_NOTES
+	echo '		<title>3D Blades of Avernum Editor</title>' >> $RELEASE_NOTES
+	echo '		<meta name="robots" content="anchors">' >> $RELEASE_NOTES
+	echo '		<link href="rnotes.css" type="text/css" rel="stylesheet" media="all">' >> $RELEASE_NOTES
+	echo '	</head>' >> $RELEASE_NOTES
+	echo '	<body>' >> $RELEASE_NOTES
+	echo "		<h1>Version $HUMAN_VERSION</h1>" >> $RELEASE_NOTES
+	echo '	</body>' >> $RELEASE_NOTES
+	echo '</html>' >> $RELEASE_NOTES
+	
+	echo "Wrote release notes skeleton to $RELEASE_NOTES"
+fi
 
 echo "Finished"

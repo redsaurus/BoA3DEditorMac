@@ -995,7 +995,15 @@ void handle_edit_menu(int item_hit)
 		case 12: //toggle arrow key handling
 			allow_arrow_key_navigation = !allow_arrow_key_navigation;
 			CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
-			write_always_show_heights(allow_arrow_key_navigation);
+			write_allow_arrow_key_navigation(allow_arrow_key_navigation);
+			break;
+		case 13: //toggle auto-update checking
+			{
+				bool temp = !get_user_pref_bool_value(4,false);
+				CheckMenuItem (GetMenuHandle(570),13,temp);
+				write_user_pref_bool_value(4,temp);
+			}
+			break;
 	}
 	draw_main_screen();		
 }

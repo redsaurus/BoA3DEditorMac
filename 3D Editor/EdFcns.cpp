@@ -2404,6 +2404,15 @@ void handle_keystroke(char chr,char chr2,EventRecord event){
 					else
 						shift_selected_instance(0, 1);
 				}
+				location new_loc = selected_instance_location();
+				if(new_loc.x>-1){
+					if((cur_viewing_mode == 0 && (abs(new_loc.x-cen_x)>4 || abs(new_loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(new_loc))){
+						cen_x = new_loc.x;
+						cen_y = new_loc.y;
+						draw_terrain();
+						draw_function_buttons(1);
+					}
+				}
 			}
 			draw_terrain();
 			return;
