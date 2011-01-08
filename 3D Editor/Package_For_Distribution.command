@@ -80,7 +80,7 @@ cd ../$PRODUCT_DIR/
 echo "Compressing product..."
 tar -czf "../$OUPUT_DIR/$PRODUCT_ARCHIVE_NAME" "./$APPNAME.app"
 #make a copy of the source code
-#move mack up to the original directory
+#move back up to the original directory
 cd ../..
 #make a clean copy of the project
 echo "Exporting source code..."
@@ -104,18 +104,16 @@ rm -r "./$APPNAME Source Code"
 if [ -f "$PRIVATE_KEY_PATH" ]
 then	
 	UPDATE_SIZE=`stat -f %z "$PRODUCT_ARCHIVE_NAME"`
-	PUBDATE=`date "+%a, %d %b %Y %T"`
-	#SIGNATURE=`"$SIGNING_SCRIPT" "$PRODUCT_ARCHIVE_NAME" "$PRIVATE_KEY_PATH"`
+	PUBDATE=$(LC_TIME=en_US date +"%a, %d %b %G %T %z")
 	SIGNATURE=`openssl dgst -sha1 -binary < "$PRODUCT_ARCHIVE_NAME" | openssl dgst -dss1 -sign "$PRIVATE_KEY_PATH" | openssl enc -base64`
-	ESCAPED_URL=`echo "$APPCAST_URL_BASE/Versions/$PRODUCT_ARCHIVE_NAME" | sed 's| |%20|g'`
 	
 	echo '			<item>' > $APPCAST_ENTRY
 	echo "				<title>Version $HUMAN_VERSION</title>" >> $APPCAST_ENTRY
 	echo "					<sparkle:releaseNotesLink>" >> $APPCAST_ENTRY
-	echo "						$APPCAST_URL_BASE/ReleaseNotes/rnotes_$HUMAN_VERSION.html" >> $APPCAST_ENTRY
+	echo "						$APPCAST_URL_BASE/ReleaseNotes/Mac/rnotes_$HUMAN_VERSION.html" >> $APPCAST_ENTRY
 	echo "					</sparkle:releaseNotesLink>" >> $APPCAST_ENTRY
 	echo "					<pubDate>$PUBDATE</pubDate>" >> $APPCAST_ENTRY
-	echo "					<enclosure url=\"$ESCAPED_URL\" sparkle:version=\"$SVN_REVISION\" sparkle:shortVersionString=\"$HUMAN_VERSION\" length=\"$UPDATE_SIZE\" type=\"application/octet-stream\" sparkle:dsaSignature=\"$SIGNATURE\" />" >> $APPCAST_ENTRY
+	echo "					<enclosure url=\"$APPCAST_URL_BASE/Versions/Mac/$PRODUCT_ARCHIVE_NAME\" sparkle:version=\"$SVN_REVISION\" sparkle:shortVersionString=\"$HUMAN_VERSION\" length=\"$UPDATE_SIZE\" type=\"application/octet-stream\" sparkle:dsaSignature=\"$SIGNATURE\" />" >> $APPCAST_ENTRY
 	echo '			</item>' >> $APPCAST_ENTRY
 	
 	echo "Wrote appcast entry data to $APPCAST_ENTRY"
@@ -126,7 +124,7 @@ fi
 
 if [ ! -f "$RELEASE_NOTES" ]
 then
-#generate release notes skeleton
+	#generate release notes skeleton
 	echo '<html>' > $RELEASE_NOTES
 	echo '	<head>' >> $RELEASE_NOTES
 	echo '		<meta http-equiv="content-type" content="text/html;charset=utf-8">' >> $RELEASE_NOTES
