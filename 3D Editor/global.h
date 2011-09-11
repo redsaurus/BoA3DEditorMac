@@ -5,6 +5,33 @@
 
 // The comments are partial, intermittent, and may be wrong.
 
+//tridash - larger window stuff
+
+#define DEFAULT_WINDOW_WIDTH 516//675//standard value is 750
+#define DEFAULT_WINDOW_HEIGHT 455//585//standard value is 550
+#define TILES_DRAW_RECT_HEIGHT 520//height of rect drawn to in the tiles window, previously 382
+#define TILES_DRAW_RECT_WIDTH 310//width of rect drawn to in the tiles window, previously 210
+#define TILES_WINDOW_WIDTH 325//previously 225
+#define TILES_DRAW_RECT {20, 0, 20 + TILES_DRAW_RECT_HEIGHT, TILES_DRAW_RECT_WIDTH}//size of rectangle terrain buttons drawn to, standard value is {0, 0, 382, 210}
+#define DEFAULT_TERRAIN_RECT_GR_SIZE {0, 0, 512, 512}//size of GWorld for terrain to be drawn to in main window
+
+#define DEFAULT_RECT3DEDIT_HEIGHT 415
+#define DEFAULT_RECT3DEDIT_WIDTH 496
+
+extern const Rect default_terrain_viewport_3d;
+
+#define DEFAULT_INDOOR_DRAW_DISTANCE 10//realistic draw distance in towns, used to be 10
+#define DEFAULT_OUTDOOR_DRAW_DISTANCE 14//realistic draw distance outdoors, used to be 14
+
+#define TERRAIN_NUM_ROWS 43
+#define ITEM_NUM_ROWS 42
+#define CREATURE_NUM_ROWS 22
+#define FLOOR_NUM_ROWS 22
+
+#define MAIN_WINDOW_NUM 0
+#define PALETTE_WINDOW_NUM 1
+#define TILES_WINDOW_NUM 2
+
 #define EXILE_BIG_GUNS 1
 
 //lengths of time to wait between events
@@ -30,20 +57,21 @@
 #define	TER_RECT_UL_X	20
 #define	TER_RECT_UL_Y	20
 #define	TERRAIN_BORDER_WIDTH	15
-#define	LEFT_TEXT_LINE_ULX	15
-#define	LEFT_TEXT_LINE_ULY	485
+//tridash - larger window stuff
+#define	LEFT_TEXT_LINE_ULX	5//default 15
+#define	LEFT_TEXT_LINE_ULY	5//default 485
 #define	LEFT_TEXT_LINE_WIDTH	240
 #define	TEXT_LINE_HEIGHT	12
-#define	RIGHT_TEXT_LINE_ULX	5
-#define	RIGHT_TEXT_LINE_ULY	105
-#define	RIGHT_BUTTONS_X_SHIFT 540
-#define RIGHT_BUTTONS_Y_SHIFT 382
+#define	RIGHT_TEXT_LINE_ULX	25 //default 5
+#define	RIGHT_TEXT_LINE_ULY	65 //default 105
+#define	RIGHT_BUTTONS_X_SHIFT 500//680//default 540
+#define RIGHT_PALETTE_X_SHIFT 500
+#define RIGHT_TILES_X_SHIFT 0
+#define RIGHT_BUTTONS_Y_SHIFT 0//520//default 382
 #define RIGHT_SCROLLBAR_WIDTH 16
 
 #define	PALETTE_BUT_UL_X	0
-#define	PALETTE_BUT_UL_Y	382
-
-#define	NUM_PC_I	34
+//#define	PALETTE_BUT_UL_Y	520//default 382
 
 #define NUM_TALK_NODES	100
 #define NUM_SCEN_ITEMS	500
@@ -59,7 +87,9 @@
 #define OUTDOOR_CREATURE_WIDTH_3D   11
 #define OUTDOOR_CREATURE_HEIGHT_3D	16
 
-#define	TER_BUTTON_HEIGHT_3D	19
+#define	TER_BUTTON_HEIGHT_3D	27//default is 19
+
+#define TILES_N_COLS 12
 
 // new blades consts
 #define	SCRIPT_NAME_LEN	14
@@ -71,7 +101,8 @@
 
 #define NUM_WAYPOINTS	10
 
-#define	TER_BUTTON_SIZE	16
+#define	TER_BUTTON_SIZE	24//default is 16
+#define TER_BUTTON_SIZE_OLD 16
 #define	PALETTE_BUT_HEIGHT		17
 #define	PALETTE_BUT_WIDTH		25
 
@@ -98,6 +129,14 @@
 
 #define SDF_RANGE_X	300
 #define SDF_RANGE_Y	30
+
+#define TOOL_PALETTE_GUTTER_WIDTH 10
+#define TOOL_TITLE_HEIGHT 12
+#define TOOL_PALETTE_TEXT_LINE_WIDTH 240
+#define TOOL_PALETTE_TEXT_LINE_HEIGHT 12
+#define TOOL_PALETTE_TEXT_LINE_SPACING 2
+#define TOOL_PALETTE_HEIGHT (4*TOOL_PALETTE_GUTTER_WIDTH + TOOL_TITLE_HEIGHT + TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1 + 10*(TOOL_PALETTE_TEXT_LINE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING))
+#define TOOL_PALETTE_WIDTH (7*TOOL_PALETTE_GUTTER_WIDTH + PALETTE_BUT_WIDTH+1 + TOOL_PALETTE_TEXT_LINE_WIDTH)
 
 const static struct endianness_t{
 	bool isLittle;
@@ -135,9 +174,11 @@ namespace SelectionType{
 		Creature,
 		Item,
 		TerrainScript,
+		Waypoint,
 		//Town or outdoor:
 		SpecialEncounter, 
 		AreaDescription,
+		Sign,
 		//Outdoor only:
 		TownEntrance
 	};
@@ -1648,10 +1689,12 @@ Rect get_graphic_rect(GWorldPtr graf);
 
 // EDFCns
 void init_screen_locs();
-void handle_action(Point the_point,EventRecord event);
+void handle_action(Point the_point,EventRecord event, short which_window);
+void handleToolPaletteClick(Point the_point, EventRecord event);
 void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hit);
 void play_press_snd();
 void swap_terrain();
+void set_tool(short tool);
 void set_new_terrain(short selected_terrain);
 void set_new_floor(short selected_terrain);
 void set_new_creature(short selected_creature);
@@ -1821,31 +1864,39 @@ void ASB (const char *theStr);
 void ASB_big (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5);
 void ASB_big_color (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5,short dummy);
 void CenterRectInRect (Rect *rectA, Rect *rectB);
+int coord2Index(int coord, int base, int step);
 
 // Graphics.c
 void Get_right_sbar_rect( Rect * rect );
+int get_right_sbar_max();
 void Set_up_win ();
 void load_main_screen();
+void recalculate_2D_view_details();
+void recalculate_draw_distances();
+bool set_view_mode(int mode);
 void redraw_screen();
 void draw_main_screen();
 void set_up_terrain_buttons();
+void reset_mode_number();
+void set_up_view_buttons();
 void delete_graphic(GWorldPtr *to_delete);
 GWorldPtr load_pict(int picture_to_get);
+Rect terrainViewRect();
 Boolean place_terrain_icon_into_ter_large(graphic_id_type icon,short in_square_x,short in_square_y);
 void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect);
 Boolean place_icon_into_3D_sidebar(graphic_id_type icon, Rect to_rect, short unscaled_offset_x, short unscaled_offset_y);
-Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
-Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b,bool selected);
+Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,bool selected=false);
+Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,short r,short g,short b,bool selected=false);
 Boolean place_cliff_icon_into_ter_3D_large(short sheet,short at_point_center_x,short at_point_center_y,
 	short direction,Rect *to_whole_area_rect,short lighting);//direction:   0: east/west 1: NW/SE 2:north/south
 Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,bool selected);
 Boolean place_outdoor_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting);
 Boolean place_corner_wall_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Boolean left_side_of_template,Rect *to_whole_area_rect,short lighting);
-void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect);
+void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect,bool selected=false);
 void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,bool selected);
 void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *drawing_terrain, short square_x, short square_y, short t_to_draw, short floor_to_draw, short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect);
-void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height);
-void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_point_center_x, short at_point_center_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting);
+void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height,bool selected=false);
+void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_point_center_x, short at_point_center_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting,bool selected=false);
 void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected=false);
 void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected=false);
 void put_line_segment_in_gworld_3D(GWorldPtr line_gworld,outdoor_record_type *drawing_terrain,short at_point_center_3D_x,short at_point_center_3D_y,
@@ -1862,13 +1913,12 @@ void draw_item(short item_num,location loc_drawn,short in_square_x,short in_squa
 Boolean place_terrain_icon_into_ter_small(graphic_id_type icon,short in_square_x,short in_square_y);
 void draw_ter_small();
 void draw_terrain();
+void update_terrain_window_title();
 void place_left_text();
 void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gworld,Rect targ_rect,
   char masked,short main_win);
 void place_right_buttons(short mode);
-void draw_function_buttons(int mode);
-void set_string(const char *string,const char *string2);
-void undo_clip();
+void draw_view_buttons();
 Boolean container_there(location l);
 void char_win_draw_string(GrafPtr dest_window,Rect dest_rect,const char *str,short mode,short line_height);
 void win_draw_string(GrafPtr dest_window,Rect dest_rect,Str255 str,short mode,short line_height);
@@ -1876,7 +1926,6 @@ void c2p(Str255 str) ;
 void p2c(Str255 str);
 void get_str(Str255 str,short i, short j);
 short string_length(char *str);
-Boolean spot_in_rect(location l,Rect r);
 Boolean clear_graphics_library();
 Boolean refresh_graphics_library();
 Boolean load_sheet_into_library(graphic_id_type *new_sheet);
@@ -1927,7 +1976,7 @@ void make_sfx(short i,short j,short type);
 void take_sfx(short i,short j,short type);
 void reset_small_drawn();
 void win_draw_string_outline(CGrafPtr dest_window,Rect dest_rect,char *str,short mode,short line_height);
-void place_ter_icon_on_tile(short tile_x,short tile_y,short position,short which_icon);
+void place_ter_icon_on_tile(short tile_x,short tile_y,short position,short which_icon,bool selected=false);
 void place_dlog_borders_around_rect(GWorldPtr to_gworld,WindowPtr win,
 	Rect border_to_rect);
 void place_dlog_border_on_win(GWorldPtr to_gworld,WindowPtr win,
@@ -1936,6 +1985,11 @@ void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pa
 void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short in_square_y,bool selected);
 void cant_draw_graphics_error(graphic_id_type a,const char *bonus_string,short bonus_num);
 void refresh_graphics_on_screen();
+void drawToolPalette();
+void drawToolCategories();
+void drawToolDetails();
+OSStatus paletteWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent);
+OSStatus tileWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent);
 
 // keydlgs
 void fancy_choice_dialog_event_filter (short item_hit);

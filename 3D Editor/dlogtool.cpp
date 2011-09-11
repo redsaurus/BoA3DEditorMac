@@ -236,6 +236,7 @@ short cd_create_dialog(short dlog_num,WindowPtr parent)
 	
 	process_new_window (dlgs[free_slot]);
 
+	HideFloatingWindows();
 
 	ShowWindow(GetDialogWindow((DialogPtr)dlgs[free_slot]));
 	SetPort(GetWindowPort(GetDialogWindow((DialogPtr)dlgs[free_slot])));
@@ -465,10 +466,13 @@ short cd_kill_dialog(short dlog_num,short parent_message)
 	if (dlg_parent[which_dlg] != NULL)
 //  BUG FIX:  In OS X 10.4, there was an error on what used to be this line.  Instead of checking for the mainPtr, 
 //            the editor just used GetDialogWindow, which screws up the editor.  The following code fixes that bug.
-        if (dlg_parent[which_dlg] != mainPtr)
+        if (dlg_parent[which_dlg] != mainPtr){
             SetPort(GetWindowPort(GetDialogWindow((DialogPtr)dlg_parent[which_dlg])));
-        else
+		}
+        else {
             SetPort(GetWindowPort(mainPtr));        // NO IDEA IF THIS WORKS!!
+			ShowFloatingWindows();
+		}
 	if (FrontWindow() != mainPtr)
 		redraw_screen();
 	dialog_not_toast = TRUE;
@@ -1028,10 +1032,6 @@ void cd_draw_item(short dlog_num,short item_num)
 					 (char *) ((item_index < 10) ? text_long_str[item_index] : 
 					  text_short_str[item_index - 10]),0,(dlg_item_type[item_index] == 7) ? 14 : 12);
 					InsetRect(&item_rect[item_index],-4,-4);
-				}
-				if ((dlg_item_type[item_index] == 8) && (dlog_num == 989)) {
-					item_rect[item_index].bottom -= 12;
-					undo_clip();
 				}
 				TextFont(geneva_font_num);
 				TextFace(0);

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8D0C4E8D0486CD37000505A6 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */; };
 		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+		9D3AB05D137E257000B4F413 /* mode_buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D3AB05C137E257000B4F413 /* mode_buttons.png */; };
 		9DF52BC612CFC6DA00D01803 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DF52BC412CFC6DA00D01803 /* QuickTime.framework */; };
 		9DF52BC712CFC6DA00D01803 /* libstdc++-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DF52BC512CFC6DA00D01803 /* libstdc++-static.a */; };
 		9DF52BE212CFC74D00D01803 /* Bl A Editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF52BD612CFC74D00D01803 /* Bl A Editor.cpp */; };
@@ -86,6 +87,7 @@
 		5048396E09E3307300765E4B /* 3D BoA EditorTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; path = "3D BoA EditorTarget.xcconfig"; sourceTree = "<group>"; };
 		508344B209E5C41E0093A071 /* 3D BoA Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D BoA Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9D3AB05C137E257000B4F413 /* mode_buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mode_buttons.png; sourceTree = "<group>"; };
 		9DF52BC412CFC6DA00D01803 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
 		9DF52BC512CFC6DA00D01803 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
 		9DF52BC912CFC71800D01803 /* global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = global.h; sourceTree = "<group>"; };
@@ -261,6 +263,7 @@
 				9DF52BFF12CFCCA300D01803 /* left_arrow_button.png */,
 				9DF52C0012CFCCA300D01803 /* long_wood_button_dn.png */,
 				9DF52C0112CFCCA300D01803 /* long_wood_button.png */,
+				9D3AB05C137E257000B4F413 /* mode_buttons.png */,
 				9DF52C0212CFCCA300D01803 /* red_LED_button.png */,
 				9DF52C0312CFCCA300D01803 /* red_LED.png */,
 				9DF52C0412CFCCA300D01803 /* right_arrow_button_dn.png */,
@@ -353,6 +356,7 @@
 				9DF52C2412CFCCA400D01803 /* left_arrow_button.png in Resources */,
 				9DF52C2512CFCCA400D01803 /* long_wood_button_dn.png in Resources */,
 				9DF52C2612CFCCA400D01803 /* long_wood_button.png in Resources */,
+				9D3AB05D137E257000B4F413 /* mode_buttons.png in Resources */,
 				9DF52C2712CFCCA400D01803 /* red_LED_button.png in Resources */,
 				9DF52C2812CFCCA400D01803 /* red_LED.png in Resources */,
 				9DF52C2912CFCCA400D01803 /* right_arrow_button_dn.png in Resources */,
@@ -481,6 +485,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
 				VALID_ARCHS = "ppc i386";
@@ -495,6 +500,7 @@
 				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
 				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
 				SEPARATE_STRIP = YES;

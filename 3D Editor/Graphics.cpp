@@ -1,19 +1,3 @@
-//#include <Carbon/Carbon.h>	// included in pre-compiled header
-//#include <Memory.h>
-//#include <Quickdraw.h>
-//#include <QuickdrawText.h>
-//#include <Fonts.h>
-//#include <Events.h>
-//#include <Menus.h>
-//#include <Windows.h>
-//#include <Dialogs.h>
-//#include <Resources.h>
-//#include <OSUtils.h>
-//#include <TextUtils.h>
-//#include <QDOffscreen.h>
-
-//#include "stdio.h"
-//#include "string.h"
 #include "global.h"
 #include "QuickTime/QuickTime.h"
 
@@ -37,6 +21,8 @@ extern short cur_viewing_mode;
 extern bool use_strict_adjusts;
 extern bool always_draw_heights;
 extern WindowPtr mainPtr;
+extern WindowPtr palettePtr;
+extern WindowPtr tilesPtr;
 extern short cen_x, cen_y;
 
 extern short overall_mode;
@@ -46,7 +32,10 @@ extern short available_dlog_buttons[NUM_DLOG_B];
 extern short max_zone_dim[3];
 extern short geneva_font_num;
 extern Rect windRect;
-extern Rect world_screen;
+extern Rect tilesRect;
+extern Rect paletteRect;
+
+extern void draw_mode_buttons(int mode);
 
 extern ControlHandle right_sbar;
 
@@ -56,16 +45,25 @@ extern char *button_strs[140];
 
 extern short current_floor_drawn, current_terrain_drawn;
 
-extern Rect world_screen;
-// border rects order: top, left, bottom, right //
-extern Rect border_rect[4];
 extern Rect terrain_rects[516];	//was 264				
 extern Rect terrain_rects_3D[516];	//was 264						
 extern Rect palette_buttons[9][6];
-extern Rect large_edit_ter_rects[9][9];
-extern Rect small_edit_ter_rects[MAX_TOWN_SIZE][MAX_TOWN_SIZE];
+extern Rect	mode_buttons[5];
+extern Rect view_buttons[2];
 extern Rect left_text_lines[10];
 extern Rect right_text_lines[5];
+
+namespace tools{
+extern Rect toolCategoryTownRect;
+extern Rect toolCategoryOutdoorRect;
+extern Rect toolDetailsRect;
+extern Rect autohillsButtonRect;
+extern int lastUsedTools[6];
+extern int categoryForTool[83];
+extern int toolIcons[83][3];
+extern const char* tool_names[83];
+extern Rect tool_details_text_lines[10];
+}
 
 extern SelectionType::SelectionType_e selected_object_type;
 extern unsigned short selected_object_number;
@@ -73,14 +71,14 @@ extern Boolean hintbook_mode;
 
 GWorldPtr dlg_buttons_gworld[NUM_BUTTONS][2];
 static GWorldPtr mixed_gworld;
-//static GWorldPtr editor_mixed;
 static GWorldPtr floor_buttons_gworld;
 static GWorldPtr terrain_buttons_gworld;
 static GWorldPtr creature_buttons_gworld;
 static GWorldPtr item_buttons_gworld;
 static GWorldPtr function_buttons_gworld;
-static GWorldPtr ter_draw_gworld;
+GWorldPtr ter_draw_gworld;
 
+static GWorldPtr modeButtons;
 static GWorldPtr townButtons;
 static GWorldPtr outdoorButtons;
 static GWorldPtr markers;
@@ -91,20 +89,33 @@ static GWorldPtr dlog_vert_border_gworld = NULL;
 static GWorldPtr pattern_gworld = NULL;
 
 PixPatHandle bg[14];
-// PixPatHandle map_pat[29];
 
 // Other game rectangles
-extern const Rect terrain_buttons_rect = {0,0,382,210};
+Rect terrain_buttons_rect = TILES_DRAW_RECT;
 const Rect function_buttons_rect = {0,0,168,227};
-const Rect terrain_rect_gr_size = {0,0,512,512};
+const Rect mode_buttons_rect = {0,0,20,TILES_WINDOW_WIDTH};
+Rect terrain_rect_gr_size = DEFAULT_TERRAIN_RECT_GR_SIZE;
 const Rect base_small_button_from = {0,0,10,10};
 const Rect base_small_3D_button_from = {40,0,51,16};
 const Rect palette_button_base = {0,0,18,25};
-extern const Rect terrain_viewport_3d = {5,5,420,501};
+const Rect mode_button_base = {0, 0, 18, 25};
+const Rect view_button_base = {0, 0, 18, 25};
+const Rect default_terrain_viewport_3d = {5, 5, 420, 501};
+Rect terrain_viewport_3d = default_terrain_viewport_3d;
+unsigned int terrain_width_2d = 10;
+unsigned int terrain_height_2d = 8;
+int TER_RECT_UL_X_2d_big;
+int TER_RECT_UL_Y_2d_big;
+int TER_RECT_UL_X_2d_small;
+int TER_RECT_UL_Y_2d_small;
+
+int indoor_draw_distance = DEFAULT_INDOOR_DRAW_DISTANCE;
+int outdoor_draw_distance = DEFAULT_OUTDOOR_DRAW_DISTANCE;
 
 Rect creature_buttons_size;
 Rect item_buttons_size;
 Rect terrain_buttons_size;
+Rect floor_buttons_size;
 // Rect blue_button_from = {112,91,126,107};						
 // Rect start_button_from = {112,70,119,91};
 // Rect left_button_base = {5,5,21,200};
@@ -117,14 +128,18 @@ static graphic_id_type graphics_library_index[MAX_NUM_SHEETS_IN_LIBRARY];
 static short num_sheets_in_library = 0;
 static short num_builtin_sheets_in_library = 0;
 
-static char current_string[256] = "";
-char current_string2[256] = "";
 const char *attitude_types[4] = {"Friendly","Neutral","Hostile, Type A","Hostile, Type B"};
 static const char *facings[4] = {"North","West","South","East"};
 
 static short small_what_drawn[64][64];
 static short small_what_floor_drawn[64][64];
 extern Boolean small_any_drawn;
+
+extern Rect clipboardSize;
+extern item_type copied_item;
+extern creature_start_type copied_creature;
+extern in_town_on_ter_script_type copied_ter_script;
+extern bool object_sticky_draw;
 
 Boolean showed_graphics_error = FALSE;
 
@@ -138,63 +153,89 @@ bool setUpItemPalette = false;
 
 void Get_right_sbar_rect( Rect * rect )
 {
-	rect->top = 0;
-	rect->left = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT;
-	rect->bottom = 382;//22 * (TER_BUTTON_SIZE + 1) + 1;
-	rect->right = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT + RIGHT_SCROLLBAR_WIDTH;
+	rect->top = 20;
+	rect->left = terrain_buttons_rect.right + RIGHT_TILES_X_SHIFT;
+	rect->bottom = 20 + TILES_DRAW_RECT_HEIGHT;//22 * (TER_BUTTON_SIZE + 1) + 1;
+	rect->right = terrain_buttons_rect.right + RIGHT_TILES_X_SHIFT + RIGHT_SCROLLBAR_WIDTH;
+}
+
+int get_right_sbar_max(){
+	int iconHeight=1;
+	int iconRows=1;
+	
+	switch(current_drawing_mode){
+		case 0: //floors
+			iconHeight=TER_BUTTON_SIZE;
+			iconRows=(256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
+			break;
+		case 1: //terrains
+		case 2: //heights, which means just draw terrain icons
+			if(cur_viewing_mode == 10 || cur_viewing_mode == 11)
+				iconHeight=TER_BUTTON_HEIGHT_3D;
+			else
+				iconHeight=TER_BUTTON_SIZE;
+			iconRows=(512/TILES_N_COLS)+((512%TILES_N_COLS)>0);
+			break;
+		case 3: //creatures
+			iconHeight=TER_BUTTON_HEIGHT_3D;
+			iconRows=(256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
+			break;
+		case 4: //items
+			iconHeight=TER_BUTTON_SIZE;
+			iconRows=(500/TILES_N_COLS)+((500%TILES_N_COLS)>0);
+			break;
+	}
+	
+	//The control maximum should be equal to the total number of icon rows minus the 
+	//number of full rows which are visible at any given time
+	int max=iconRows-((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(iconHeight+1)); //add 1 to icon height for spacing
+	//naturally this should be limited to be non-negative, 
+	//if there's extra space the scrollbar should just do nothing
+	if(max<0)
+		max=0;
+	return(max);
 }
 
 void Set_up_win ()
 {
 	short i,j;
-	
+		
 	for (i = 0; i < 9; i++){
 		for (j = 0; j < 6; j++) {
 			palette_buttons[i][j] = palette_button_base;
 			OffsetRect(&palette_buttons[i][j],i * 25/* + PALETTE_BUT_UL_X*/, j * 17/* + PALETTE_BUT_UL_Y*/);
-			//printf("Palette button rect (%i,%i): %i, %i, %i, %i\n",i,j,palette_buttons[i][j].left,palette_buttons[i][j].top,palette_buttons[i][j].right,palette_buttons[i][j].bottom);
 		}
 	}
-	//printf("Finished initializing palette rects.\n\n");
-			
-	for (i = 0; i < 9; i++){
-		for (j = 0; j < 9; j++) {
-			SetRect(&large_edit_ter_rects[i][j],TERRAIN_BORDER_WIDTH + i * BIG_SPACE_SIZE,TERRAIN_BORDER_WIDTH + j * BIG_SPACE_SIZE,
-					TERRAIN_BORDER_WIDTH + (i + 1) * BIG_SPACE_SIZE,TERRAIN_BORDER_WIDTH + (j + 1) * BIG_SPACE_SIZE);
-			//SetRect(&large_edit_ter_rects[i][j],TER_RECT_UL_X + i * BIG_SPACE_SIZE,TER_RECT_UL_Y + j * BIG_SPACE_SIZE,
-			//TER_RECT_UL_X + (i + 1) * BIG_SPACE_SIZE,TER_RECT_UL_Y + (j + 1) * BIG_SPACE_SIZE);
-		}
-	}
-	for (i = 0; i < MAX_TOWN_SIZE; i++){
-		for (j = 0; j < MAX_TOWN_SIZE; j++) {
-			SetRect(&small_edit_ter_rects[i][j],  i * SMALL_SPACE_SIZE,  j * SMALL_SPACE_SIZE,
-					(i + 1) * SMALL_SPACE_SIZE,  (j + 1) * SMALL_SPACE_SIZE);
-			//SetRect(&small_edit_ter_rects[i][j],TER_RECT_UL_X + i * SMALL_SPACE_SIZE,TER_RECT_UL_Y + j * SMALL_SPACE_SIZE,
-			//TER_RECT_UL_X + (i + 1) * SMALL_SPACE_SIZE,TER_RECT_UL_Y + (j + 1) * SMALL_SPACE_SIZE);
-		}
-	}
+	
+	reset_mode_number(); //this initialises the mode button rects
+	
+	set_up_view_buttons(); //initialises view button rects
+	
 	for (i = 0; i < 516; i++) //was 264
-		SetRect(&terrain_rects[i],3 + (i % 12) * (TER_BUTTON_SIZE + 1),2 + (i / 12) * (TER_BUTTON_SIZE + 1),
-				3 + (i % 12) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / 12) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE);
+		SetRect(&terrain_rects[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1),
+				3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE);
 	for (i = 0; i < 516; i++) //was 228
-		SetRect(&terrain_rects_3D[i],3 + (i % 12) * (TER_BUTTON_SIZE + 1),2 + (i / 12) * (TER_BUTTON_HEIGHT_3D + 1),
-				3 + (i % 12) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / 12) * (TER_BUTTON_HEIGHT_3D + 1) + TER_BUTTON_HEIGHT_3D);
+		SetRect(&terrain_rects_3D[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1),
+				3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1) + TER_BUTTON_HEIGHT_3D);
 	
 	for (i = num_builtin_sheets_in_library; i < MAX_NUM_SHEETS_IN_LIBRARY; i++) {
 		graphics_library[i] = NULL;
 	}
-	Rect theWorld_screen = {large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,
-		large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right};
 	
-	InsetRect(&theWorld_screen,-15,-15);
-	OffsetRect(&theWorld_screen,TER_RECT_UL_X,TER_RECT_UL_Y);
-	
-	for (i = 0; i < 4; i++)
-		border_rect[i] = theWorld_screen;
-	border_rect[0].bottom = border_rect[0].top + 15;
-	border_rect[1].right = border_rect[1].left + 15;
-	border_rect[2].top = border_rect[2].bottom - 15;
-	border_rect[3].left = border_rect[3].right - 15;
+	SetRect(&tools::toolCategoryTownRect, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH, 3*TOOL_PALETTE_GUTTER_WIDTH+PALETTE_BUT_WIDTH+1, 3*TOOL_PALETTE_GUTTER_WIDTH+6*PALETTE_BUT_HEIGHT+1);
+	SetRect(&tools::toolCategoryOutdoorRect, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH, 3*TOOL_PALETTE_GUTTER_WIDTH+PALETTE_BUT_WIDTH+1, 3*TOOL_PALETTE_GUTTER_WIDTH+5*PALETTE_BUT_HEIGHT+1);
+	SetRect(&tools::toolDetailsRect, tools::toolCategoryTownRect.right+TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH, tools::toolCategoryTownRect.right+3*TOOL_PALETTE_GUTTER_WIDTH+TOOL_PALETTE_TEXT_LINE_WIDTH, TOOL_PALETTE_HEIGHT-TOOL_PALETTE_GUTTER_WIDTH);
+	for(i=0; i<10; i++)
+		SetRect(&tools::tool_details_text_lines[i],
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1+(i+1)*TOOL_PALETTE_TEXT_LINE_SPACING+i*TOOL_PALETTE_TEXT_LINE_HEIGHT,
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH+TOOL_PALETTE_TEXT_LINE_WIDTH,
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1+(i+1)*(TOOL_PALETTE_TEXT_LINE_SPACING+TOOL_PALETTE_TEXT_LINE_HEIGHT));
+	SetRect(&tools::autohillsButtonRect,
+			tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH, 
+			tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+3*TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+TOOL_PALETTE_TEXT_LINE_HEIGHT, 
+			tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH+PALETTE_BUT_WIDTH+1, 
+			tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+3*TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+TOOL_PALETTE_TEXT_LINE_HEIGHT+PALETTE_BUT_HEIGHT+1);
 	
 	load_main_screen();
 }
@@ -204,7 +245,6 @@ void load_main_screen()
 	Str255 fn1 = "\pGeneva";
 	//	Str255 fn2 = "\pDungeon Bold";
 	Str255 fn3 = "\pPalatino";
-	//short i,j;	
 	
 	GetFNum(fn1,&geneva_font_num);
 	if (geneva_font_num == 0)
@@ -217,23 +257,29 @@ void load_main_screen()
 	
 	creature_buttons_size.top=0;
 	creature_buttons_size.left=0;
-	creature_buttons_size.bottom=1+22*(1+TER_BUTTON_HEIGHT_3D);
-	creature_buttons_size.right=210;
+	creature_buttons_size.bottom=1+CREATURE_NUM_ROWS*(1+TER_BUTTON_HEIGHT_3D);
+	creature_buttons_size.right=TILES_DRAW_RECT_WIDTH;
 	
 	NewGWorld(&creature_buttons_gworld, 0,&creature_buttons_size, NIL, NIL, kNativeEndianPixMap);
 	
 	item_buttons_size.top=0;
 	item_buttons_size.left=0;
-	item_buttons_size.bottom=1+42*(1+TER_BUTTON_SIZE);
-	item_buttons_size.right=210;
+	item_buttons_size.bottom=1+ITEM_NUM_ROWS*(1+TER_BUTTON_SIZE);
+	item_buttons_size.right=TILES_DRAW_RECT_WIDTH;
 	
 	NewGWorld(&item_buttons_gworld, 0,&item_buttons_size, NIL, NIL, kNativeEndianPixMap);
-	NewGWorld(&floor_buttons_gworld, 0,&terrain_buttons_rect, NIL, NIL, kNativeEndianPixMap);
+	
+	floor_buttons_size.top=0;
+	floor_buttons_size.left=0;
+	floor_buttons_size.bottom=1+FLOOR_NUM_ROWS*(1+TER_BUTTON_SIZE);
+	floor_buttons_size.right=TILES_DRAW_RECT_WIDTH;
+	
+	NewGWorld(&floor_buttons_gworld, 0,&floor_buttons_size, NIL, NIL, kNativeEndianPixMap);
 	
 	terrain_buttons_size.top=0;
 	terrain_buttons_size.left=0;
-	terrain_buttons_size.bottom=1+43*(1+TER_BUTTON_HEIGHT_3D);
-	terrain_buttons_size.right=210;
+	terrain_buttons_size.bottom=1+TERRAIN_NUM_ROWS*(1+TER_BUTTON_HEIGHT_3D);
+	terrain_buttons_size.right=TILES_DRAW_RECT_WIDTH;
 	
 	NewGWorld(&terrain_buttons_gworld, 0,&terrain_buttons_size, NIL, NIL, kNativeEndianPixMap);
 	NewGWorld(&function_buttons_gworld, 0,&function_buttons_rect, NIL, NIL, kNativeEndianPixMap);
@@ -242,19 +288,17 @@ void load_main_screen()
 	TextFont(geneva_font_num);
 	TextSize(10);
 	TextFace(bold);
+	SetPort(GetWindowPort(palettePtr));
+	TextFont(geneva_font_num);
+	TextSize(10);
+	TextFace(bold);	
 	SetPort(GetWindowPort(mainPtr));
 	NewGWorld(&ter_draw_gworld, 0,&terrain_rect_gr_size, NIL, NIL, kNativeEndianPixMap);
 	
 	NewGWorld(&tint_area, 16,&tint_rect, NIL, NIL, kNativeEndianPixMap);
 	
-	//for (i = 0; i < NUM_BUTTONS; i++){
-	//	for (j = 0; j < 2; j++)
-	//		dlg_buttons_gworld[i][j] = load_pict(2000 + (2 * i) + j);
-	//}
 	for(short i = 0; i < 14; i++)
 	    bg[i] = GetPixPat (128 + i);
-	//	for (i = 0; i < 29; i++) 
-	//	    map_pat[i] = GetPixPat (200 + i);
 		
 	mixed_gworld = load_pict(903);
 	if (dlog_horiz_border_bottom_gworld == NULL)
@@ -265,6 +309,53 @@ void load_main_screen()
 		dlog_vert_border_gworld = load_pict(840);//(850);
 }
 
+void recalculate_2D_view_details(){
+	terrain_width_2d = ((windRect.right-windRect.left)-2*(TERRAIN_BORDER_WIDTH+TER_RECT_UL_X))/BIG_SPACE_SIZE;
+	terrain_height_2d = ((windRect.bottom-windRect.top)-2*(TERRAIN_BORDER_WIDTH+TER_RECT_UL_Y))/BIG_SPACE_SIZE;
+	TER_RECT_UL_X_2d_big = (((windRect.right-windRect.left)-2*TERRAIN_BORDER_WIDTH)-(terrain_width_2d*BIG_SPACE_SIZE))/2;
+	TER_RECT_UL_Y_2d_big = (((windRect.bottom-windRect.top)-2*TERRAIN_BORDER_WIDTH)-(terrain_height_2d*BIG_SPACE_SIZE))/2;
+	TER_RECT_UL_X_2d_small = ((windRect.right-windRect.left)-(((editing_town) ? max_zone_dim[town_type] : 48)*SMALL_SPACE_SIZE))/2;
+	TER_RECT_UL_Y_2d_small = ((windRect.bottom-windRect.top)-(((editing_town) ? max_zone_dim[town_type] : 48)*SMALL_SPACE_SIZE))/2;
+}
+
+void recalculate_draw_distances(){
+	int i_x, i_y, o_x, o_y;
+	i_x = 1+(10*(terrain_viewport_3d.right - terrain_viewport_3d.left))/DEFAULT_RECT3DEDIT_WIDTH;
+	i_y = 1+(10*(terrain_viewport_3d.bottom - terrain_viewport_3d.top))/DEFAULT_RECT3DEDIT_HEIGHT;
+	o_x = 1+(14*(terrain_viewport_3d.right - terrain_viewport_3d.left))/DEFAULT_RECT3DEDIT_WIDTH;
+	o_y = 1+(14*(terrain_viewport_3d.bottom - terrain_viewport_3d.top))/DEFAULT_RECT3DEDIT_HEIGHT;
+	indoor_draw_distance = (i_x > i_y) ? i_x : i_y;
+	outdoor_draw_distance = (o_x > o_y) ? o_x : o_y;
+}
+
+//return value indicates whether the mode actually changed
+bool set_view_mode(int mode){
+	switch(mode){
+		case 0: //2D, zoomed in
+			if(cur_viewing_mode>=10){
+				//TODO: (maybe) if window size is default 3d size, switch it to default 2d size
+				recalculate_2D_view_details();
+			}
+			cur_viewing_mode = mode;
+			break;
+		case 1: //2D, zoomed out
+			//TODO: enforce that window size is actually large enough
+			break;
+		case 10: //3D, schematic
+			//do nothing
+			break;
+		case 11: //3D, realistic
+			recalculate_draw_distances();
+			break;
+		default:
+			give_error("Internal Error: Attempted to set invalid view mode","",0);
+			return(false);
+	}
+	bool changed=(mode!=cur_viewing_mode);
+	cur_viewing_mode=mode;
+	return(changed);
+}
+
 void redraw_screen()
 {
 	GrafPtr		old_port;
@@ -273,28 +364,66 @@ void redraw_screen()
 	SetPort(GetWindowPort(mainPtr));
 	TextSize(10);
 	
+	SetPort(GetWindowPort(tilesPtr));
+	paint_pattern(NULL, 1, tilesRect, 3);
+	SetPort(GetWindowPort(mainPtr));	
+	
 	// fill left with pattern
 	Rect to_rect = windRect;
-	//to_rect.right = RIGHT_BUTTONS_X_SHIFT;
-	//FillCRect(&to_rect,bg[12]);
 	paint_pattern(NULL,1,to_rect,1);
-	// fill lower right corner
-	to_rect = windRect;
-	to_rect.left = terrain_buttons_rect.right + RIGHT_BUTTONS_X_SHIFT;
-	to_rect.top = 22 * (TER_BUTTON_SIZE + 1) + 1;
-	//FillCRect(&to_rect,bg[12]);
-	paint_pattern(NULL,1,to_rect,1);
-	
+		
 	small_any_drawn = TRUE;
 	draw_main_screen();
+	drawToolPalette();
+	
 	SetPort (old_port);
 }
 
 void draw_main_screen()
 {
+	GrafPtr		old_port;
+
+	GetPort (&old_port);
+
 	place_right_buttons(0);
+	drawToolPalette();
 	draw_terrain();
+	draw_view_buttons();
+	SetPort(GetWindowPort(tilesPtr));
 	Draw1Control(right_sbar);
+	SetPort(old_port);
+}
+
+//this probably needs a slightly better name, it sets the mode button rectangles
+//according to whether you're editing town or outdoors.
+void reset_mode_number()
+{
+	int i;
+	short offset;
+	
+	offset = TILES_WINDOW_WIDTH / 2;//find middle of tiles window..
+	
+	offset -= (PALETTE_BUT_WIDTH * ((editing_town) ? 5 : 3))  / 2;//..and shift over by either 3/2 or 5/2 buttons worth to centre the buttons
+		
+	for (i = 0; i < 5; i++) {
+		mode_buttons[i] = mode_button_base;
+		OffsetRect(&mode_buttons[i], offset + i * 25, 0);
+	}
+}
+
+void set_up_view_buttons()
+{
+	int i;
+	short offset;
+	
+	offset = (windRect.right-windRect.left)/2;//find middle of main window...
+	
+	offset -= PALETTE_BUT_WIDTH; //shift by 1 over to centre buttons
+	
+	for (i = 0; i < 2; i++) {
+		view_buttons[i] = view_button_base;
+		OffsetRect(&view_buttons[i], offset + i * 25, 1);
+	}
 }
 
 void set_up_terrain_buttons()
@@ -308,7 +437,7 @@ void set_up_terrain_buttons()
 	Rect ter_from,ter_from_base = {0,0,16,16};
 	//Rect terrain_buttons_rect_frame = {0,0,382,210};
 	if(current_drawing_mode==0){
-		paint_pattern(floor_buttons_gworld,0,terrain_buttons_rect,3);
+		paint_pattern(floor_buttons_gworld,0,floor_buttons_size,3);
 		SetPort((GrafPtr) floor_buttons_gworld);
 	}
 	if(current_drawing_mode==3){
@@ -357,11 +486,11 @@ void set_up_terrain_buttons()
 					break;
 				case 1: case 2:
 					sbar_pos = GetControlValue(right_sbar);
-					store_ter_type = i;//sbar_pos * 12 + i;
-					if(/*sbar_pos * 12 + */i == 0)
+					store_ter_type = i;//sbar_pos * TILES_N_COLS + i;
+					if(/*sbar_pos * TILES_N_COLS + */i == 0)
 						fill_rect_in_gworld(terrain_buttons_gworld,terrain_rects_3D[i],255,255,255);
-					//if (/*sbar_pos * 12 + */i < 512) {
-					a = scen_data.scen_terrains[/*sbar_pos * 12 + */i].pic;
+					//if (/*sbar_pos * TILES_N_COLS + */i < 512) {
+					a = scen_data.scen_terrains[/*sbar_pos * TILES_N_COLS + */i].pic;
 					//if a wall (or fence - at least one move block, but not all)
 					//this doesn't include open fence gates, but perhaps that's good - they can 
 					//stick out of a square unpredictably
@@ -374,7 +503,7 @@ void set_up_terrain_buttons()
 							 scen_data.scen_terrains[store_ter_type].move_block[2] == 1 || scen_data.scen_terrains[store_ter_type].move_block[3] == 1)
 							)
 						   ) {
-						draw_wall_3D_sidebar(/*sbar_pos * 12 + */i, terrain_rects_3D[i]);
+						draw_wall_3D_sidebar(/*sbar_pos * TILES_N_COLS + */i, terrain_rects_3D[i]);
 						do_this_item = FALSE;
 					}
 					OffsetRect(&ter_from,(1 + PICT_BOX_WIDTH_3D) * (a.which_icon % 10) + 1,(1 + PICT_BOX_HEIGHT_3D) * (a.which_icon / 10) + 1);
@@ -387,7 +516,7 @@ void set_up_terrain_buttons()
 					break;
 				case 3:
 					sbar_pos = GetControlValue(right_sbar);
-					store_ter_type = i;//sbar_pos * 12 + i;
+					store_ter_type = i;//sbar_pos * TILES_N_COLS + i;
 					a = scen_data.scen_creatures[i].char_graphic;
 					OffsetRect(&ter_from,2 * (1 + PICT_BOX_WIDTH_3D) + 1,1);
 					if (a.not_legit())
@@ -411,18 +540,18 @@ void set_up_terrain_buttons()
 					a = scen_data.scen_floors[i].ed_pic;
 					if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_floors[i].pic.graphic_adjust!=0)
 						a.graphic_adjust=scen_data.scen_floors[i].pic.graphic_adjust;
-					OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE) * (a.which_icon / 10) + 1);
+					OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE_OLD) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE_OLD) * (a.which_icon / 10) + 1);
 					if (a.not_legit())
 						do_this_item = FALSE;
 						break;
 				case 1: case 2:
 					sbar_pos = GetControlValue(right_sbar);
-					store_ter_type = /*sbar_pos * 12 + */i;
-					//if (sbar_pos * 12 + i < 512) {
-						a = scen_data.scen_terrains[/*sbar_pos * 12 + */i].ed_pic;
+					store_ter_type = /*sbar_pos * TILES_N_COLS + */i;
+					//if (sbar_pos * TILES_N_COLS + i < 512) {
+						a = scen_data.scen_terrains[/*sbar_pos * TILES_N_COLS + */i].ed_pic;
 						if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_terrains[i].pic.graphic_adjust!=0)
 							a.graphic_adjust=scen_data.scen_terrains[i].pic.graphic_adjust;
-						OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE) * (a.which_icon / 10) + 1);
+						OffsetRect(&ter_from,(1 + TER_BUTTON_SIZE_OLD) * (a.which_icon % 10) + 1,(1 + TER_BUTTON_SIZE_OLD) * (a.which_icon / 10) + 1);
 						if (a.not_legit())
 							do_this_item = FALSE;
 					//}
@@ -430,7 +559,7 @@ void set_up_terrain_buttons()
 					break;
 				case 3:
 					sbar_pos = GetControlValue(right_sbar);
-					store_ter_type = i;//sbar_pos * 12 + i;
+					store_ter_type = i;//sbar_pos * TILES_N_COLS + i;
 					a = scen_data.scen_creatures[i].char_graphic;
 					SetRect(&ter_from,0,0,PICT_BOX_WIDTH_3D,PICT_BOX_HEIGHT_3D);
 					OffsetRect(&ter_from,2 * (1 + PICT_BOX_WIDTH_3D) + 1,1);
@@ -441,7 +570,7 @@ void set_up_terrain_buttons()
 					sbar_pos = GetControlValue(right_sbar);
 					store_ter_type = i;
 					SetRect(&ter_from,0,0,ITEM_BOX_SIZE_3D,ITEM_BOX_SIZE_3D);
-					a = scen_data.scen_items[sbar_pos * 12 + i].item_floor_graphic;
+					a = scen_data.scen_items[sbar_pos * TILES_N_COLS + i].item_floor_graphic;
 					OffsetRect(&ter_from,(1 + ITEM_BOX_SIZE_3D) * (a.which_icon % 10) + 1,(1 + ITEM_BOX_SIZE_3D) * (a.which_icon / 10) + 1);
 					if (a.not_legit())
 						do_this_item = FALSE;
@@ -469,9 +598,9 @@ void set_up_terrain_buttons()
 			GWorldPtr src_gworld = graphics_library[index];
 			adjust_graphic(&src_gworld,&ter_from,a.graphic_adjust);
 			if(current_drawing_mode==0)
-				rect_draw_some_item(src_gworld,ter_from,floor_buttons_gworld,(cur_viewing_mode >= 10 && current_drawing_mode > 0) ? terrain_rects_3D[i] : terrain_rects[i],0,0);
+				rect_draw_some_item(src_gworld,ter_from,floor_buttons_gworld,/*(cur_viewing_mode >= 10 && current_drawing_mode > 0) ? terrain_rects_3D[i] : */terrain_rects[i],0,0);
 			else if(current_drawing_mode<3)
-				rect_draw_some_item(src_gworld,ter_from,terrain_buttons_gworld,(cur_viewing_mode >= 10 && current_drawing_mode > 0) ? terrain_rects_3D[i] : terrain_rects[i],0,0);
+				rect_draw_some_item(src_gworld,ter_from,terrain_buttons_gworld,(cur_viewing_mode >= 10/* && current_drawing_mode > 0*/) ? terrain_rects_3D[i] : terrain_rects[i],0,0);
 			else if(current_drawing_mode==3)
 				rect_draw_some_item(src_gworld,ter_from,creature_buttons_gworld,terrain_rects_3D[i],0,0);
 			else if(current_drawing_mode==4)
@@ -550,29 +679,54 @@ GWorldPtr load_pict(int picture_to_get)
 	return myGWorld;
 }
 
+Rect terrainViewRect(){
+	Rect r;
+	if(cur_viewing_mode==0){ //2D, zoomed in
+		r.top=TERRAIN_BORDER_WIDTH;
+		r.left=TERRAIN_BORDER_WIDTH;
+		r.bottom=TERRAIN_BORDER_WIDTH + terrain_height_2d * BIG_SPACE_SIZE;
+		r.right=TERRAIN_BORDER_WIDTH + terrain_width_2d * BIG_SPACE_SIZE;
+	}
+	else if(cur_viewing_mode==1){ //2D, zoomed out
+		r.top=0;
+		r.left=0;
+		r.bottom=((editing_town) ? max_zone_dim[town_type] : 48) * SMALL_SPACE_SIZE;
+		r.right=((editing_town) ? max_zone_dim[town_type] : 48) * SMALL_SPACE_SIZE;
+	}
+	else{ //3D
+		r = terrain_viewport_3d;
+	}
+	return(r);
+}
+
+Rect largeTileScreenRect(int xIdx, int yIdx){
+	Rect r={TERRAIN_BORDER_WIDTH + yIdx * BIG_SPACE_SIZE,TERRAIN_BORDER_WIDTH + xIdx * BIG_SPACE_SIZE,
+		TERRAIN_BORDER_WIDTH + (yIdx + 1) * BIG_SPACE_SIZE,TERRAIN_BORDER_WIDTH + (xIdx + 1) * BIG_SPACE_SIZE};
+	return(r);
+}
+
+Rect smallTileScreenRect(int xIdx, int yIdx){
+	Rect r={yIdx * SMALL_SPACE_SIZE,xIdx * SMALL_SPACE_SIZE,
+		(yIdx + 1) * SMALL_SPACE_SIZE,(xIdx + 1) * SMALL_SPACE_SIZE};
+	return(r);
+}
+
 Boolean place_terrain_icon_into_ter_large(graphic_id_type icon,short in_square_x,short in_square_y)
 {
-	Rect to_rect = large_edit_ter_rects[in_square_x][in_square_y];
+	Rect to_rect = largeTileScreenRect(in_square_x,in_square_y);
 	Rect from_rect;
 	graphic_id_type a = icon;
 	
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
-	SetRect(&from_rect,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10),1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10),
-		1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10) + TER_BUTTON_SIZE,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10) + TER_BUTTON_SIZE);
+	if (index < 0)
+		return FALSE;
+	SetRect(&from_rect,1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon % 10),1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon / 10),
+		1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon % 10) + TER_BUTTON_SIZE_OLD,1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon / 10) + TER_BUTTON_SIZE_OLD);
 	GWorldPtr src_gworld = graphics_library[index];
 	adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 	rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);
 	return TRUE;
 }
-/*GWorldPtr src_gworld = graphics_library[index];
-adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
-apply_lighting_to_graphic(&src_gworld,&from_rect,lighting);
-
-rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);*/
 
 void draw_wall_3D_sidebar(short t_to_draw, Rect to_rect)
 {			
@@ -664,10 +818,8 @@ Boolean place_icon_into_3D_sidebar(graphic_id_type icon, Rect to_rect, short uns
 			   (unscaled_offset_y * TER_BUTTON_SIZE) / PICT_BOX_HEIGHT_3D);
 	
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
@@ -678,7 +830,7 @@ Boolean place_icon_into_3D_sidebar(graphic_id_type icon, Rect to_rect, short uns
 	return TRUE;
 }
 
-Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting)
+Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,short lighting,bool selected)
 {
 	Rect to_rect;
 	Rect from_rect;
@@ -694,16 +846,21 @@ Boolean place_icon_into_ter_3D_large(graphic_id_type icon,short at_point_center_
 	a = icon;
 	
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
 	GWorldPtr src_gworld = graphics_library[index];
 	adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 	apply_lighting_to_graphic(&src_gworld,&from_rect,lighting);
+	
+	if(cur_viewing_mode != 11){
+		if(selected){
+			add_border_to_graphic(&src_gworld,&from_rect,27,0,31);
+			add_border_to_graphic(&src_gworld,&from_rect,31,0,31);
+		}
+	}	
 	
 	rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);
 	return TRUE;
@@ -724,10 +881,8 @@ Boolean place_creature_icon_into_ter_3D_large(graphic_id_type icon,short at_poin
 	a = icon;
 	
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
@@ -768,10 +923,8 @@ Boolean place_cliff_icon_into_ter_3D_large(short sheet,short at_point_center_x,s
 		a.which_icon = 1;
 	}
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
@@ -807,10 +960,8 @@ Boolean place_item_icon_into_ter_3D_large(graphic_id_type icon,short at_point_ce
 	
 	a = icon;
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (ITEM_BOX_SIZE_3D + 1) * (a.which_icon % 10),1 + (ITEM_BOX_SIZE_3D + 1) * (a.which_icon / 10),
 			1 + (ITEM_BOX_SIZE_3D + 1) * (a.which_icon % 10) + ITEM_BOX_SIZE_3D,1 + (ITEM_BOX_SIZE_3D + 1) * (a.which_icon / 10) + ITEM_BOX_SIZE_3D);
 	
@@ -843,10 +994,8 @@ Boolean place_outdoor_creature_icon_into_ter_3D_large(graphic_id_type icon,short
 	
 	a = icon;
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 4),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 4),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 4) + OUTDOOR_CREATURE_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 4) + OUTDOOR_CREATURE_HEIGHT_3D);
 	
@@ -873,10 +1022,8 @@ Boolean place_corner_wall_icon_into_ter_3D_large(graphic_id_type icon,short at_p
 	
 	a = icon;
 	short index = safe_get_index_of_sheet(&a);
-	if (index < 0) {
-		//cant_draw_graphics_error(a);
-		return FALSE;	
-	}		
+	if (index < 0)
+		return FALSE;
 	SetRect(&from_rect,1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10),1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10),
 			1 + (PICT_BOX_WIDTH_3D + 1) * (a.which_icon % 10) + PICT_BOX_WIDTH_3D,1 + (PICT_BOX_HEIGHT_3D + 1) * (a.which_icon / 10) + PICT_BOX_HEIGHT_3D);
 	
@@ -896,7 +1043,7 @@ Boolean place_corner_wall_icon_into_ter_3D_large(graphic_id_type icon,short at_p
 	return TRUE;
 }
 
-void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect)
+void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,short position,short which_icon,Rect *to_whole_area_rect,bool selected)
 {
 	//too bad, there's no room left
 	if(position > 9)
@@ -910,7 +1057,24 @@ void place_ter_icon_on_tile_3D(short at_point_center_x,short at_point_center_y,s
 	
 	Rect tiny_from = base_small_3D_button_from;
 	OffsetRect(&tiny_from,16 * (which_icon % 10),11 * (which_icon / 10));
-	rect_draw_some_item(markers,tiny_from,ter_draw_gworld,tiny_to,1,0);
+	GWorldPtr src_gworld = markers;
+	if(selected){
+		Rect temp_rect = tiny_from;
+		OffsetRect(&temp_rect, 2-temp_rect.left, 2-temp_rect.top);
+		GrafPtr old_port;
+		GetPort(&old_port);
+		SetPort(tint_area);
+		EraseRect(&tint_rect);
+		SetPort(old_port);
+		CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(tint_area), &tiny_from, &temp_rect, srcCopy, NULL);
+		tiny_from = temp_rect;
+		InsetRect(&tiny_from, -2, -2);
+		InsetRect(&tiny_to, -2, -2);
+		src_gworld = tint_area;
+		add_border_to_graphic(&src_gworld,&tiny_from,27,0,31);
+		add_border_to_graphic(&src_gworld,&tiny_from,31,0,31);
+	}
+	rect_draw_some_item(src_gworld,tiny_from,ter_draw_gworld,tiny_to,1,0);
 }
 
 void draw_ter_script_3D(short at_point_center_x,short at_point_center_y,Rect *to_whole_area_rect,bool selected)
@@ -965,15 +1129,15 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 		//I don't think either of these is necessary for users understanding.  Their only 'purpose' is to look bad.
 		// signs
 	 if (scen_data.scen_terrains[t_to_draw].special == 39) {
-		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,20);
+		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,20,to_whole_area_rect);
 		 small_icon_position++;
 	 }			
 	 //containers
 	 if (scen_data.scen_terrains[t_to_draw].special == 40) {
-		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,21);
+		 place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,21,to_whole_area_rect);
 		 small_icon_position++;
-	 }			*/
-	
+	 }
+	*/
 	// icons for secret doors
 	if (((t_to_draw >= 18) && (t_to_draw <= 21)) || ((t_to_draw >= 54) && (t_to_draw <= 57))) {
 		place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,26,to_whole_area_rect);
@@ -1013,7 +1177,7 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 		
 		for (i = 0; i < NUM_WAYPOINTS; i++) {
 			if ((town.waypoints[i].x >= 0) && (same_point(loc_drawn,town.waypoints[i]))) {
-				place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,10 + i,to_whole_area_rect);
+				place_ter_icon_on_tile_3D(at_point_center_x,at_point_center_y,small_icon_position,10 + i,to_whole_area_rect, selected_object_type==SelectionType::Waypoint && selected_object_number==i);
 				small_icon_position++;
 			}	
 		}
@@ -1074,14 +1238,14 @@ void place_ter_icons_3D(location which_outdoor_sector, outdoor_record_type *draw
 	}
 }
 
-void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height)
+void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,graphic_id_type a,short t_to_draw,Rect *to_whole_area_rect,short lighting,short height,bool selected)
 {
 	a.which_icon = icon_number;
 	short i;
 	if (a.not_legit() == FALSE) {
 		for(i = 0; i < height; i++) {
 			if (place_icon_into_ter_3D_large(a,x + scen_data.scen_terrains[terrain_number].icon_offset_x,
-											 y + scen_data.scen_terrains[terrain_number].icon_offset_y - i * 35,to_whole_area_rect,lighting) == FALSE) {
+											 y + scen_data.scen_terrains[terrain_number].icon_offset_y - i * 35,to_whole_area_rect,lighting,selected) == FALSE) {
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 				break;
 			}
@@ -1091,7 +1255,7 @@ void draw_ter_icon_3D(short terrain_number,short icon_number,short x,short y,gra
 
 // "Town: Corner Wall display in realistic mode" fix
 // Modified cutaway height handling
-void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_x, short at_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting)
+void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short sector_y, short at_x, short at_y, Boolean see_in_neighbors[3][3], Boolean is_wall_corner,Rect *to_whole_area_rect,short lighting,bool selected)
 {			
 	graphic_id_type a;
 	//	short temp_t_to_draw;
@@ -1100,6 +1264,18 @@ void draw_terrain_3D(short t_to_draw, short x, short y, short sector_x, short se
 	Boolean cutaway = FALSE;
 	
 	short cutHeight = height;
+	
+	if (cur_viewing_mode == 10)
+	{
+		if(editing_town && selected_object_type==SelectionType::Sign && town.sign_locs[selected_object_number].x == x && town.sign_locs[selected_object_number].y == y)
+		{
+			selected = true;
+		}
+		else if (selected_object_type==SelectionType::Sign && current_terrain.sign_locs[selected_object_number].x == x && current_terrain.sign_locs[selected_object_number].y == y)
+		{
+			selected = true;
+		}
+	}
 	
 	if(cur_viewing_mode == 10) {
 		//use cutaway when possible, so user can see better
@@ -1296,7 +1472,7 @@ else {
 	if (a.not_legit() == FALSE) {
 		for(i = 0; i < cutHeight; i++) {
 			if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_terrains[t_to_draw].icon_offset_x,
-											 at_y + scen_data.scen_terrains[t_to_draw].icon_offset_y - i * 35,to_whole_area_rect, lighting) == FALSE) {
+											 at_y + scen_data.scen_terrains[t_to_draw].icon_offset_y - i * 35,to_whole_area_rect, lighting, selected) == FALSE) {
 				cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 				break;
 			}
@@ -1306,7 +1482,7 @@ else {
 	a.which_icon = scen_data.scen_terrains[t_to_draw].second_icon;
 	if (a.not_legit() == FALSE)
 		if (place_icon_into_ter_3D_large(a,at_x + scen_data.scen_terrains[t_to_draw].second_icon_offset_x,
-										 at_y + scen_data.scen_terrains[t_to_draw].second_icon_offset_y,to_whole_area_rect, lighting) == FALSE)
+										 at_y + scen_data.scen_terrains[t_to_draw].second_icon_offset_y,to_whole_area_rect, lighting, selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for terrain type",t_to_draw);
 }
 }
@@ -1350,14 +1526,6 @@ void draw_creature_3D(short creature_num,short at_point_center_x,short at_point_
 				g = 12;
 			}
 	}
-	/*if (town.creatures[creature_num].start_attitude >= 4) {
-		r = 23;
-	}
-else if (town.creatures[creature_num].start_attitude < 3)
-b = 31;
-
-if (town.creatures[creature_num].hidden_class > 0) 
-g = 31;*/
 	
 	a = scen_data.scen_creatures[town.creatures[creature_num].number].char_graphic;
 	a.which_icon = town.creatures[creature_num].facing;
@@ -1381,49 +1549,6 @@ g = 31;*/
 	if (a.not_legit() == FALSE)
 		if(place_creature_icon_into_ter_3D_large(a,at_point_center_x,at_point_center_y - PICT_BOX_HEIGHT_3D,to_whole_area_rect,lighting,r,g,b,selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for creature type",town.creatures[creature_num].number);
-	
-	/*
-		//if (same_point(town.creatures[creature_num].start_loc,loc_drawn)) {
-		//	Rect base_rect = large_edit_ter_rects[in_square_x][in_square_y];
-	 from_rect = get_template_from_rect(town.creatures[creature_num].facing,0);
-	 InsetRect(&from_rect,3,6);
-	 Rect to_rect = from_rect;
-	 CenterRectInRect(&to_rect,&base_rect);
-	 
-	 short obj_index = safe_get_index_of_sheet(&a);
-	 if (obj_index < 0) {
-		 cant_draw_graphics_error(a,"Error was for creature type",town.creatures[creature_num].number);
-	 }		
-	 else rect_draw_some_item(graphics_library[obj_index],
-							  from_rect,ter_draw_gworld,to_rect,0,0);
-	 
-	 if (town.creatures[creature_num].start_attitude >= 4)
-	 r = 255;
-	 else if (town.creatures[creature_num].start_attitude < 3)
-	 b = 255;
-	 if (town.creatures[creature_num].hidden_class > 0) 
-	 g = 255;
-	 put_rect_in_gworld(ter_draw_gworld,to_rect,
-						r,g,b);
-	 
-	 // do facing
-	 Rect facing_to_rect = to_rect;
-	 InsetRect(&facing_to_rect,1,1);
-	 switch (town.creatures[creature_num].facing) {
-		 case 0: InsetRect(&facing_to_rect,3,0); facing_to_rect.bottom = facing_to_rect.top + 2; break;
-		 case 1: InsetRect(&facing_to_rect,0,3); facing_to_rect.right = facing_to_rect.left + 2; break;
-		 case 2: InsetRect(&facing_to_rect,3,0); facing_to_rect.top = facing_to_rect.bottom - 2; break;
-		 case 3: InsetRect(&facing_to_rect,0,3); facing_to_rect.left = facing_to_rect.right - 2; break;
-	 }
-	 put_rect_in_gworld(ter_draw_gworld,facing_to_rect,
-						0,0,0);*/
-		  
-	// Labels for wandering and hidden
-	//	if (town.creatures[creature_num].hidden_class > 0) {
-	//		sprintf(str,"H");
-	//		}
-	//	}
-	
 }
 
 void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y, short square_x, short square_y,Rect *to_whole_area_rect,short lighting,bool selected)
@@ -1442,34 +1567,6 @@ void draw_item_3D(short item_num,short at_point_center_x,short at_point_center_y
 											 at_point_center_y + town.preset_items[item_num].item_shift.y
 											 - scen_data.scen_terrains[t_d.terrain[square_x][square_y]].height_adj,to_whole_area_rect, lighting, selected) == FALSE)
 			cant_draw_graphics_error(a,"Error was for item type",town.preset_items[item_num].which_item);
-	
-	/*if (same_point(town.preset_items[item_num].item_loc,loc_drawn)) {
-		Rect to_rect = large_edit_ter_rects[in_square_x][in_square_y];
-	InsetRect(&to_rect,10,10);
-	OffsetRect(&to_rect, town.preset_items[item_num].item_shift.x,town.preset_items[item_num].item_shift.y);
-	
-	a = scen_data.scen_items[town.preset_items[item_num].which_item].item_floor_graphic;
-	
-	icon_to_use = scen_data.scen_items[town.preset_items[item_num].which_item].inven_icon;
-	
-	SetRect(&from_rect,1 + 29 * (icon_to_use % 10),
-			1 + 29 * (icon_to_use / 10),
-			1 + 29 * (icon_to_use % 10) + 28,
-			1 + 29 * (icon_to_use / 10) + 28);
-	
-	short obj_index = safe_get_index_of_sheet(&a);
-	if (obj_index < 0) {
-		cant_draw_graphics_error(a,"Error was for item type",town.preset_items[item_num].which_item);
-		put_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
-		return;
-	}		
-	
-	rect_draw_some_item(graphics_library[obj_index],
-						from_rect,ter_draw_gworld,to_rect,0,0);
-	
-	put_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
-	}*/
-	
 }
 
 //XXX if line_on_2D_x_side and line_on_2D_y_side are nonzero, it's a corner (they should be -1, 0, or 1)
@@ -1970,13 +2067,6 @@ void draw_ter_3D_large()
 	
 	SetPort((GrafPtr) ter_draw_gworld);
 	
-	//FillCRect(&terrain_rect_gr_size,bg[6]);
-	
-	//Original: 
-	//Rect whole_area_rect = {large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right};
-	//InsetRect(&whole_area_rect,-15,-15);
-	
-	//printf("%i %i %i %i\n",large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right);
 	Rect whole_area_rect = terrain_viewport_3d;
 	
 	ZeroRectCorner(&whole_area_rect);
@@ -1989,13 +2079,9 @@ void draw_ter_3D_large()
 	fill_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
 	
 	if (file_is_loaded == FALSE) {
-		//for (q = 0; q < 9; q++) 
-		//	for (r = 0; r < 9; r++) 
-		//		fill_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],230,230,230);
 		to_rect = whole_area_rect;
 		InsetRect(&to_rect,1,1);
 		fill_rect_in_gworld(ter_draw_gworld,to_rect,230,230,230);
-		//put_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
 		to_rect = whole_area_rect;
 		OffsetRect(&to_rect,TER_RECT_UL_X,TER_RECT_UL_Y);
 		rect_draw_some_item(ter_draw_gworld,whole_area_rect,ter_draw_gworld,to_rect,0,1);			
@@ -2082,9 +2168,9 @@ void draw_ter_3D_large()
 						view_to.y = temp_y;
 						//in the game, things a certain distance away aren't drawn.  Also, 
 						//that helps here by reducing the number of line-of-sight calculations needed
-						if(editing_town && (abs(view_to.x - cen_x) > 10 || abs(view_to.y - cen_y) > 10))
+						if(editing_town && (abs(view_to.x - cen_x) > indoor_draw_distance || abs(view_to.y - cen_y) > indoor_draw_distance))
 							continue;
-						if(!editing_town && (abs(view_to.x - cen_x) + abs(view_to.y - cen_y) > 14))
+						if(!editing_town && (abs(view_to.x - cen_x) + abs(view_to.y - cen_y) > outdoor_draw_distance))
 							continue;
 						see_in = get_see_in(sector_offset_x,sector_offset_y,x,y);
 						see_to = get_see_to(sector_offset_x,sector_offset_y,x,y);
@@ -2182,12 +2268,7 @@ continue;*/
 							continue;
 						
 						a = scen_data.scen_floors[floor_to_draw].pic;
-						
-						// if graphic is undefined for floor, just draw white
-						if (a.not_legit()) {
-							//fill_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],230,230,230);
-						}
-						else if (place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y,to_whole_area_rect,lighting) == FALSE)
+						if (!a.not_legit() && !place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y,to_whole_area_rect,lighting))
 							cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 						continue;
 					}
@@ -2303,11 +2384,7 @@ continue;*/
 					if(floor_to_draw != 255 && scen_data.scen_terrains[t_to_draw].suppress_floor == FALSE && see_in) {
 						a = scen_data.scen_floors[floor_to_draw].pic;
 						
-						// if graphic is undefined for floor, just draw white
-						if (a.not_legit()) {
-							//fill_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],230,230,230);
-						}
-						else if (place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y,to_whole_area_rect,lighting) == FALSE)
+						if (!a.not_legit() && !place_icon_into_ter_3D_large(a,center_of_current_square_x,center_of_current_square_y,to_whole_area_rect,lighting))
 							cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 					}
 					
@@ -2789,65 +2866,65 @@ void draw_ter_large()
 	graphic_id_type a;
 	char str[256];
 	
-	//extern Rect large_edit_ter_rects[9][9];
- 	paint_pattern(ter_draw_gworld,0,terrain_rect_gr_size,2);
+	Rect whole_area_rect = terrainViewRect();
+	InsetRect(&whole_area_rect,-TERRAIN_BORDER_WIDTH,-TERRAIN_BORDER_WIDTH);
+	paint_pattern(ter_draw_gworld,0,whole_area_rect,2);
 	SetPort((GrafPtr) ter_draw_gworld);
- 	//FillCRect(&terrain_rect_gr_size,bg[6]);
-	Rect whole_area_rect = {large_edit_ter_rects[0][0].top,large_edit_ter_rects[0][0].left,
-		large_edit_ter_rects[8][8].bottom,large_edit_ter_rects[8][8].right};
-	
-	InsetRect(&whole_area_rect,-15,-15);
 	ZeroRectCorner(&whole_area_rect);
 	
 	FrameRect(&whole_area_rect);
-	InsetRect(&whole_area_rect,15,15);
+	InsetRect(&whole_area_rect,TERRAIN_BORDER_WIDTH,TERRAIN_BORDER_WIDTH);
 	FrameRect(&whole_area_rect);
-	InsetRect(&whole_area_rect,-15,-15);
+	InsetRect(&whole_area_rect,-TERRAIN_BORDER_WIDTH,-TERRAIN_BORDER_WIDTH);
 	
 	SetPort(GetWindowPort(mainPtr));
 	
 	if (file_is_loaded == FALSE) {
-		//for (q = 0; q < 9; q++) 
-		//	for (r = 0; r < 9; r++) 
-		//		fill_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],230,230,230);
 		to_rect = whole_area_rect;
 		InsetRect(&to_rect,16,16);
 		fill_rect_in_gworld(ter_draw_gworld,to_rect,230,230,230);
-		//put_rect_in_gworld(ter_draw_gworld,to_rect,0,0,0);
 		to_rect = whole_area_rect;
-		OffsetRect(&to_rect,TER_RECT_UL_X,TER_RECT_UL_Y);
+		OffsetRect(&to_rect,TER_RECT_UL_X_2d_big,TER_RECT_UL_Y_2d_big);
 		rect_draw_some_item(ter_draw_gworld,whole_area_rect,ter_draw_gworld,to_rect,0,1);			
 		return;
 	}
 	
-	//SetPort(mainPtr);
-	for (q = 0; q < 9; q++){
-		for (r = 0; r < 9; r++) {
+	const int half_width = terrain_width_2d/2;
+	const int half_height = terrain_height_2d/2;
+	
+	for (q = 0; q < terrain_width_2d; q++){
+		for (r = 0; r < terrain_height_2d; r++) {
+			int x_coord = cen_x + q - half_width;
+			int y_coord = cen_y + r - half_height;
+			
+			bool selected = false;
+						
+			Rect destRect=largeTileScreenRect(q,r);
 			where_draw.x = q; where_draw.y = r;
 			
-			if((editing_town == FALSE) && ((cen_x + q - 4 <= -1) || (cen_x + q - 4 >= 48) || (cen_y + r - 4 <= -1) || (cen_y + r - 4 >= 48)) ) {
-				short sector_offset_x = ((cen_x + q - 4 <= -1) ? -1 : ((cen_x + q - 4 >= 48) ? 1 : 0));
-				short sector_offset_y = ((cen_y + r - 4 <= -1) ? -1 : ((cen_y + r - 4 >= 48) ? 1 : 0));
+			if(!editing_town && ((x_coord <= -1) || (x_coord >= 48) || (y_coord <= -1) || (y_coord >= 48)) ) {
+				short sector_offset_x = ((x_coord <= -1) ? -1 : ((x_coord >= 48) ? 1 : 0));
+				short sector_offset_y = ((y_coord <= -1) ? -1 : ((y_coord >= 48) ? 1 : 0));
 				//leave the wood background there
 				if(cur_out.x + sector_offset_x < 0 || cur_out.y + sector_offset_y < 0 || cur_out.x + sector_offset_x >= scenario.out_width || cur_out.y + sector_offset_y >= scenario.out_height)
 					continue;
-				t_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].terrain[cen_x + q - 4 - sector_offset_x * 48][cen_y + r - 4 - sector_offset_y * 48];
-				floor_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].floor[cen_x + q - 4 - sector_offset_x * 48][cen_y + r - 4 - sector_offset_y * 48];
-				height_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].height[cen_x + q - 4 - sector_offset_x * 48][cen_y + r - 4 - sector_offset_y * 48];
+				t_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].terrain[x_coord - sector_offset_x * 48][y_coord - sector_offset_y * 48];
+				floor_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].floor[x_coord - sector_offset_x * 48][y_coord - sector_offset_y * 48];
+				height_to_draw = border_terrains[sector_offset_x + 1][sector_offset_y + 1].height[x_coord - sector_offset_x * 48][y_coord - sector_offset_y * 48];
 			}
-			else if((editing_town == TRUE) && ((cen_x + q - 4 <= -1) || (cen_x + q - 4 >= max_zone_dim[town_type]) || (cen_y + r - 4 <= -1) || (cen_y + r - 4 >= max_zone_dim[town_type])) ) {
-				short temp_x = cen_x + q - 4;
-				short temp_y = cen_y + r - 4;
-				if(cen_x + q - 4 <= -1) {
+			else if(editing_town && ((x_coord <= -1) || (x_coord >= max_zone_dim[town_type]) || (y_coord <= -1) || (y_coord >= max_zone_dim[town_type])) ) {
+				short temp_x = x_coord;
+				short temp_y = y_coord;
+				if(x_coord <= -1) {
 					temp_x = 0;
 				}
-				if(cen_x + q - 4 >= max_zone_dim[town_type]) {
+				if(x_coord >= max_zone_dim[town_type]) {
 					temp_x = max_zone_dim[town_type] - 1;
 				}
-				if(cen_y + r - 4 <= -1) {
+				if(y_coord <= -1) {
 					temp_y = 0;
 				}
-				if(cen_y + r - 4 >= max_zone_dim[town_type]) {
+				if(y_coord >= max_zone_dim[town_type]) {
 					temp_y = max_zone_dim[town_type] - 1;
 				}
 				
@@ -2871,33 +2948,33 @@ void draw_ter_large()
 					floor_to_draw = town.external_floor_type;
 				}
 			}
-			/*if ((editing_town == FALSE) && (cen_x + q - 4 == -1)) {
-				t_to_draw = borders[3][cen_y + r - 4];
-			floor_to_draw = border_floor[3][cen_y + r - 4];		
-			height_to_draw = border_height[3][cen_y + r - 4];		
+			/*if ((editing_town == FALSE) && (x_coord == -1)) {
+				t_to_draw = borders[3][y_coord];
+			floor_to_draw = border_floor[3][y_coord];		
+			height_to_draw = border_height[3][y_coord];		
 			}
-			else if ((editing_town == FALSE) && (cen_x + q - 4 == 48)) {
-				t_to_draw = borders[1][cen_y + r - 4];
-				floor_to_draw = border_floor[1][cen_y + r - 4];		
-				height_to_draw = border_height[1][cen_y + r - 4];		
+			else if ((editing_town == FALSE) && (x_coord == 48)) {
+				t_to_draw = borders[1][y_coord];
+				floor_to_draw = border_floor[1][y_coord];		
+				height_to_draw = border_height[1][y_coord];		
 			}
-			else if ((editing_town == FALSE) && (cen_y + r - 4 == -1)) {
-				t_to_draw = borders[0][cen_x + q - 4];
-				floor_to_draw = border_floor[0][cen_x + q - 4];		
-				height_to_draw = border_height[0][cen_x + q - 4];		
+			else if ((editing_town == FALSE) && (y_coord == -1)) {
+				t_to_draw = borders[0][x_coord];
+				floor_to_draw = border_floor[0][x_coord];		
+				height_to_draw = border_height[0][x_coord];		
 			}
-			else if ((editing_town == FALSE) && (cen_y + r - 4 == 48)) {
-				t_to_draw = borders[2][cen_x + q - 4];
-				floor_to_draw = border_floor[2][cen_x + q - 4];		
-				height_to_draw = border_height[2][cen_x + q - 4];		
+			else if ((editing_town == FALSE) && (y_coord == 48)) {
+				t_to_draw = borders[2][x_coord];
+				floor_to_draw = border_floor[2][x_coord];		
+				height_to_draw = border_height[2][x_coord];		
 			}*/
 			else {
-				t_to_draw = (editing_town) ? t_d.terrain[cen_x + q - 4][cen_y + r - 4] : current_terrain.terrain[cen_x + q - 4][cen_y + r - 4];		
-				floor_to_draw = (editing_town) ? t_d.floor[cen_x + q - 4][cen_y + r - 4] : current_terrain.floor[cen_x + q - 4][cen_y + r - 4];		
-				height_to_draw = (editing_town) ? t_d.height[cen_x + q - 4][cen_y + r - 4] : current_terrain.height[cen_x + q - 4][cen_y + r - 4];		
+				t_to_draw = (editing_town) ? t_d.terrain[x_coord][y_coord] : current_terrain.terrain[x_coord][y_coord];		
+				floor_to_draw = (editing_town) ? t_d.floor[x_coord][y_coord] : current_terrain.floor[x_coord][y_coord];		
+				height_to_draw = (editing_town) ? t_d.height[x_coord][y_coord] : current_terrain.height[x_coord][y_coord];		
 			}
 			
-			location loc_drawn = {cen_x + q - 4,cen_y + r - 4};
+			location loc_drawn = {x_coord,y_coord};
 			
 			// draw floor
 			a = scen_data.scen_floors[floor_to_draw].ed_pic;
@@ -2906,7 +2983,7 @@ void draw_ter_large()
 			
 			// if graphic is underfined for floor, just draw white
 			if (a.not_legit())
-				fill_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],230,230,230);
+				fill_rect_in_gworld(ter_draw_gworld,destRect,230,230,230);
 			else if (place_terrain_icon_into_ter_large(a,q,r) == FALSE)
 				cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 			/*
@@ -2916,7 +2993,10 @@ void draw_ter_large()
 			 rect_draw_some_item(graphics_library[index],
 								 from_rect,ter_draw_gworld,large_edit_ter_rects[q][r],0,0);
 			 */
+			
 			// draw terrain
+			
+
 			if (t_to_draw > 0) {
 				a = scen_data.scen_terrains[t_to_draw].ed_pic;
 				if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_terrains[t_to_draw].pic.graphic_adjust!=0)
@@ -2997,26 +3077,36 @@ void draw_ter_large()
 			if ((current_drawing_mode == 2) || always_draw_heights){
 				sprintf(str,"%d",height_to_draw);
 				//  ((editing_town) ? t_d.height[loc_drawn.x][loc_drawn.y] : current_terrain.height[loc_drawn.x][loc_drawn.y]);
-				to_rect = large_edit_ter_rects[q][r];
+				to_rect = destRect;
 				OffsetRect(&to_rect,2,2);
 				to_rect.left = to_rect.right - ((strlen(str) > 1) ? 23 : 14);
 				win_draw_string_outline(ter_draw_gworld,to_rect,str,2,10);		
 			}
 			
-			if(((editing_town == FALSE) && ((cen_x + q - 4 <= -1) || (cen_x + q - 4 >= 48) || (cen_y + r - 4 <= -1) || (cen_y + r - 4 >= 48))) ||
-			   (editing_town == TRUE) && ((cen_x + q - 4 <= -1) || (cen_x + q - 4 >= max_zone_dim[town_type]) || (cen_y + r - 4 <= -1) || (cen_y + r - 4 >= max_zone_dim[town_type])) ) {
+			if(((editing_town == FALSE) && ((x_coord <= -1) || (x_coord >= 48) || (y_coord <= -1) || (y_coord >= 48))) ||
+			   (editing_town == TRUE) && ((x_coord <= -1) || (x_coord >= max_zone_dim[town_type]) || (y_coord <= -1) || (y_coord >= max_zone_dim[town_type])) ) {
 				continue;
 			}
-			put_rect_in_gworld(ter_draw_gworld,large_edit_ter_rects[q][r],0,0,0);
+			put_rect_in_gworld(ter_draw_gworld,destRect,0,0,0);
 			short small_icon_position = 0;
 				
 			// now place the tiny icons in the lower right corner
 			// first, stuff that is done for both town and outdoors
 			// signs
-			if (scen_data.scen_terrains[t_to_draw].special == 39) {
-				place_ter_icon_on_tile(q,r,small_icon_position,20);
-				small_icon_position++;
+			//highlighting signs
+			if(editing_town && scen_data.scen_terrains[t_to_draw].special == 39 && town.sign_locs[selected_object_number].x == x_coord && town.sign_locs[selected_object_number].y == y_coord)
+			{
+				selected = true;
+			}
+			else if(scen_data.scen_terrains[t_to_draw].special == 39 && current_terrain.sign_locs[selected_object_number].x == x_coord && current_terrain.sign_locs[selected_object_number].y == y_coord)
+			{
+				selected = true;
 			}			
+			if (scen_data.scen_terrains[t_to_draw].special == 39) {
+				place_ter_icon_on_tile(q,r,small_icon_position,20,selected);
+				small_icon_position++;
+			}
+			// containers
 			if (scen_data.scen_terrains[t_to_draw].special == 40) {
 				place_ter_icon_on_tile(q,r,small_icon_position,21);
 				small_icon_position++;
@@ -3058,7 +3148,7 @@ void draw_ter_large()
 				}
 				for (i = 0; i < NUM_WAYPOINTS; i++){	
 					if ((town.waypoints[i].x >= 0) && (same_point(loc_drawn,town.waypoints[i]))) {
-						place_ter_icon_on_tile(q,r,small_icon_position,10 + i);
+						place_ter_icon_on_tile(q,r,small_icon_position,10 + i, selected_object_type==SelectionType::Waypoint && selected_object_number==i);
 						small_icon_position++;
 					}	
 				}
@@ -3114,10 +3204,10 @@ void draw_ter_large()
 		if (editing_town) {
 			for (i = 0; i < NUM_TOWN_PLACED_SPECIALS; i++){
 				if (town.spec_id[i] != kNO_TOWN_SPECIALS){
-					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.special_rects[i].left - cen_x + 4);
-					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.special_rects[i].right - cen_x + 4 + 1) - 1;
-					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.special_rects[i].top - cen_y + 4);
-					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.special_rects[i].bottom - cen_y + 4 + 1) - 1;				
+					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.special_rects[i].left - cen_x + half_width);
+					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.special_rects[i].right - cen_x + half_width + 1) - 1;
+					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.special_rects[i].top - cen_y + half_height);
+					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.special_rects[i].bottom - cen_y + half_height + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,200,200,255);
 					InsetRect(&rectangle_draw_rect,1,1);
@@ -3131,20 +3221,20 @@ void draw_ter_large()
 				}
 			}
 			// zone border rect
-			rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.in_town_rect.left - cen_x + 4);
-			rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.in_town_rect.right - cen_x + 4 + 1) - 1;
-			rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.in_town_rect.top - cen_y + 4);
-			rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.in_town_rect.bottom - cen_y + 4 + 1) - 1;				
+			rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.in_town_rect.left - cen_x + half_width);
+			rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.in_town_rect.right - cen_x + half_width + 1) - 1;
+			rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.in_town_rect.top - cen_y + half_height);
+			rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.in_town_rect.bottom - cen_y + half_height + 1) - 1;				
 			InsetRect(&rectangle_draw_rect,3,3);
 			put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,0); 
 						
 			// description rects
 			for (i = 0; i < 16; i++){
 				if (town.room_rect[i].right > 0) {
-					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.room_rect[i].left - cen_x + 4);
-					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.room_rect[i].right - cen_x + 4 + 1) - 1;
-					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.room_rect[i].top - cen_y + 4);
-					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.room_rect[i].bottom - cen_y + 4 + 1) - 1;				
+					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (town.room_rect[i].left - cen_x + half_width);
+					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (town.room_rect[i].right - cen_x + half_width + 1) - 1;
+					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (town.room_rect[i].top - cen_y + half_height);
+					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (town.room_rect[i].bottom - cen_y + half_height + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,4,4);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,255,0);
 					if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
@@ -3161,10 +3251,10 @@ void draw_ter_large()
 			// town entry rects
 			for (i = 0; i < NUM_OUT_TOWN_ENTRANCES; i++){
 				if ((current_terrain.exit_rects[i].right > 0) && (current_terrain.exit_dests[i] >= 0)) {
-					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].left - cen_x + 4);
-					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].right - cen_x + 4 + 1) - 1;
-					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].top - cen_y + 4);
-					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].bottom - cen_y + 4 + 1) - 1;				
+					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].left - cen_x + half_width);
+					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].right - cen_x + half_width + 1) - 1;
+					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].top - cen_y + half_height);
+					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.exit_rects[i].bottom - cen_y + half_height + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,255,0,255);
 					if(selected_object_type==SelectionType::TownEntrance && selected_object_number==i){
@@ -3178,10 +3268,10 @@ void draw_ter_large()
 			// special enc rects
 			for (i = 0; i < NUM_OUT_PLACED_SPECIALS; i++){
 				if (current_terrain.spec_id[i] >= 0) {
-					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].left - cen_x + 4);
-					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].right - cen_x + 4 + 1) - 1;
-					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].top - cen_y + 4);
-					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].bottom - cen_y + 4 + 1) - 1;				
+					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].left - cen_x + half_width);
+					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].right - cen_x + half_width + 1) - 1;
+					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].top - cen_y + half_height);
+					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.special_rects[i].bottom - cen_y + half_height + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,1,1);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,200,200,255);
 					InsetRect(&rectangle_draw_rect,1,1);
@@ -3197,10 +3287,10 @@ void draw_ter_large()
 			// description rects
 			for (i = 0; i < 8; i++){
 				if (current_terrain.info_rect[i].right > 0) {
-					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].left - cen_x + 4);
-					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].right - cen_x + 4 + 1) - 1;
-					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].top - cen_y + 4);
-					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].bottom - cen_y + 4 + 1) - 1;				
+					rectangle_draw_rect.left = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].left - cen_x + half_width);
+					rectangle_draw_rect.right = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].right - cen_x + half_width + 1) - 1;
+					rectangle_draw_rect.top = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].top - cen_y + half_height);
+					rectangle_draw_rect.bottom = 15 + BIG_SPACE_SIZE * (current_terrain.info_rect[i].bottom - cen_y + half_height + 1) - 1;				
 					InsetRect(&rectangle_draw_rect,4,4);
 					put_clipped_rect_in_gworld(ter_draw_gworld,rectangle_draw_rect,clip_rect,0,255,0);
 					if(selected_object_type==SelectionType::AreaDescription && selected_object_number==i){
@@ -3214,15 +3304,15 @@ void draw_ter_large()
 		}
 		// plop ter on screen
 		to_rect = whole_area_rect;
-		OffsetRect(&to_rect,TER_RECT_UL_X,TER_RECT_UL_Y);
+		OffsetRect(&to_rect,TER_RECT_UL_X_2d_big,TER_RECT_UL_Y_2d_big);
 		rect_draw_some_item(ter_draw_gworld,whole_area_rect,ter_draw_gworld,to_rect,0,1);			
 		small_any_drawn = FALSE;
 	}
 }
 
-void place_ter_icon_on_tile(short tile_x,short tile_y,short position,short which_icon)
+void place_ter_icon_on_tile(short tile_x,short tile_y,short position,short which_icon, bool selected)
 {
-	Rect tiny_to = large_edit_ter_rects[tile_x][tile_y];
+	Rect tiny_to = largeTileScreenRect(tile_x,tile_y);
 	tiny_to.right = tiny_to.left + 10;
 	tiny_to.bottom = tiny_to.top + 10;
 	OffsetRect(&tiny_to,10 * (position / 4) + 1,10 * (position % 4) + 1);
@@ -3230,6 +3320,13 @@ void place_ter_icon_on_tile(short tile_x,short tile_y,short position,short which
 	Rect tiny_from = base_small_button_from;
 	OffsetRect(&tiny_from,10 * (which_icon % 10),10 * (which_icon / 10));
 	rect_draw_some_item(markers,tiny_from,ter_draw_gworld,tiny_to,0,0);
+	if(selected){
+		InsetRect(&tiny_to,-1,-1);
+		put_rect_in_gworld(ter_draw_gworld,tiny_to,215,0,255);
+		InsetRect(&tiny_to,-1,-1);
+		put_rect_in_gworld(ter_draw_gworld,tiny_to,255,0,255);
+		InsetRect(&tiny_to,2,2);
+	}	
 }
 
 Rect get_template_from_rect(short x,short y)
@@ -3252,7 +3349,7 @@ void draw_creature(short creature_num,location loc_drawn,short in_square_x,short
 		return;
 	
 	if (same_point(town.creatures[creature_num].start_loc,loc_drawn)) {
-		Rect base_rect = large_edit_ter_rects[in_square_x][in_square_y];
+		Rect base_rect = largeTileScreenRect(in_square_x,in_square_y);
 		a = scen_data.scen_creatures[town.creatures[creature_num].number].char_graphic;
 		
 		from_rect = get_template_from_rect(0,0);
@@ -3313,7 +3410,7 @@ void draw_item(short item_num,location loc_drawn,short in_square_x,short in_squa
 		return;
 	
 	if (same_point(town.preset_items[item_num].item_loc,loc_drawn)) {
-		Rect to_rect = large_edit_ter_rects[in_square_x][in_square_y];
+		Rect to_rect = largeTileScreenRect(in_square_x,in_square_y);
 		InsetRect(&to_rect,10,10);
 		OffsetRect(&to_rect, town.preset_items[item_num].item_shift.x,town.preset_items[item_num].item_shift.y);
 		
@@ -3351,7 +3448,7 @@ void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short
 	if (town.ter_scripts[script_num].exists == FALSE)
 		return;
 	if (same_point(town.ter_scripts[script_num].loc,loc_drawn)) {
-		Rect to_rect = large_edit_ter_rects[in_square_x][in_square_y];
+		Rect to_rect = largeTileScreenRect(in_square_x,in_square_y);
 		to_rect.left = to_rect.right - 20;
 		to_rect.bottom = to_rect.top + 20;
 		rect_draw_some_item(markers,ter_script_icon_from,ter_draw_gworld,to_rect,0,0);
@@ -3367,7 +3464,7 @@ void draw_ter_script(short script_num,location loc_drawn,short in_square_x,short
 
 Boolean place_terrain_icon_into_ter_small(graphic_id_type icon,short in_square_x,short in_square_y)
 {
-	Rect to_rect = small_edit_ter_rects[in_square_x][in_square_y];
+	Rect to_rect = smallTileScreenRect(in_square_x,in_square_y);
 	Rect from_rect;
 	
 	graphic_id_type a = icon;
@@ -3377,8 +3474,8 @@ Boolean place_terrain_icon_into_ter_small(graphic_id_type icon,short in_square_x
 		//cant_draw_graphics_error(a);
 		return FALSE;	
 	}		
-	SetRect(&from_rect,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10),1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10),
-			1 + (TER_BUTTON_SIZE + 1) * (a.which_icon % 10) + TER_BUTTON_SIZE,1 + (TER_BUTTON_SIZE + 1) * (a.which_icon / 10) + TER_BUTTON_SIZE);
+	SetRect(&from_rect,1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon % 10),1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon / 10),
+			1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon % 10) + TER_BUTTON_SIZE_OLD,1 + (TER_BUTTON_SIZE_OLD + 1) * (a.which_icon / 10) + TER_BUTTON_SIZE_OLD);
 	GWorldPtr src_gworld = graphics_library[index];
 	adjust_graphic(&src_gworld,&from_rect,a.graphic_adjust);
 	rect_draw_some_item(src_gworld,from_rect,ter_draw_gworld,to_rect,1,0);
@@ -3405,22 +3502,15 @@ void draw_ter_small()
 	
 	// first, clear area not drawn on
 	if ((editing_town == FALSE) || (town_type > 0)) {
-		//SetPort((GrafPtr) ter_draw_gworld);
-		Rect fill_area_rect = {small_edit_ter_rects[0][0].top,small_edit_ter_rects[0][0].left,
-			small_edit_ter_rects[63][63].bottom,small_edit_ter_rects[63][63].right};
-		fill_area_rect.left = small_edit_ter_rects[((editing_town) ? max_zone_dim[town_type] : 48)][0].left;
-	 	//FillCRect(&fill_area_rect,bg[6]);
+		Rect fill_area_rect = terrainViewRect();
+		fill_area_rect.left = ((editing_town) ? max_zone_dim[town_type] : 48)*SMALL_SPACE_SIZE;
  		paint_pattern(ter_draw_gworld,0,fill_area_rect,1);
 		fill_area_rect.left = 0;
-		fill_area_rect.top = small_edit_ter_rects[0][((editing_town) ? max_zone_dim[town_type] : 48)].top;	
-	 	//FillCRect(&fill_area_rect,bg[6]);
+		fill_area_rect.top = ((editing_town) ? max_zone_dim[town_type] : 48)*SMALL_SPACE_SIZE;
  		paint_pattern(ter_draw_gworld,0,fill_area_rect,1);
-		//SetPort(mainPtr);
 	}
 	
-	Rect whole_area_rect;
-	SetRect(&whole_area_rect,small_edit_ter_rects[0][0].left,small_edit_ter_rects[0][0].top,
-			small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].right,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].bottom);
+	Rect whole_area_rect = terrainViewRect();
 	
 	ZeroRectCorner(&whole_area_rect);
 	for (q = 0; q < ((editing_town) ? max_zone_dim[town_type] : 48); q++) 
@@ -3435,10 +3525,8 @@ void draw_ter_small()
 				a = scen_data.scen_floors[floor_to_draw].ed_pic;
 				if(!use_strict_adjusts && a.graphic_adjust==0 && scen_data.scen_floors[floor_to_draw].pic.graphic_adjust!=0)
 					a.graphic_adjust=scen_data.scen_floors[floor_to_draw].pic.graphic_adjust;
-				if (a.not_legit()) {
-					//fill_rect_in_gworld(ter_draw_gworld,small_edit_ter_rects[q][r],230,230,230);
-					fill_rect_in_gworld(ter_draw_gworld,small_edit_ter_rects[q][r],230,230,230);
-				}
+				if (a.not_legit())
+					fill_rect_in_gworld(ter_draw_gworld,smallTileScreenRect(q,r),230,230,230);
 				else if (place_terrain_icon_into_ter_small(a,q,r) == FALSE)
 					cant_draw_graphics_error(a,"Error was for floor type",floor_to_draw);
 				
@@ -3460,7 +3548,7 @@ void draw_ter_small()
 				for (i = 0; i < NUM_TOWN_PLACED_CREATURES; i++){
 					if ((town.creatures[i].exists()) && 
 						(town.creatures[i].start_loc.x == q) && (town.creatures[i].start_loc.y == r)) {
-					  	to_rect = small_edit_ter_rects[q][r];
+					  	to_rect = smallTileScreenRect(q,r);
 					  	InsetRect(&to_rect,1,1);
 						if (town.creatures[i].start_attitude < 3)
 							put_rect_in_gworld(ter_draw_gworld,to_rect,0,255,0);
@@ -3493,8 +3581,31 @@ void draw_ter_small()
 		}
 		// plop ter on screen
 		to_rect = whole_area_rect;
-		OffsetRect(&to_rect,TER_RECT_UL_X,TER_RECT_UL_Y);
+		OffsetRect(&to_rect,TER_RECT_UL_X_2d_small,TER_RECT_UL_Y_2d_small);
 		rect_draw_some_item(ter_draw_gworld,whole_area_rect,ter_draw_gworld,to_rect,0,1);
+}
+
+void draw_position_text(){
+	static int previous_width;
+	
+	Rect to_rect;
+	char draw_str[100];
+	if(file_is_loaded)
+		sprintf((char*)draw_str,"Center: x = %d, y = %d ",cen_x,cen_y);
+	else
+		sprintf((char*)draw_str,"No Scenario Loaded");
+	
+	int width=TextWidth(draw_str, 0, strlen((char *)draw_str));
+	//how much the rectangle for the current string should be inset from each side of the main window
+	int insetH=((windRect.right-windRect.left)-width)/2;
+	SetRect(&to_rect, insetH, TER_RECT_UL_Y+terrain_viewport_3d.bottom, insetH+width, TER_RECT_UL_Y+terrain_viewport_3d.bottom+TER_RECT_UL_Y);
+	//erase the larger of the rectangles filled by the previous or current string
+	InsetRect(&to_rect, -ceil(max(0,previous_width-width)/2), 0);
+	paint_pattern(NULL,1,to_rect,1);
+	//restore the rectangle to being the right size for the current string
+	InsetRect(&to_rect, ceil(max(0,previous_width-width)/2), 0);
+	char_win_draw_string(GetWindowPort(mainPtr),to_rect,draw_str,2,TER_RECT_UL_Y);
+	previous_width=width;
 }
 
 void draw_terrain()
@@ -3508,254 +3619,16 @@ void draw_terrain()
 	if (cur_viewing_mode == 10 || cur_viewing_mode == 11) 
 		draw_ter_3D_large();
 	
-	place_left_text();
+	draw_position_text();
 }
 
-// Takes care of everything on the left side of the screen that isn't terrain. 
-// Cleans up screen with background and puts 8 text strings.
-void place_left_text()
-{
+void update_terrain_window_title(){
 	Str255 draw_str;
-	if (cur_viewing_mode == 1) 
-		return;
-	
-	// Clean up area to right of terrain. 
-	//SetRect(&to_rect,TER_RECT_UL_X + terrain_rect_gr_size.right,0,RIGHT_BUTTONS_X_SHIFT,TER_RECT_UL_Y + terrain_rect_gr_size.bottom);
-	//FillCRect(&to_rect,bg[12]);
-	
-	for (short i = 0; i < 10; i++)
- 		paint_pattern(NULL,1,left_text_lines[i],1);
-	//FillCRect(&left_text_lines[i],bg[12]);
-	
-	if (file_is_loaded == FALSE){
-		sprintf((char *) draw_str,"No Scenario Loaded"); 
-		char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-		return;
-	}
-	
-	if (editing_town){
-		// Erase and draw bottom text strs
-		switch(selected_object_type){
-			case SelectionType::None:
-				sprintf((char *) draw_str,"Editing Town/Dungeon %d",cur_town);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  %s",town.town_name);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				break;
-			case SelectionType::Creature:
-				sprintf((char *) draw_str,"Creature %d: %s",selected_object_number + 6,
-						scen_data.scen_creatures[town.creatures[selected_object_number].number].name); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-				
-				sprintf((char *) draw_str,"  Edit This Creature  (Type %d, L%d)",
-						town.creatures[selected_object_number].number,
-						scen_data.scen_creatures[town.creatures[selected_object_number].number].level); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);	
-				
-				if (strlen(town.creatures[selected_object_number].char_script) <= 0){
-					if(strlen(scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script) <=0)
-						sprintf((char *) draw_str,"  Script: basicnpc");
-					else
-						sprintf((char *) draw_str,"  Script: %s", scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script);
-				}
-				else 
-					sprintf((char *) draw_str,"  Script: %s",town.creatures[selected_object_number].char_script); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);		
-				
-				sprintf((char *) draw_str,"  Attitude: %s",attitude_types[town.creatures[selected_object_number].start_attitude - 2]); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);		
-				
-				sprintf((char *) draw_str,"  Character ID: %d",town.creatures[selected_object_number].character_id); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);		
-				
-				sprintf((char *) draw_str,"  Hidden Class: %d",town.creatures[selected_object_number].hidden_class); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);		
-				
-				//TODO: what is this doing here?
-				if (town.creatures[selected_object_number].extra_item == 0)
-					town.creatures[selected_object_number].extra_item = -1;
-				
-				if (town.creatures[selected_object_number].extra_item < 0)
-					sprintf((char *) draw_str,"  Drop Item 1: None");
-				else 
-					sprintf((char *) draw_str,"  Drop Item 1: %s %%%d",scen_data.scen_items[town.creatures[selected_object_number].extra_item].full_name,
-							town.creatures[selected_object_number].extra_item_chance_1); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);		
-				
-				if (town.creatures[selected_object_number].extra_item_2 == 0)
-					town.creatures[selected_object_number].extra_item_2 = -1;
-				
-				if (town.creatures[selected_object_number].extra_item_2 < 0)
-					sprintf((char *) draw_str,"  Drop Item 2: None");
-				else sprintf((char *) draw_str,"  Drop Item 2: %s %%%d",
-							 scen_data.scen_items[town.creatures[selected_object_number].extra_item_2].full_name,
-							 town.creatures[selected_object_number].extra_item_chance_2);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Personality: %d",
-						town.creatures[selected_object_number].personality);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Facing: %s",
-						facings[town.creatures[selected_object_number].facing]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			case SelectionType::Item:
-				sprintf((char *) draw_str,"Item %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  %s",
-						scen_data.scen_items[town.preset_items[selected_object_number].which_item].full_name);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				if (scen_data.scen_items[town.preset_items[selected_object_number].which_item].charges > 0) {
-					sprintf((char *) draw_str,"  Charges/Amount: %d",
-							town.preset_items[selected_object_number].charges);
-					char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
-				}
-				if (town.preset_items[selected_object_number].properties & 2)
-					sprintf((char *) draw_str,"  Property");
-				else sprintf((char *) draw_str,"  Not Property");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[5],(char *) draw_str,2,10);
-				if (town.preset_items[selected_object_number].properties & 4)
-					sprintf((char *) draw_str,"  Contained");
-				else sprintf((char *) draw_str,"  Not Contained");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Drawing Shift X: %d",
-						town.preset_items[selected_object_number].item_shift.x);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Drawing Shift Y: %d",
-						town.preset_items[selected_object_number].item_shift.y);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Edit Properties");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[7],(char *) draw_str,2,10);
-				break;
-			case SelectionType::TerrainScript:
-				sprintf((char *) draw_str,"Terrain Script %d:",selected_object_number); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);		
-				
-				sprintf((char *) draw_str,"  Script: %s",
-						town.ter_scripts[selected_object_number].script_name); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);		
-				for (short i = 0; i < 8; i++) {
-					sprintf((char *) draw_str,"  Memory Cell %d: %d",
-							i,town.ter_scripts[selected_object_number].memory_cells[i]); 
-					char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[i + 2],(char *) draw_str,2,10);		
-				}
-				break;
-			case SelectionType::SpecialEncounter:
-				sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  State: %d",town.spec_id[selected_object_number]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Top Boundary: %d",town.special_rects[selected_object_number].top);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Left Boundary: %d",town.special_rects[selected_object_number].left);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"[Redraw]");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Bottom Boundary: %d",town.special_rects[selected_object_number].bottom);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Right Boundary: %d",town.special_rects[selected_object_number].right);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			case SelectionType::AreaDescription:
-				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				//use line 2, and effectively line 7 as well
-				sprintf((char *) draw_str,"  Description: %s",town.info_rect_text[selected_object_number]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Top Boundary: %d",town.room_rect[selected_object_number].top);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Left Boundary: %d",town.room_rect[selected_object_number].left);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"[Redraw]");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				//7 is taken up by possible overflow from 2
-				sprintf((char *) draw_str,"  Bottom Boundary: %d",town.room_rect[selected_object_number].bottom);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Right Boundary: %d",town.room_rect[selected_object_number].right);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			default: //TownEntrance
-				break;
-		}
-	}
-	else{ //editing outdoors
-		switch(selected_object_type){
-			case SelectionType::None:
-				sprintf((char *) draw_str,"Editing Outdoors"); 
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  %s",current_terrain.name);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Section X = %d, Y = %d",cur_out.x,cur_out.y);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
-				break;
-			case SelectionType::SpecialEncounter:
-				sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  State: %d",current_terrain.spec_id[selected_object_number]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.special_rects[selected_object_number].top);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.special_rects[selected_object_number].left);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"[Redraw]");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.special_rects[selected_object_number].bottom);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.special_rects[selected_object_number].right);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			case SelectionType::AreaDescription:
-				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				//use line 2, and effectively line 7 as well
-				sprintf((char *) draw_str,"  Description: %s",current_terrain.info_rect_text[selected_object_number]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[2],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.info_rect[selected_object_number].top);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.info_rect[selected_object_number].left);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"[Redraw]");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.info_rect[selected_object_number].bottom);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.info_rect[selected_object_number].right);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			case SelectionType::TownEntrance:
-				sprintf((char *) draw_str,"Town Entrance %d",selected_object_number);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[0],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Town: %d",current_terrain.exit_dests[selected_object_number]);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[1],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.exit_rects[selected_object_number].top);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[3],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.exit_rects[selected_object_number].left);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[4],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"[Redraw]");
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[6],(char *) draw_str,2,10);
-				
-				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.exit_rects[selected_object_number].bottom);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[8],(char *) draw_str,2,10);
-				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.exit_rects[selected_object_number].right);
-				char_win_draw_string(GetWindowPort(mainPtr),left_text_lines[9],(char *) draw_str,2,10);
-				break;
-			default: //other cases should never occur; do nothing
-				break;
-		}
-	}
+	if (editing_town)
+		sprintf((char *) draw_str, "Town/Dungeon %d: %s", cur_town, town.town_name);
+	else
+		sprintf((char *) draw_str, "Outdoors: %s, Section X = %d, Y = %d", current_terrain.name, cur_out.x, cur_out.y);
+	SetWindowTitleWithCFString(mainPtr, CFStringCreateWithCString(NULL, (char *)draw_str, kCFStringEncodingUTF8));
 }
 
 void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gworld,Rect targ_rect,char masked,short main_win)
@@ -3794,324 +3667,152 @@ void place_right_buttons(short mode)
 	Rect to_rect;
 	GrafPtr	old_port;
 	GetPort (&old_port);
-	SetPort(function_buttons_gworld);
-	to_rect = function_buttons_rect;
-	paint_pattern(NULL,0,to_rect,3);//1,1
-	SetPort(old_port);
+	
+	SetPort(GetWindowPort(tilesPtr));
 	
 	if (file_is_loaded == FALSE) {
 		to_rect = terrain_buttons_rect;
-		OffsetRect(&to_rect,RIGHT_BUTTONS_X_SHIFT,0);
+		OffsetRect(&to_rect,RIGHT_TILES_X_SHIFT,0);
 		rect_draw_some_item(terrain_buttons_gworld,terrain_buttons_rect,terrain_buttons_gworld,to_rect,0,1); 
 		return;
 	}
 	
 	// place buttons on screen
 	to_rect = terrain_buttons_rect;
-	OffsetRect(&to_rect,RIGHT_BUTTONS_X_SHIFT,0);
+	OffsetRect(&to_rect,RIGHT_TILES_X_SHIFT,0);
 	if(current_drawing_mode==0){
 		Rect from_rect = terrain_buttons_rect;
+		OffsetRect(&from_rect,0,-20);
+		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_SIZE));
 		rect_draw_some_item(floor_buttons_gworld,from_rect,floor_buttons_gworld,to_rect,0,1);
 	}
-	else if(current_drawing_mode==3){
+	else if(current_drawing_mode==1||current_drawing_mode==2){
 		Rect from_rect = terrain_buttons_rect;
-		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_HEIGHT_3D));
-		rect_draw_some_item(creature_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
-		//rect_draw_some_item(creature_buttons_gworld,terrain_buttons_rect,terrain_buttons_gworld,to_rect,0,1);
-	}
-	else if(current_drawing_mode==4){
-		Rect from_rect = terrain_buttons_rect;
-		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_SIZE));
-		rect_draw_some_item(item_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
-	}
-	else{
-		Rect from_rect = terrain_buttons_rect;
+		OffsetRect(&from_rect,0,-20);
 		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+((cur_viewing_mode >= 10)?TER_BUTTON_HEIGHT_3D:TER_BUTTON_SIZE)));
 		rect_draw_some_item(terrain_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
 	}
-	//	rect_draw_some_item(terrain_buttons_gworld,terrain_buttons_rect,terrain_buttons_gworld,to_rect,0,1);
+	else if(current_drawing_mode==3){
+		Rect from_rect = terrain_buttons_rect;
+		OffsetRect(&from_rect,0,-20);
+		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_HEIGHT_3D));
+		rect_draw_some_item(creature_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
+	}
+	else if(current_drawing_mode==4){
+		Rect from_rect = terrain_buttons_rect;
+		OffsetRect(&from_rect,0,-20);
+		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_SIZE));
+		rect_draw_some_item(item_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
+	}
 	FrameRect(&to_rect);
-	draw_function_buttons(mode);
 	
+	draw_mode_buttons(mode);
+		
 	// draw frames around selected ter
 	short selected_ter = -1;
 	short draw_position;
 	switch (current_drawing_mode) {
-		case 0: selected_ter = current_floor_drawn; to_rect = terrain_rects[selected_ter]; break;
+		case 0:
+			selected_ter = current_floor_drawn;
+			draw_position = selected_ter - TILES_N_COLS * GetControlValue(right_sbar);
+			//compare draw_position with the indices of the first positions off of both ends of the visible range
+			if (draw_position<0 || draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(TER_BUTTON_SIZE+1)))
+				selected_ter = -1;
+			else
+				to_rect = terrain_rects[draw_position]; break;
 		case 1: 
-		case 2: selected_ter = current_terrain_drawn; 
-			draw_position = selected_ter - 12 * GetControlValue(right_sbar);
-			if (draw_position != minmax(0,(cur_viewing_mode >= 10) ? 227 : 263,draw_position))
+		case 2:
+			selected_ter = current_terrain_drawn; 
+			draw_position = selected_ter - TILES_N_COLS * GetControlValue(right_sbar);
+			if (draw_position<0 || draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(((cur_viewing_mode >= 10)?TER_BUTTON_HEIGHT_3D:TER_BUTTON_SIZE)+1)))
 				selected_ter = -1;
 			else 
 				to_rect = ((cur_viewing_mode >= 10) ? terrain_rects_3D[draw_position] : terrain_rects[draw_position]);
 			break;
 		case 3:
 			selected_ter = mode_count;
-			draw_position = selected_ter - 12 * GetControlValue(right_sbar);
-			if(draw_position<0 || draw_position>227)
+			draw_position = selected_ter - TILES_N_COLS * GetControlValue(right_sbar);
+			if(draw_position<0 || draw_position>=draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(TER_BUTTON_HEIGHT_3D+1)))
 				selected_ter=-1;
 			else
 				to_rect = terrain_rects_3D[draw_position];
 			break;
 		case 4:
 			selected_ter = mode_count;
-			draw_position = selected_ter - 12 * GetControlValue(right_sbar);
-			if(draw_position<0 || draw_position>264)
+			draw_position = selected_ter - TILES_N_COLS * GetControlValue(right_sbar);
+			if(draw_position<0 || draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(TER_BUTTON_SIZE+1)))
 				selected_ter=-1;
 			else
 				to_rect = terrain_rects[draw_position];
 			break;
 	}	
+				
+	SetPort(old_port);
+
 	if (selected_ter >= 0) {
-		OffsetRect(&to_rect,RIGHT_BUTTONS_X_SHIFT,0);
+		OffsetRect(&to_rect,RIGHT_TILES_X_SHIFT,20);
 		InsetRect(&to_rect,-1,-1);
-		put_rect_on_screen(mainPtr,to_rect,0,0,0);
+		put_rect_on_screen(tilesPtr,to_rect,0,0,0);
 	}
 }
 
-//returns whether the function button at position (i,j)
-//should be drawn to indicate that its associated tool 
-//is in use
-bool isButtonHilited(int i, int j){
-	if(editing_town){
-		if(j==0){ //first row
-			if(i==0 && (overall_mode==0 || (current_drawing_mode==3 && overall_mode==46) || (current_drawing_mode==4 && overall_mode==47)))
-				return(true);
-			if(i==1 && overall_mode==1)
-				return(true);
-			if(i==2 && overall_mode==2)
-				return(true);
-			if(i==3 && overall_mode==3)
-				return(true);
-			if(i==4 && overall_mode==4)
-				return(true);
-			if(i==5 && (overall_mode==20 || overall_mode==24))
-				return(true);
-			if(i==6 && overall_mode==11)
-				return(true);
-			if(i==7 && overall_mode==10)
-				return(true);
-			if(i==8 && overall_mode==19)
-				return(true);
-			return(false);
-		}
-		if(j==1){ //second row
-			if(i==3 && overall_mode==18)
-				return(true);
-			if(i==5 && overall_mode==6)
-				return(true);
-			if(i==6 && overall_mode==7)
-				return(true);
-			if(i==7 && overall_mode==23)
-				return(true);
-			if(i==8 && overall_mode==5)
-				return(true);
-		}
-		if(j==2){ //third row
-			if(i==0 && overall_mode==40)
-				return(true);
-			if(i==1 && overall_mode==16)
-				return(true);
-			if(i==2 && overall_mode==59)
-				return(true);
-			if(i==3 && overall_mode==21)
-				return(true);
-			if(i==4 && overall_mode==70)
-				return(true);
-			if(i==6 && overall_mode==57)
-				return(true);
-			if(i==7 && overall_mode==58)
-				return(true);
-			if(i==8 && overall_mode==60)
-				return(true);
-			return(false);
-		}
-		if(j==3){ //fourth row
-			if(i==5 && overall_mode==30)
-				return(true);
-			if(i==6 && overall_mode==31)
-				return(true);
-			if(i==7 && overall_mode==32)
-				return(true);
-			if(i==8 && overall_mode==33)
-				return(true);
-			return(false);
-		}
-		if(j==4){ //fifth row
-			if(i==0 && overall_mode==61)
-				return(true);
-			if(i==1 && overall_mode==62)
-				return(true);
-			if(i==2 && overall_mode==63)
-				return(true);
-			if(i==3 && overall_mode==64)
-				return(true);
-			if(i==4 && overall_mode==65)
-				return(true);
-			if(i==5 && overall_mode==66)
-				return(true);
-			return(false);			
-		}
-		if(j==5){ //sixth row
-			if(i==0 && overall_mode==67)
-				return(true);
-			if(i==1 && overall_mode==68 && mode_count==0)
-				return(true);
-			if(i==2 && overall_mode==68 && mode_count==1)
-				return(true);
-			if(i==3 && overall_mode==68 && mode_count==2)
-				return(true);
-			if(i==4 && overall_mode==68 && mode_count==3)
-				return(true);
-			if(i==5 && overall_mode==68 && mode_count==4)
-				return(true);
-			if(i==6 && overall_mode==68 && mode_count==5)
-				return(true);
-			if(i==7 && overall_mode==68 && mode_count==6)
-				return(true);
-			if(i==8 && overall_mode==68 && mode_count==7)
-				return(true);
-			return(false);
-		}
-	}
-	else{//editing outdoors
-		if(j==0){ //first row
-			if(i==0 && overall_mode==0)
-				return(true);
-			if(i==1 && overall_mode==1)
-				return(true);
-			if(i==2 && overall_mode==2)
-				return(true);
-			if(i==3 && overall_mode==3)
-				return(true);
-			if(i==4 && overall_mode==4)
-				return(true);
-			if(i==5 && (overall_mode==20 || overall_mode==24))
-				return(true);
-			if(i==6 && overall_mode==11)
-				return(true);
-			if(i==7 && overall_mode==10)
-				return(true);
-			if(i==8 && overall_mode==19)
-				return(true);
-			return(false);
-		}
-		if(j==1){ //second row
-			if(i==3 && overall_mode==18)
-				return(true);
-			if(i==5 && overall_mode==6)
-				return(true);
-			if(i==6 && overall_mode==7)
-				return(true);
-			if(i==7 && overall_mode==23)
-				return(true);
-			if(i==8 && overall_mode==5)
-				return(true);
-			return(false);
-		}
-		if(j==2){ //third row
-			if(i==0 && overall_mode==40)
-				return(true);
-			if(i==1 && overall_mode==16)
-				return(true);
-			if(i==2 && overall_mode==59)
-				return(true);
-			if(i==3 && overall_mode==21)
-				return(true);
-			if(i==4 && overall_mode==50)
-				return(true);
-			if(i==6 && overall_mode==22)
-				return(true);
-			if(i==7 && overall_mode==69)
-				return(true);
-			if(i==8 && overall_mode==60)
-				return(true);
-			return(false);
-		}
-	}
-	return(false);
-}
-
-//Draws the tool buttons and right lines of text
-// mode: 0 - draw whole thing
-//		 1 - just location string
-// = x loc of button + 100 * (y loc of button+1)
-void draw_function_buttons(int mode){
-	char draw_str[256];
+void draw_mode_buttons(int mode){
 	Rect to_rect;
-	for (short i = 0; i < 5; i++) {
- 		paint_pattern(function_buttons_gworld,0,right_text_lines[i],3);
-	}
-	switch (current_drawing_mode) {
-		case 0: sprintf((char *) draw_str,"Drawing mode: FLOORS"); break;
-		case 1: sprintf((char *) draw_str,"Drawing mode: TERRAIN"); break;
-		case 2: sprintf((char *) draw_str,"Drawing mode: HEIGHT"); break;
-		case 3: sprintf((char *) draw_str,"Drawing mode: CREATURE"); break;
-		case 4: sprintf((char *) draw_str,"Drawing mode: ITEM"); break;
-	}
-	char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[0],(char *) draw_str,2,12);
+	GrafPtr	old_port, cur_port;
+	GetPort (&old_port);
 	
-	sprintf((char *) draw_str,"Center: x = %d, y = %d ",cen_x,cen_y);
-	char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[1],(char *) draw_str,2,12);
-	
-	if (current_drawing_mode == 1 || current_drawing_mode == 2) {
-		if (current_height_mode == 0)
-			char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[2],"Automatic Hills: OFF",2,12);
-		else 
-			char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[2],"Automatic Hills: ON",2,12);
-	}
-	else if(current_drawing_mode == 3 && overall_mode==46){
-		sprintf(draw_str,"Placing: %s (%i)",scen_data.scen_creatures[mode_count].name,mode_count);
-		char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[2],draw_str,2,12);
-	}
-	else if(current_drawing_mode == 4 && overall_mode==47){
-		sprintf(draw_str,"Placing: %s (%i)",scen_data.scen_items[mode_count].full_name,mode_count);
-		char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[2],draw_str,2,12);
-	}
-	
-	char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[3],(char *) current_string,2,12);
-	char_win_draw_string((GrafPtr) function_buttons_gworld,right_text_lines[4],(char *) current_string2,2,12);
+	SetPort(GetWindowPort(tilesPtr));
+
+	GetPort(&cur_port);
+
 	
 	if(mode!=1){
-		short i,j;
-		for (i = 0; i < 9; i++){
-			for (j = 0; j < ((editing_town == TRUE) ? 6 : 3); j++) {
-				to_rect = palette_buttons[i][j];
-				Rect from_rect = to_rect;
-				ZeroRectCorner(&from_rect);
-				if(cur_viewing_mode >= 10 && i == 1 && j == 1)
-					OffsetRect(&from_rect,PALETTE_BUT_WIDTH * 0,PALETTE_BUT_HEIGHT * ((editing_town == TRUE) ? 6 : 3));
-				else
-					OffsetRect(&from_rect,PALETTE_BUT_WIDTH * i,PALETTE_BUT_HEIGHT * j);
-				to_rect.right++;
-				from_rect.right++;
-				if(isButtonHilited(i,j))
-					CopyBits( GetPortBitMapForCopyBits(((editing_town == TRUE) ? townButtons : outdoorButtons)), GetPortBitMapForCopyBits(function_buttons_gworld), &from_rect, &to_rect, 35, NULL);
-				else
-					rect_draw_some_item(((editing_town == TRUE) ? townButtons : outdoorButtons),from_rect,function_buttons_gworld,to_rect,0,0);
-			}
+		short i;
+		for (i = 0; i < ((editing_town) ? 5 : 3); i++){
+			to_rect = mode_buttons[i];
+			Rect from_rect = to_rect;
+			ZeroRectCorner(&from_rect);
+			OffsetRect(&from_rect, i * PALETTE_BUT_WIDTH, 0);
+			to_rect.right++;
+			from_rect.right++;
+			if(current_drawing_mode == i)
+				CopyBits( GetPortBitMapForCopyBits(modeButtons), GetPortBitMapForCopyBits(cur_port), &from_rect, &to_rect, 4, NULL);
+			else
+				rect_draw_some_item(modeButtons,from_rect, modeButtons,to_rect,0,1);
 		}
 	}
 	
-	to_rect = function_buttons_rect;
-	OffsetRect(&to_rect,RIGHT_BUTTONS_X_SHIFT,RIGHT_BUTTONS_Y_SHIFT);
-	rect_draw_some_item(function_buttons_gworld,function_buttons_rect,function_buttons_gworld,to_rect,0,1);
+	to_rect = mode_buttons_rect;
+	SetPort(old_port);
 }
 
-//sets the paor of strings displayed to the user
-//below the function buttons
-void set_string(const char *string,const char *string2)
-{
-	strcpy((char *)current_string,string);
-	strcpy((char *)current_string2,string2);
-	draw_function_buttons(1);
-}
-
-void undo_clip()
-{
-	Rect c = {0,0,550,730};
-	ClipRect(&c);
+void draw_view_buttons(){
+	Rect to_rect;
+	int viewIcons[4][3] = {{0,0,1},{0,1,1},{0,0,1},{0,0,6}};
+	GrafPtr	old_port, cur_port;
+	short i;
+	GetPort (&old_port);
+	
+	SetPort(GetWindowPort(mainPtr));
+	
+	for (i = 0; i < 2; i++){
+		to_rect = view_buttons[i];
+		Rect from_rect = view_button_base;
+		if (cur_viewing_mode >= 10)
+		{
+			OffsetRect(&from_rect, viewIcons[i+2][1]*PALETTE_BUT_WIDTH, viewIcons[i+2][2]*PALETTE_BUT_HEIGHT);
+		}
+		else
+		{
+			OffsetRect(&from_rect, viewIcons[i][1]*PALETTE_BUT_WIDTH, viewIcons[i][2]*PALETTE_BUT_HEIGHT);
+		}
+		to_rect.right++;
+		from_rect.right++;
+		rect_draw_some_item(townButtons,from_rect, townButtons,to_rect,0,1);
+	}
+	
+	GetPort(&cur_port);
+	SetPort(old_port);
 }
 
 Boolean container_there(location l)
@@ -4192,9 +3893,9 @@ void win_draw_string(GrafPtr dest_window,Rect dest_rect,Str255 str,short mode,sh
 	//current_clip = NewRgn();
 	//GetClip(current_clip);
 	
-	dest_rect.bottom += 5;
-	//ClipRect(&dest_rect);
-	dest_rect.bottom -= 5;
+	//dest_rect.bottom += 5;
+	////ClipRect(&dest_rect);
+	//dest_rect.bottom -= 5;
 	
 	for (i = 0; i < 257; i++){
 		if ((text_len[i] > total_width) && (i <= str_len))
@@ -4353,13 +4054,6 @@ short string_length(char *str)
 	return total_width;
 }
 
-Boolean spot_in_rect(location l,Rect r)
-{
-	if ((l.x < r.left) || (l.x > r.right) || (l.y < r.top) || (l.y > r.bottom))
-		return FALSE;
-	return TRUE;
-}
-
 //clears all of the loaded graphics out of the library
 Boolean clear_graphics_library()
 {
@@ -4504,7 +4198,7 @@ void import_image_resource_into_library(CFStringRef resourceName, CFStringRef re
 		give_error("Internal Error: Graphics library full (in import_image_resource_into_library)!","",0);
 		return;
 	}
-	//std::cout << "import_image_resource_into_library: Inserting sheet " << new_sheet.which_sheet << " at index " << num_sheets_in_library << std::endl;
+	
 	graphics_library[num_sheets_in_library] = NULL;
 	graphics_library[num_sheets_in_library] = load_image_resource(resourceName,resourceType,resourceSubDir);
 	
@@ -4549,6 +4243,7 @@ void load_builtin_images(){
 		return;
 	markers = load_image_resource(CFSTR("markers"),CFSTR("png"),NULL);
 	townButtons = load_image_resource(CFSTR("town_buttons"),CFSTR("png"),NULL);
+	modeButtons = load_image_resource(CFSTR("mode_buttons"),CFSTR("png"),NULL);
 	outdoorButtons = load_image_resource(CFSTR("outdoor_buttons"),CFSTR("png"),NULL);
 	pattern_gworld = load_image_resource(CFSTR("editor_textures"),CFSTR("png"),NULL);
 	
@@ -4658,7 +4353,6 @@ void put_clipped_rect_on_screen(WindowPtr win,Rect to_rect,Rect clip_rect,short 
 	GrafPtr old_port;
 	GetPort(&old_port);
 	SetPort(GetWindowPort(win));
-	//FrameRect(&to_rect);
 	
 	if ((to_rect.top >= clip_rect.top) && (to_rect.top < clip_rect.bottom))
 		put_line_on_screen(max(to_rect.left,clip_rect.left),to_rect.top,
@@ -4712,9 +4406,9 @@ void put_clipped_rect_in_gworld(GWorldPtr line_gworld,Rect to_rect,Rect clip_rec
 //+16 - Darken the graphic. 
 //+32 - Lighten the graphic. 
 //+64 - Invert all of the pixels. 
-//+128 ‚Äì Tint the  graphic red 
-//+256 ‚Äì Tint the  graphic  green 
-//+512 ‚Äì Tint the  graphic  blue 
+//+128 - Tint the  graphic red 
+//+256 - Tint the  graphic  green 
+//+512 - Tint the  graphic  blue 
 void adjust_graphic(GWorldPtr *src_gworld_ptr, Rect *from_rect_ptr, short graphic_adjust/*,
 short light_level, Boolean has_border, short border_r, short border_g, short border_b*/)
 {
@@ -5346,7 +5040,7 @@ void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pa
 					
 					switch (which_mode) {
 						case 0: rect_draw_some_item(pattern_gworld,from_rect,dest,to_rect2,0,0); break;
-						case 1: rect_draw_some_item(pattern_gworld,from_rect,pattern_gworld,to_rect2,0,1); break;
+						case 1: case 3: rect_draw_some_item(pattern_gworld,from_rect,pattern_gworld,to_rect2,0,1); break;
 						case 2: rect_draw_some_item(pattern_gworld,from_rect,dest,to_rect2,0,2); break;	
 					}
 					
@@ -5368,6 +5062,15 @@ void paint_pattern(GWorldPtr dest,short which_mode,Rect dest_rect,short which_pa
 			break;
 		case 2:
 			break;
+		case 3:
+			SetPort((GrafPtr) tilesPtr);
+			FillCRect(&dest_rect,bg[which_pattern]);
+			break;
+		case 4:
+			SetPort((GrafPtr) palettePtr);
+			FillCRect(&dest_rect,bg[which_pattern]);
+			break;						
+			
 	}
 	SetPort(old_port);	
 }
@@ -5400,4 +5103,1228 @@ void refresh_graphics_on_screen()
 	RgnHandle  rgnHandle = NewRgn();	
 	QDFlushPortBuffer(GetWindowPort(mainPtr), GetPortVisibleRegion(GetWindowPort(mainPtr), rgnHandle));
 	DisposeRgn(rgnHandle);	
+}
+
+void getIconSourceForTool(int toolNumber, CGrafPtr& srcPtr, Rect& from_rect){
+	using namespace tools;
+	SetRect(&from_rect, 0, 0, PALETTE_BUT_WIDTH+1, PALETTE_BUT_HEIGHT+1);
+	if(toolIcons[toolNumber][0]<0)
+		printf("Danger! Tool mode %i has no defined icon.\n",toolNumber);
+	else{
+		if(toolIcons[toolNumber][0]==0)
+			srcPtr=townButtons; //most icons are available from the town buttons sheet
+		else if(toolIcons[toolNumber][0]==1)
+			srcPtr=outdoorButtons;
+		OffsetRect(&from_rect, toolIcons[toolNumber][1]*PALETTE_BUT_WIDTH, toolIcons[toolNumber][2]*PALETTE_BUT_HEIGHT);
+	}
+}
+
+void drawToolCategories(){
+	using namespace tools;
+	SetPort(GetWindowPort(palettePtr));
+	paint_pattern(NULL, 1, editing_town?toolCategoryTownRect:toolCategoryOutdoorRect, 3);
+	
+	int current_category=categoryForTool[overall_mode];
+	
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	if(editing_town){
+		for(unsigned int i=0; i<6; i++){
+			SetRect(&to_rect, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_HEIGHT, TOOL_PALETTE_GUTTER_WIDTH+PALETTE_BUT_WIDTH+1, TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_HEIGHT+1);
+			OffsetRect(&to_rect, toolCategoryTownRect.left, toolCategoryTownRect.top);
+			getIconSourceForTool(lastUsedTools[i],srcPtr,from_rect);
+			if(i==current_category && file_is_loaded){
+				put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+				CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+			}
+			else
+				rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+		}
+	}
+	else{ //outdoors
+		for(unsigned int i=0; i<5; i++){
+			SetRect(&to_rect, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_HEIGHT, TOOL_PALETTE_GUTTER_WIDTH+PALETTE_BUT_WIDTH+1, TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_HEIGHT+1);
+			OffsetRect(&to_rect, toolCategoryOutdoorRect.left, toolCategoryOutdoorRect.top);
+			getIconSourceForTool(lastUsedTools[i],srcPtr,from_rect);
+			if(i==current_category && file_is_loaded){
+				put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+				CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+			}
+			else
+				rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+		}
+	}
+}
+
+//This function assumes that the space in tool_details_text_lines[1] and 
+//tool_details_text_lines[2] is unused and can be scribbled over. 
+//Assumes that the current graphics port is that of the tool palette
+void drawAutohillsDetails(){
+	using namespace tools;
+	Rect from_rect, to_rect;
+	CGrafPtr windowPort=GetWindowPort(palettePtr);
+	to_rect = autohillsButtonRect;
+	char draw_str[256];
+	SetRect(&from_rect, 0, 0, PALETTE_BUT_WIDTH+1, PALETTE_BUT_HEIGHT+1);
+	OffsetRect(&from_rect, 5*PALETTE_BUT_WIDTH, 2*PALETTE_BUT_HEIGHT);
+	if(current_height_mode){
+		put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+		CopyBits( GetPortBitMapForCopyBits(townButtons), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		to_rect = tool_details_text_lines[1];
+		OffsetRect(&to_rect, PALETTE_BUT_WIDTH+2*TOOL_PALETTE_TEXT_LINE_SPACING, (PALETTE_BUT_HEIGHT-TOOL_PALETTE_TEXT_LINE_HEIGHT)/2);
+		sprintf((char*)draw_str,"Autohills: ON");
+	}
+	else{
+		rect_draw_some_item(townButtons,from_rect,windowPort,to_rect,0,0);
+		to_rect = tool_details_text_lines[1];
+		OffsetRect(&to_rect, PALETTE_BUT_WIDTH+2*TOOL_PALETTE_TEXT_LINE_SPACING, (PALETTE_BUT_HEIGHT-TOOL_PALETTE_TEXT_LINE_HEIGHT)/2);
+		sprintf((char*)draw_str,"Autohills: OFF");
+	}
+	char_win_draw_string(GetWindowPort(palettePtr),to_rect,(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+}
+
+//assumes that the current graphics port is that of the tool palette
+void drawBasicDrawingToolDetails(){
+	using namespace tools;
+	const int nBasicTools = 7;
+	static int basicTools[nBasicTools] = {0,1,2,3,4,7,6};
+	static const char* drawingTypesCap[5] = {"FLOOR", "TERRAIN", "HEIGHT", "CREATURE", "ITEM"};
+	static const char* drawingTypes[5] = {"floor", "terrain", "height", "creature", "item"};
+	
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	for(int i=0; i<nBasicTools; i++){
+		SetRect(&to_rect, 
+				TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_WIDTH, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_WIDTH+1, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1);
+		OffsetRect(&to_rect, toolDetailsRect.left, toolDetailsRect.top);
+		getIconSourceForTool(basicTools[i],srcPtr,from_rect);
+		if(basicTools[i]==overall_mode){
+			put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+			CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		}
+		else
+			rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+	}
+	
+	char draw_str[256];
+	
+	sprintf((char*)draw_str,"Drawing mode: %s",drawingTypesCap[current_drawing_mode]);
+	char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+	
+	if(current_drawing_mode!=2){ //not drawing height
+		int num=0;
+		switch(current_drawing_mode){
+			case 0:
+				num=current_floor_drawn; break;
+			case 1:
+				num=current_terrain_drawn; break;
+			case 3:
+			case 4:
+				num=mode_count; break;
+		}
+		sprintf((char*)draw_str,"Drawing %s number %i:",drawingTypes[current_drawing_mode],num);
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+		
+		const char* name;
+		switch(current_drawing_mode){
+			case 0:
+				name=scen_data.scen_floors[current_floor_drawn].floor_name; break;
+			case 1:
+				name=scen_data.scen_terrains[current_terrain_drawn].ter_name; break;
+			case 3:
+				name=scen_data.scen_creatures[mode_count].name; break;
+			case 4:
+				name=scen_data.scen_items[mode_count].full_name; break;
+		}
+		sprintf((char*)draw_str,"  %s",name);
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+		
+		if((current_drawing_mode==3 || current_drawing_mode==4) && object_sticky_draw){ //placing cretaures or items in sticky mode
+			sprintf((char*)draw_str,"  (Sticky mode ON)",name);
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+		}
+	}
+	else //drawing height
+		drawAutohillsDetails();
+}
+
+void drawAdvancedDrawingToolDetails(){
+	using namespace tools;
+	const int nAdvancedTools = 6; //tools 20 and 24 share a button
+	static int advancedTools[nAdvancedTools] = {20,10,11,18,19,45};
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	
+	for(int i=0; i<nAdvancedTools; i++){
+		SetRect(&to_rect, 
+				TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_WIDTH, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_WIDTH+1, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1);
+		OffsetRect(&to_rect, toolDetailsRect.left, toolDetailsRect.top);
+		getIconSourceForTool(advancedTools[i],srcPtr,from_rect);
+		if(advancedTools[i]==overall_mode || (advancedTools[i]==20 && overall_mode==24)){
+			put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+			CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		}
+		else
+			rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+	}
+	
+	char draw_str[256];
+	
+	if(mode_count==2)
+		sprintf((char*)draw_str,"Select upper left corner");
+	else if(mode_count==1)
+		sprintf((char*)draw_str,"Select lower right corner");
+	char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+	
+	if(overall_mode==20 || overall_mode==24) //Autohills matter for both change height in rectangle tools
+		drawAutohillsDetails();
+}
+
+void drawCopyPasteToolDetails(){
+	using namespace tools;
+	const int nCopyPasteTools = 2;
+	static int copyPasteTools[nCopyPasteTools] = {23,5};
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	
+	for(int i=0; i<nCopyPasteTools; i++){
+		SetRect(&to_rect, 
+				TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_WIDTH, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_WIDTH+1, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1);
+		OffsetRect(&to_rect, toolDetailsRect.left, toolDetailsRect.top);
+		getIconSourceForTool(copyPasteTools[i],srcPtr,from_rect);
+		if(copyPasteTools[i]==overall_mode){
+			put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+			CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		}
+		else
+			rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+	}
+	
+	char draw_str[256];
+	if(overall_mode==23){ //copy
+		if(mode_count==2)
+			sprintf((char*)draw_str,"Select upper left corner");
+		else if(mode_count==1)
+			sprintf((char*)draw_str,"Select lower right corner");
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+	}
+	else{ //paste
+		sprintf((char*)draw_str,"Select upper left corner to paste");
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+		sprintf((char*)draw_str,"Clipboard contents are %i by %i",clipboardSize.right+1,clipboardSize.bottom+1);
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+	}
+}
+
+void drawObjectToolDetails(){
+	using namespace tools;
+	const int nObjectToolsTown = 9;
+	static int objectToolsTown[nObjectToolsTown] = {16,21,70,57,60,30,31,32,33};
+	const int nObjectToolsOutdoor = 4;
+	static int objectToolsOutdoor[nObjectToolsOutdoor] = {16,21,60,22};
+	
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	
+	int nTools=(editing_town?nObjectToolsTown:nObjectToolsOutdoor);
+	int* tools=(editing_town?(int*)objectToolsTown:(int*)objectToolsOutdoor);
+	for(int i=0; i<nTools; i++){
+		SetRect(&to_rect, 
+				TOOL_PALETTE_GUTTER_WIDTH+i*PALETTE_BUT_WIDTH, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				TOOL_PALETTE_GUTTER_WIDTH+(i+1)*PALETTE_BUT_WIDTH+1, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+PALETTE_BUT_HEIGHT+1);
+		OffsetRect(&to_rect, toolDetailsRect.left, toolDetailsRect.top);
+		getIconSourceForTool(tools[i],srcPtr,from_rect);
+		if(tools[i]==overall_mode){
+			put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+			CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		}
+		else
+			rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+	}
+	
+	char draw_str[256];
+	switch(overall_mode){
+		case 16: //place special encounter
+		case 21: //place area description
+			if(object_sticky_draw){
+				sprintf((char*)draw_str,"  (Sticky mode ON)");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			//Fall through
+		case 22: //town entrance, external
+			if(mode_count==2)
+				sprintf((char*)draw_str,"Select upper left corner");
+			else if(mode_count==1)
+				sprintf((char*)draw_str,"Select lower right corner");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 30: //town entrance, north
+			sprintf((char*)draw_str,"Select north town entrance location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 31: //town entrance, west
+			sprintf((char*)draw_str,"Select west town entrance location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 32: //town entrance, south
+			sprintf((char*)draw_str,"Select south town entrance location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 33: //town entrance, east
+			sprintf((char*)draw_str,"Select east town entrance location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+			sprintf((char*)draw_str,"Select north town entrance location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 57: //place waypoint
+		{
+			unsigned int nPlaced=0;
+			for(unsigned int i=0; i<NUM_WAYPOINTS; i++)
+				if(town.waypoints[i].x>=0)
+					nPlaced++;
+			if(nPlaced==NUM_WAYPOINTS){
+				sprintf((char*)draw_str,"All (%i) waypoints have been placed",NUM_WAYPOINTS);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"Waypoints can be moved, or deleted so that new ones can be placed");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,0,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			else{
+				sprintf((char*)draw_str,"Select waypoint location");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				if(object_sticky_draw){
+					sprintf((char*)draw_str,"  (Sticky mode ON)");
+					char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				}
+			}
+		}
+			break;
+		case 60: //place wandering monster spawn point
+			if(editing_town)
+				sprintf((char*)draw_str,"Select spawn point location %i",7-mode_count);
+			else
+				sprintf((char*)draw_str,"Select spawn point location %i",5-mode_count);
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 70: //place area description
+			sprintf((char*)draw_str,"Select terrain script location");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			if(object_sticky_draw){
+				sprintf((char*)draw_str,"  (Sticky mode ON)");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			break;
+	}
+}
+
+void drawSelectionToolDetails(){
+	using namespace tools;
+	char draw_str[256];
+	if (editing_town){
+		switch(selected_object_type){
+			case SelectionType::None:
+				sprintf((char*)draw_str,"Click an object to select it");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::Creature:
+				sprintf((char*)draw_str,"Creature %d: %s",selected_object_number + 6,
+						scen_data.scen_creatures[town.creatures[selected_object_number].number].name); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				
+				sprintf((char*)draw_str,"  Edit This Creature  (Type %d, L%d)",
+						town.creatures[selected_object_number].number,
+						scen_data.scen_creatures[town.creatures[selected_object_number].number].level); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);	
+				
+				if (strlen(town.creatures[selected_object_number].char_script) <= 0){
+					if(strlen(scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script) <=0)
+						sprintf((char*)draw_str,"  Script: basicnpc");
+					else
+						sprintf((char*)draw_str,"  Script: %s", scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script);
+				}
+				else 
+					sprintf((char*)draw_str,"  Script: %s",town.creatures[selected_object_number].char_script); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				
+				sprintf((char*)draw_str,"  Attitude: %s",attitude_types[town.creatures[selected_object_number].start_attitude - 2]); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				
+				sprintf((char*)draw_str,"  Character ID: %d",town.creatures[selected_object_number].character_id); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				
+				sprintf((char*)draw_str,"  Hidden Class: %d",town.creatures[selected_object_number].hidden_class); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				if (town.creatures[selected_object_number].extra_item < 0)
+					sprintf((char*)draw_str,"  Drop Item 1: None");
+				else 
+					sprintf((char*)draw_str,"  Drop Item 1: %s %%%d",scen_data.scen_items[town.creatures[selected_object_number].extra_item].full_name,
+							town.creatures[selected_object_number].extra_item_chance_1); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				
+				if (town.creatures[selected_object_number].extra_item_2 == 0)
+					town.creatures[selected_object_number].extra_item_2 = -1;
+				
+				if (town.creatures[selected_object_number].extra_item_2 < 0)
+					sprintf((char*)draw_str,"  Drop Item 2: None");
+				else sprintf((char*)draw_str,"  Drop Item 2: %s %%%d",
+							 scen_data.scen_items[town.creatures[selected_object_number].extra_item_2].full_name,
+							 town.creatures[selected_object_number].extra_item_chance_2);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"  Personality: %d",
+						town.creatures[selected_object_number].personality);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[8],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"  Facing: %s",
+						facings[town.creatures[selected_object_number].facing]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[9],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::Item:
+				sprintf((char*)draw_str,"Item %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  %s",
+						scen_data.scen_items[town.preset_items[selected_object_number].which_item].full_name);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				if (scen_data.scen_items[town.preset_items[selected_object_number].which_item].charges > 0) {
+					sprintf((char*)draw_str,"  Charges/Amount: %d",
+							town.preset_items[selected_object_number].charges);
+					char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				}
+				if (town.preset_items[selected_object_number].properties & 2)
+					sprintf((char*)draw_str,"  Property");
+				else sprintf((char*)draw_str,"  Not Property");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				if (town.preset_items[selected_object_number].properties & 4)
+					sprintf((char*)draw_str,"  Contained");
+				else sprintf((char*)draw_str,"  Not Contained");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  Drawing Shift X: %d",
+						town.preset_items[selected_object_number].item_shift.x);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  Drawing Shift Y: %d",
+						town.preset_items[selected_object_number].item_shift.y);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  Edit Properties");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::TerrainScript:
+				sprintf((char*)draw_str,"Terrain Script %d:",selected_object_number); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"  Script: %s",
+						town.ter_scripts[selected_object_number].script_name); 
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				for (short i = 0; i < 8; i++) {
+					sprintf((char*)draw_str,"  Memory Cell %d: %d",
+							i,town.ter_scripts[selected_object_number].memory_cells[i]); 
+					char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[i + 2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+				}
+				break;
+			case SelectionType::Waypoint:
+				sprintf((char*)draw_str,"Waypoint %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::SpecialEncounter:
+				sprintf((char*)draw_str,"Special Encounter Rectangle %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  State: %d",town.spec_id[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"  Top Boundary: %d",town.special_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  Left Boundary: %d",town.special_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"  Bottom Boundary: %d",town.special_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  Right Boundary: %d",town.special_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char*)draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::AreaDescription:
+				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				//use line 1, and effectively line 2 as well (with wrapping)
+				sprintf((char *) draw_str,"Description: %s",town.info_rect_text[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,0,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",town.room_rect[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Left Boundary: %d",town.room_rect[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",town.room_rect[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Right Boundary: %d",town.room_rect[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::Sign:
+				sprintf((char *) draw_str,"Sign %d", selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"Sign Text: %s",town.sign_text[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,0,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			default: //TownEntrance
+				break;
+		}
+	}
+	else{ //editing outdoors
+		switch(selected_object_type){
+			case SelectionType::None:
+				sprintf((char*)draw_str,"Click an object to select it");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::SpecialEncounter:
+				sprintf((char *) draw_str,"Special Encounter Rectangle %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  State: %d",current_terrain.spec_id[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.special_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.special_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.special_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.special_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::AreaDescription:
+				sprintf((char *) draw_str,"Area Description %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				//use line 1, and effectively line 2 as well
+				sprintf((char *) draw_str,"  Description: %s",current_terrain.info_rect_text[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.info_rect[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.info_rect[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.info_rect[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.info_rect[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::TownEntrance:
+				sprintf((char *) draw_str,"Town Entrance %d",selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Town: %d (%s)",current_terrain.exit_dests[selected_object_number], zone_names.town_names[current_terrain.exit_dests[selected_object_number]]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Top Boundary: %d",current_terrain.exit_rects[selected_object_number].top);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Left Boundary: %d",current_terrain.exit_rects[selected_object_number].left);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"  Bottom Boundary: %d",current_terrain.exit_rects[selected_object_number].bottom);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[5],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"  Right Boundary: %d",current_terrain.exit_rects[selected_object_number].right);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[6],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				
+				sprintf((char *) draw_str,"[Redraw]");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[7],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;
+			case SelectionType::Sign:
+				sprintf((char *) draw_str,"Sign %d", selected_object_number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char *) draw_str,"Sign Text: %s",current_terrain.sign_text[selected_object_number]);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char *) draw_str,0,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				break;				
+			default: //other cases should never occur; do nothing
+				break;
+		}
+	}
+}
+
+//objects, fields, and stains
+void drawOFSToolDetails(){
+	using namespace tools;
+	const int nOFSTools = 17;
+	static int OFSTools[nOFSTools] = {62,63,64,65,66,73,74,61,67,75,76,77,78,79,80,81,82};
+	Rect from_rect, to_rect;
+	CGrafPtr srcPtr, windowPort=GetWindowPort(palettePtr);
+	
+	const int rowWidth=9;
+	for(int i=0; i<nOFSTools; i++){
+		int x=i%rowWidth;
+		int y=i/rowWidth;
+		SetRect(&to_rect, 
+				TOOL_PALETTE_GUTTER_WIDTH+x*PALETTE_BUT_WIDTH, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+y*PALETTE_BUT_HEIGHT, 
+				TOOL_PALETTE_GUTTER_WIDTH+(x+1)*PALETTE_BUT_WIDTH+1, 
+				TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING+(y+1)*PALETTE_BUT_HEIGHT+1);
+		OffsetRect(&to_rect, toolDetailsRect.left, toolDetailsRect.top);
+		getIconSourceForTool(OFSTools[i],srcPtr,from_rect);
+		if(OFSTools[i]==overall_mode){
+			put_rect_on_screen(palettePtr, to_rect, 0, 0, 0);
+			CopyBits( GetPortBitMapForCopyBits(srcPtr), GetPortBitMapForCopyBits(windowPort), &from_rect, &to_rect, 35, NULL);
+		}
+		else
+			rect_draw_some_item(srcPtr,from_rect,windowPort,to_rect,0,0);
+	}
+	
+	char draw_str[256];
+	switch(overall_mode){
+		case 62:
+			sprintf((char*)draw_str,"Click to place a web");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 63:
+			sprintf((char*)draw_str,"Click to place a crate");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 64:
+			sprintf((char*)draw_str,"Click to place a barrel");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 65:
+			sprintf((char*)draw_str,"Click to place a fire barrier");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 66:
+			sprintf((char*)draw_str,"Click to place a force barrier");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 73:
+			sprintf((char*)draw_str,"Click to place a mirror");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 74:
+			sprintf((char*)draw_str,"Click to place a mirror");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 61:
+			sprintf((char*)draw_str,"Click to make a space blocked");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 67:
+			sprintf((char*)draw_str,"Click to erase stains, objects and");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			sprintf((char*)draw_str,"  blockage from a space");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 75:
+			sprintf((char*)draw_str,"Click to place a small blood stain");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 76:
+			sprintf((char*)draw_str,"Click to place a medium blood stain");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 77:
+			sprintf((char*)draw_str,"Click to place a large blood stain");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 78:
+			sprintf((char*)draw_str,"Click to place a small slime pool");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 79:
+			sprintf((char*)draw_str,"Click to place a large slime pool");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 80:
+			sprintf((char*)draw_str,"Click to place dried blood");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 81:
+			sprintf((char*)draw_str,"Click to place bones");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+		case 82:
+			sprintf((char*)draw_str,"Click to place rocks");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char *) draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+	}
+	
+	if(object_sticky_draw){ //placing cretaures or items in sticky mode
+		sprintf((char*)draw_str,"  (Sticky mode ON)");
+		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[4],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+	}
+}
+
+void drawMiscellaneousToolDetails(){
+	using namespace tools;
+	char draw_str[256];
+	switch(overall_mode){
+		case 17: //set town boundaries
+		case 25: //redraw special encounter rectangle
+		case 26: //redraw town entrance
+		case 27: //redraw area description
+			if(mode_count==2)
+				sprintf((char*)draw_str,"Select upper left corner");
+			else if(mode_count==1)
+				sprintf((char*)draw_str,"Select lower right corner");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;	
+		case 48: //paste instance
+			sprintf((char*)draw_str,"Select location to paste");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			if(copied_creature.number >= 0){
+				sprintf((char*)draw_str,"Clipboard contains a creature of type %i",copied_creature.number);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  (%s)",scen_data.scen_creatures[copied_creature.number].name);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			else if(copied_ter_script.exists){
+				sprintf((char*)draw_str,"Clipboard contains a terrain script");
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  (%s)",copied_ter_script.script_name);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			else if(copied_item.which_item >= 0){
+				sprintf((char*)draw_str,"Clipboard contains item of type %i",copied_item.which_item);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				sprintf((char*)draw_str,"  (%s)",scen_data.scen_items[copied_item.which_item].full_name);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			}
+			
+			break;
+		case 49: //delete special encounter
+		case 50: //set special encounter
+		case 58: //delete waypoint
+		case 59: //edit sign
+		case 69: //edit town entrance
+			break;
+		case 71:
+		case 72:
+			sprintf((char*)draw_str,"Select location for scenario starting point");
+			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+			break;
+	}
+}
+
+void drawToolDetails(){
+	using namespace tools;
+	SetPort(GetWindowPort(palettePtr));
+	paint_pattern(NULL, 1, toolDetailsRect, 3);
+	
+	if(!file_is_loaded)
+		return;
+	
+	TextSize(12);
+	Rect nameRect;
+	SetRect(&nameRect, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH+TOOL_PALETTE_TEXT_LINE_WIDTH, TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT);
+	OffsetRect(&nameRect, toolDetailsRect.left, toolDetailsRect.top);
+	char_win_draw_string(GetWindowPort(palettePtr),nameRect,tool_names[overall_mode],0,TOOL_TITLE_HEIGHT);
+	TextSize(10);
+	
+	int current_category=categoryForTool[overall_mode];
+	switch(current_category){
+		case -1:
+			drawMiscellaneousToolDetails();
+			break;
+		case 0: //basic drawing
+			drawBasicDrawingToolDetails();
+			break;
+		case 1:
+			drawAdvancedDrawingToolDetails();
+			break;
+		case 2:
+			drawCopyPasteToolDetails();
+			break;
+		case 3:
+			drawObjectToolDetails();
+			break;
+		case 4:
+			drawSelectionToolDetails();
+			break;
+		case 5:
+			drawOFSToolDetails();
+			break;
+	}
+}
+
+void drawToolPalette(){
+	SetPort(GetWindowPort(palettePtr));
+	paint_pattern(NULL, 1, paletteRect, 2);
+	drawToolCategories();
+	drawToolDetails();
+}
+
+bool basicDrawingToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
+	const Rect ofInterest={tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING,
+					 tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+	                 tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1,
+	                 tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + 7*PALETTE_BUT_WIDTH+1};
+	if(PtInRect(where, &ofInterest)){
+		int idx=(where.h-ofInterest.left)/PALETTE_BUT_WIDTH;
+		static const CFStringRef descriptions[7] = {
+			CFSTR("Pencil"),
+			CFSTR("Large Paintbrush"),
+			CFSTR("Small Paintbrush"),
+			CFSTR("Large Spraycan"),
+			CFSTR("Small Spraycan"),
+			CFSTR("Paintbucket"),
+			CFSTR("Eyedropper")
+		};
+		static const CFStringRef longDescriptions[7] = {
+			CFSTR("Pencil - Change the floor terrain, or height of single spaces, and place creatures and items"),
+			CFSTR("Large Paintbrush - Change the floor terrain, or height with a brush 9 spaces wide"),
+			CFSTR("Small Paintbrush - Change the floor terrain, or height with a brush 3 spaces wide"),
+			CFSTR("Large Spraycan - Change the floor terrain, or height with a brush 9 spaces wide"),
+			CFSTR("Small Spraycan - Change the floor terrain, or height with a brush 5 spaces wide"),
+			CFSTR("Paintbucket - Change all of the floor or terrain in a connected region"),
+			CFSTR("Eyedropper - Select the floor or terrain of a single space")
+		};
+		if(idx>=0 && idx<7){
+			ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = descriptions[idx];
+			ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = longDescriptions[idx];
+			SetRect(&ioHelpContent->absHotRect,
+					tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + idx*PALETTE_BUT_WIDTH, 
+					tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+					tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx+1)*PALETTE_BUT_WIDTH + 1, 
+					tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1);
+		}
+		ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+		return(true);
+	}
+	else if(PtInRect(where, &tools::autohillsButtonRect)){
+		ioHelpContent->absHotRect=tools::autohillsButtonRect;
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Toggle Autohills");
+		ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Toggle automatic correction of hill terrains as heights are changed");
+		ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+		return(true);
+	}
+	return(false);
+}
+
+bool advancedDrawingToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
+	const Rect ofInterest={tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+		tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + 6*PALETTE_BUT_WIDTH+1};
+	if(!PtInRect(where, &ofInterest))
+		return(false);
+	int idx=(where.h-ofInterest.left)/PALETTE_BUT_WIDTH;
+	static const CFStringRef descriptions[6] = {
+		CFSTR("Set Height Rectangle"),
+		CFSTR("Frame Rectangle"),
+		CFSTR("Fill Rectangle"),
+		CFSTR("Swap Wall Types"),
+		CFSTR("Place Bounding Walls"),
+		CFSTR("Change Terrain Randomly")
+	};
+	static const CFStringRef longDescriptions[6] = {
+		CFSTR("Set Height Rectangle - Set the height of a rectangular region"),
+		CFSTR("Frame Rectangle - Draw an unfilled rectangle using the of a floor or terrain"),
+		CFSTR("Fill Rectangle - Draw a filled rectangle using the of a floor or terrain"),
+		CFSTR("Swap Wall Types - Swap the types of all walls in a rectangular region"),
+		CFSTR("Place Bounding Walls - Automatically surround Solid Stone floor with walls"),
+		CFSTR("Change Terrain Randomly - Randomly replace one floor or terrain with another")
+	};
+	if(idx>=0 && idx<6){
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = descriptions[idx];
+		ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = longDescriptions[idx];
+		SetRect(&ioHelpContent->absHotRect,
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + idx*PALETTE_BUT_WIDTH, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx+1)*PALETTE_BUT_WIDTH + 1, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1);
+	}
+	ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+	return(true);
+}
+
+bool copyAndPasteToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
+	const Rect ofInterest={tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+		tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + 2*PALETTE_BUT_WIDTH+1};
+	if(!PtInRect(where, &ofInterest))
+		return(false);
+	int idx=(where.h-ofInterest.left)/PALETTE_BUT_WIDTH;
+	static const CFStringRef descriptions[2] = {
+		CFSTR("Copy Terrain"),
+		CFSTR("Paste Terrain")
+	};
+	static const CFStringRef longDescriptions[2] = {
+		CFSTR("Copy Terrain - Copy a rectangular region of floor, terrain, and height data"),
+		CFSTR("Paste Terrain - Paste copied floor, terrain, and height data")
+	};
+	if(idx>=0 && idx<2){
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = descriptions[idx];
+		ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = longDescriptions[idx];
+		SetRect(&ioHelpContent->absHotRect,
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + idx*PALETTE_BUT_WIDTH, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx+1)*PALETTE_BUT_WIDTH + 1, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1);
+	}
+	ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+	return(true);
+}
+
+bool objectCreationToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
+	static const CFStringRef townDescriptions[9] = {
+		CFSTR("Place Special Encounter"),
+		CFSTR("Place Area Description"),
+		CFSTR("Place Terrain Script"),
+		CFSTR("Place Waypoint"),
+		CFSTR("Place Spawn Point"),
+		CFSTR("Place North Town Entrance"),
+		CFSTR("Place West Town Entrance"),
+		CFSTR("Place East Town Entrance"),
+		CFSTR("Place South Town Entrance")
+	};
+	static const CFStringRef townLongDescriptions[9] = {
+		CFSTR("Place Special Encounter - Add a trigger rectangle for a special encounter"),
+		CFSTR("Place Area Description - Add a label, visible to the player, to a region"),
+		CFSTR("Place Terrain Script"),
+		CFSTR("Place Waypoint - Place a point creatures can use for navigation"),
+		CFSTR("Place Spawn Point - Place a location where wandering monster groups can appear"),
+		CFSTR("Place North Town Entrance - Define where the party will arrive when entering the town from the north"),
+		CFSTR("Place North Town Entrance - Define where the party will arrive when entering the town from the west"),
+		CFSTR("Place North Town Entrance - Define where the party will arrive when entering the town from the south"),
+		CFSTR("Place North Town Entrance - Define where the party will arrive when entering the town from the east")
+	};
+	
+	static const CFStringRef outdoorDescriptions[4] = {
+		CFSTR("Place Special Encounter"),
+		CFSTR("Place Area Description"),
+		CFSTR("Place Spawn Point"),
+		CFSTR("Place Town Entrance")
+	};
+	static const CFStringRef outdoorLongDescriptions[4] = {
+		CFSTR("Place Special Encounter - Add a trigger rectangle for a special encounter"),
+		CFSTR("Place Area Description - Add a label, visible to the player, to a region"),
+		CFSTR("Place Spawn Point - Place a location where wandering monster groups can appear"),
+		CFSTR("Place Town Entrance - Place an entry rectangle for a town")
+	};
+	
+	const Rect ofInterest={tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+		tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (editing_town?9:4)*PALETTE_BUT_WIDTH+1};
+	if(!PtInRect(where, &ofInterest))
+		return(false);
+	int idx=(where.h-ofInterest.left)/PALETTE_BUT_WIDTH;
+	
+	if(editing_town && idx>=0 && idx<9){
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = townDescriptions[idx];
+		ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = townLongDescriptions[idx];
+	}
+	else if(!editing_town && idx>=0 && idx<4){
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = outdoorDescriptions[idx];
+		ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = outdoorLongDescriptions[idx];
+	}
+	SetRect(&ioHelpContent->absHotRect,
+			tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + idx*PALETTE_BUT_WIDTH, 
+			tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING, 
+			tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx+1)*PALETTE_BUT_WIDTH + 1, 
+			tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + PALETTE_BUT_HEIGHT+1);
+	ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+	return(true);
+}
+
+bool ofsToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
+	const Rect ofInterest={tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH,
+		tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + 2*PALETTE_BUT_HEIGHT+1,
+		tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + 9*PALETTE_BUT_WIDTH+1};
+	if(!PtInRect(where, &ofInterest))
+		return(false);
+	int idx=(where.h-ofInterest.left)/PALETTE_BUT_WIDTH + 9*((where.v-ofInterest.top)/PALETTE_BUT_HEIGHT);
+	static const CFStringRef descriptions[17] = {
+		CFSTR("Place Web"),
+		CFSTR("Place Crate"),
+		CFSTR("Place Barrel"),
+		CFSTR("Place Fire Barrier"),
+		CFSTR("Place Force Barrier"),
+		CFSTR("Place NE/SW Mirror"),
+		CFSTR("Place NW/SE Mirror"),
+		CFSTR("Make Space Blocked"),
+		CFSTR("Clear Space"),
+		CFSTR("Place Small Bloodstain"),
+		CFSTR("Place Medium Bloodstain"),
+		CFSTR("Place Large Bloodstain"),
+		CFSTR("Place Small Slime Pool"),
+		CFSTR("Place Large Slime Pool"),
+		CFSTR("Place Dried Blood"),
+		CFSTR("Place Bones"),
+		CFSTR("Place Rocks")
+	};
+	if(idx>=0 && idx<17){
+		ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = descriptions[idx];
+		if(idx==7)
+			ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Make Space Blocked - NPCs will not enter and the party will not be placed on the space after combat");
+		else if(idx==8)
+			ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Clear Space - Remove blockage, stains, objects, and fields from a space");
+		else
+			ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = descriptions[idx];
+		SetRect(&ioHelpContent->absHotRect,
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx%9)*PALETTE_BUT_WIDTH, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + (idx/9)*PALETTE_BUT_HEIGHT, 
+				tools::toolDetailsRect.left+TOOL_PALETTE_GUTTER_WIDTH + (idx%9 + 1)*PALETTE_BUT_WIDTH + 1, 
+				tools::toolDetailsRect.top+TOOL_PALETTE_GUTTER_WIDTH+TOOL_TITLE_HEIGHT+TOOL_PALETTE_TEXT_LINE_SPACING + (idx/9 + 1)*PALETTE_BUT_HEIGHT+1);
+	}
+	ioHelpContent->tagSide = kHMOutsideTopRightAligned;
+	return(true);
+}
+
+OSStatus paletteWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent){
+	using namespace tools;
+    OSErr status = noErr;
+	
+    if (inRequest == kHMSupplyContent) { //being asked to supply a tooltip
+		bool willShowTooltip = false;
+		GrafPtr savePort;
+		if (!QDSwapPort(GetWindowPort(palettePtr), &savePort))
+			savePort = NULL;
+		GlobalToLocal(&inGlobalMouse);
+		
+		//determine whether the mouse is over anything which merits a tooltip
+		//check the tool category buttons
+		Rect ofInterest;
+		if(editing_town)
+			ofInterest=toolCategoryTownRect;
+		else
+			ofInterest=toolCategoryTownRect;
+			InsetRect(&ofInterest, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH);
+		if(PtInRect(inGlobalMouse, &ofInterest)){
+			int idx=(inGlobalMouse.v-ofInterest.top)/PALETTE_BUT_HEIGHT;
+			switch(idx){
+				case 0:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Basic drawing tools");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Basic tools for drawing terrains and floors");
+					break;
+				case 1:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Advanced drawing tools");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Specialized tools for drawing terrains and floors");
+					break;
+				case 2:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Terrain copy and paste");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Tools to copy and paste regions of terrain");
+					break;
+				case 3:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Object creation tools");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Tools to place special encounters, area descriptions, scripts, signs, waypoints, spawn points, and town entrances");
+					break;
+				case 4:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Object selection");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Select objects and edit their properties");
+					break;
+				case 5:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Stains, fields, and objects");
+					ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Tools to place and remove stains, fields, and objects.");
+					break;
+			}
+			SetRect(&ioHelpContent->absHotRect, ofInterest.left, ofInterest.top+idx*PALETTE_BUT_HEIGHT, ofInterest.right, ofInterest.top+(idx+1)*PALETTE_BUT_HEIGHT);
+			
+			ioHelpContent->tagSide = kHMOutsideLeftCenterAligned;
+			willShowTooltip = true;
+		}
+		else{
+			ofInterest=toolDetailsRect;
+			if(PtInRect(inGlobalMouse, &ofInterest)){
+				int current_category=categoryForTool[overall_mode];
+				switch(current_category){
+					case -1: //do nothing
+						break;
+					case 0:
+						willShowTooltip = basicDrawingToolsTooltip(inGlobalMouse,ioHelpContent);
+						break;
+					case 1:
+						willShowTooltip = advancedDrawingToolsTooltip(inGlobalMouse,ioHelpContent);
+						break;
+					case 2:
+						willShowTooltip = copyAndPasteToolsTooltip(inGlobalMouse,ioHelpContent);
+						break;
+					case 3:
+						willShowTooltip = objectCreationToolsTooltip(inGlobalMouse,ioHelpContent);
+						break;
+					case 4: //do nothing
+						break;
+					case 5:
+						willShowTooltip = ofsToolsTooltip(inGlobalMouse,ioHelpContent);
+						break;
+				}
+			}
+		}
+		
+		ioHelpContent->version = kMacHelpVersion;
+		if(willShowTooltip){
+			*outContentProvided = kHMContentProvided;
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.top);
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.bottom);
+			ioHelpContent->content[kHMMinimumContentIndex].contentType = kHMCFStringContent;
+			ioHelpContent->content[kHMMaximumContentIndex].contentType = kHMCFStringContent;
+		}
+		else
+			*outContentProvided = kHMContentNotProvidedDontPropagate;
+		if (savePort != NULL)
+			SetPort(savePort);
+    }
+    else if (inRequest == kHMDisposeContent) {// being asked to clean up a tootip
+		//nothing to do
+    }
+	return status;
+}
+
+OSStatus tileWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent){
+	using namespace tools;
+    OSErr status = noErr;
+	static CFStringRef allocatedString=NULL;
+	
+	if (inRequest == kHMSupplyContent) { //being asked to supply a tooltip
+		bool willShowTooltip = false;
+		GrafPtr savePort;
+		if (!QDSwapPort(GetWindowPort(tilesPtr), &savePort))
+			savePort = NULL;
+		GlobalToLocal(&inGlobalMouse);
+		
+		Rect ofInterest={mode_buttons[0].top,mode_buttons[0].left,mode_buttons[0].bottom,mode_buttons[(editing_town?5:3)-1].right};
+		if(PtInRect(inGlobalMouse, &ofInterest)){
+			int idx=(inGlobalMouse.h-ofInterest.left)/PALETTE_BUT_WIDTH;
+			switch(idx){
+				case 0:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Floors");
+					break;
+				case 1:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Terrains");
+					break;
+				case 2:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Heights");
+					break;
+				case 3:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Creatures");
+					break;
+				case 4:
+					ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Items");
+					break;
+			}
+			SetRect(&ioHelpContent->absHotRect, ofInterest.left+idx*PALETTE_BUT_WIDTH, ofInterest.top, ofInterest.left+(idx+1)*PALETTE_BUT_WIDTH, ofInterest.bottom);
+			
+			ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+			willShowTooltip = true;
+		}
+		else if(PtInRect(inGlobalMouse,&terrain_buttons_rect)){
+			int i,j,idx;
+			short sbar_pos = GetControlValue(right_sbar);
+			switch(current_drawing_mode){
+				case 0: //drawing floors
+					i = (inGlobalMouse.h-terrain_buttons_rect.left)/(TER_BUTTON_SIZE+1);
+					j = (inGlobalMouse.v-terrain_buttons_rect.top)/(TER_BUTTON_SIZE+1) + sbar_pos;
+					if(i<TILES_N_COLS){
+						idx=i + j*TILES_N_COLS;
+						if(idx>=0 && idx<256 && !scen_data.scen_floors[idx].ed_pic.not_legit()){
+							allocatedString = CFStringCreateWithCString(kCFAllocatorDefault,scen_data.scen_floors[idx].floor_name,kCFStringEncodingUTF8);
+							ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = allocatedString;
+							
+							SetRect(&ioHelpContent->absHotRect,
+									terrain_buttons_rect.left+i*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.left+(i+1)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos+1)*(TER_BUTTON_SIZE+1));
+							ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+							willShowTooltip = true;
+						}
+					}
+					break;
+				case 1: //drawing terrains
+				case 2: //drawing heights
+					i = (inGlobalMouse.h-terrain_buttons_rect.left)/(TER_BUTTON_SIZE+1);
+					j = (inGlobalMouse.v-terrain_buttons_rect.top)/((cur_viewing_mode>=10?TER_BUTTON_HEIGHT_3D:TER_BUTTON_SIZE)+1) + sbar_pos;
+					if(i<TILES_N_COLS){
+						idx=i + j*TILES_N_COLS;
+						if(idx>=0 && idx<512 && !scen_data.scen_terrains[idx].ed_pic.not_legit()){
+							allocatedString = CFStringCreateWithCString(kCFAllocatorDefault,scen_data.scen_terrains[idx].ter_name,kCFStringEncodingUTF8);
+							ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = allocatedString;
+							
+							SetRect(&ioHelpContent->absHotRect,
+									terrain_buttons_rect.left+i*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos)*((cur_viewing_mode>=10?TER_BUTTON_HEIGHT_3D:TER_BUTTON_SIZE)+1),
+									terrain_buttons_rect.left+(i+1)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos+1)*((cur_viewing_mode>=10?TER_BUTTON_HEIGHT_3D:TER_BUTTON_SIZE)+1));
+							ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+							willShowTooltip = true;
+						}
+					}
+					break;
+				case 3: //drawing creatures
+					i = (inGlobalMouse.h-terrain_buttons_rect.left)/(TER_BUTTON_SIZE+1);
+					j = (inGlobalMouse.v-terrain_buttons_rect.top)/(TER_BUTTON_HEIGHT_3D+1) + sbar_pos;
+					if(i<TILES_N_COLS){
+						idx=i + j*TILES_N_COLS;
+						if(idx>=0 && idx<256 && strcmp("Unused",scen_data.scen_creatures[idx].name) && strcmp("Placeholder",scen_data.scen_creatures[idx].name)){
+							allocatedString = CFStringCreateWithCString(kCFAllocatorDefault,scen_data.scen_creatures[idx].name,kCFStringEncodingUTF8);
+							ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = allocatedString;
+							
+							SetRect(&ioHelpContent->absHotRect,
+									terrain_buttons_rect.left+i*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos)*(TER_BUTTON_HEIGHT_3D+1),
+									terrain_buttons_rect.left+(i+1)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos+1)*(TER_BUTTON_HEIGHT_3D+1));
+							ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+							willShowTooltip = true;
+						}
+					}
+					break;
+				case 4: //draing items
+					i = (inGlobalMouse.h-terrain_buttons_rect.left)/(TER_BUTTON_SIZE+1);
+					j = (inGlobalMouse.v-terrain_buttons_rect.top)/(TER_BUTTON_SIZE+1) + sbar_pos;
+					if(i<TILES_N_COLS){
+						idx=i + j*TILES_N_COLS;
+						if(idx>=0 && idx<NUM_SCEN_ITEMS && strcmp("Unused",scen_data.scen_items[idx].full_name)){
+							allocatedString = CFStringCreateWithCString(kCFAllocatorDefault,scen_data.scen_items[idx].full_name,kCFStringEncodingUTF8);
+							ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = allocatedString;
+							
+							SetRect(&ioHelpContent->absHotRect,
+									terrain_buttons_rect.left+i*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.left+(i+1)*(TER_BUTTON_SIZE+1),
+									terrain_buttons_rect.top+(j-sbar_pos+1)*(TER_BUTTON_SIZE+1));
+							ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+							willShowTooltip = true;
+						}
+					}
+					break;
+			}
+		}
+		
+		ioHelpContent->version = kMacHelpVersion;
+		if(willShowTooltip){
+			*outContentProvided = kHMContentProvided;
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.top);
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.bottom);
+			ioHelpContent->content[kHMMinimumContentIndex].contentType = kHMCFStringContent;
+			ioHelpContent->content[kHMMaximumContentIndex].contentType = kHMNoContent;
+		}
+		else
+			*outContentProvided = kHMContentNotProvidedDontPropagate;
+		if (savePort != NULL)
+			SetPort(savePort);
+	}
+	else if (inRequest == kHMDisposeContent) {// being asked to clean up a tootip
+		if(ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString==allocatedString){
+			CFRelease(allocatedString);
+			allocatedString=NULL;
+		}
+    }
+	return status;
 }

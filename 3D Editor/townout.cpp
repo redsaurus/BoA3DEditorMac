@@ -200,10 +200,7 @@ void edit_placed_monst(short which_m)
 		ModalDialog(main_dialog_UPP, &item_hit);
 
 	cd_kill_dialog(837,0);
-
-	set_string("Select/edit placed object","Select object to edit");
-	set_cursor(7);
-	overall_mode = 40;
+	set_tool(40);
 
 }
 

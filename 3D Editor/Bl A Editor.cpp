@@ -51,12 +51,19 @@
 
 extern Rect terrain_rects[516]; //was 264
 
+//tridash - moving stuff to panels
+WindowPtr palettePtr;
+WindowPtr tilesPtr;
 /* Globals */
 Rect	windRect;
+//tridash - moving stuff to panels
+Rect	paletteRect;
+Rect	tilesRect;
 Boolean dialog_not_toast = FALSE;
 WindowPtr	mainPtr;
 EventHandlerRef scrollHandler;
 EventHandlerRef scrollHandler2;
+EventHandlerRef scrollHandler3;
 Boolean scroll_dialog_lock = FALSE;
 Boolean mouse_button_held = FALSE;
 Boolean play_sounds = TRUE;
@@ -105,6 +112,7 @@ short current_height_mode = 0; // 0 - no autohills, 1 - autohills
 Boolean editing_town = FALSE;
 short cur_viewing_mode = 10; // 0 - big icons 1 - small icons 10 - big 3D icons 11 - 3D view as in game
 short overall_mode = 0;
+short previous_tool = 0;
 // 0 - 9 - different terrain painting modes
 // 0 - neutral state, editing terrain/spaces with pencil
 // 1 - large paintbrush
@@ -139,6 +147,7 @@ short overall_mode = 0;
 
 // 40 - select instance
 // 41 - delete instance
+// 45 - change terrain randomly
 // 46 - placing creature
 // 47 - placing item
 // 48 - pasting instance
@@ -155,15 +164,23 @@ short overall_mode = 0;
 // 59 - edit sign
 // 60 - wandering monster pts
 // 61 - blocked spot
-// 62-66 - barrels, atc
+// 62-66 - barrels, etc.
 // 67 - clean space
-// 68 - place different floor stains
+// 68 - place different floor stains (No longer used see 75-82)
 // 69 - edit town entrance
 // 70 - place, edit terrain script
 // 71 - place outdoor start point
 // 72 - place town start point
 // 73 - place NE/SW mirror
 // 74 - place NW/SE mirror
+// 75 - place small blood stain
+// 76 - place med. blood stain
+// 77 - place large blood stain
+// 78 - place small slime pool
+// 79 - place large slime pool
+// 80 - place dried blood
+// 81 - place bones
+// 82 - place rocks
 
 // Numbers of current zone being edited
 
@@ -182,10 +199,13 @@ FSSpec default_directory;
 
 extern bool setUpCreaturePalette;
 extern bool setUpItemPalette;
-extern const Rect terrain_buttons_rect;
-extern const Rect terrain_viewport_3d;
-extern Rect large_edit_ter_rects[9][9];
-extern Rect small_edit_ter_rects[MAX_TOWN_SIZE][MAX_TOWN_SIZE];
+extern Rect terrain_buttons_rect;
+extern Rect terrain_viewport_3d;
+
+extern unsigned int terrain_width_2d;
+extern unsigned int terrain_height_2d;
+extern int TER_RECT_UL_X_2d_big;
+extern int TER_RECT_UL_Y_2d_big;
 
 /* Prototypes */
 int main(void);
@@ -215,7 +235,10 @@ static pascal OSErr handle_open_doc(const AppleEvent *theAppleEvent,AppleEvent *
 static pascal OSErr handle_quit(const AppleEvent *theAppleEvent,AppleEvent *reply, long handlerRefcon);
 void doScroll(ControlHandle bar, short delta);
 OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
+OSStatus paletteScrollHandler2(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
+
+extern GWorldPtr ter_draw_gworld;
 
 //MW specified argument and return type.
 int main(void)
@@ -245,7 +268,7 @@ int main(void)
 		return -1;
 
 	make_cursor_sword();
-	Set_Window_Drag_Bdry();
+	Set_Window_Drag_Bdry();//TODO: this doesn't seem to actually do anything?
 	Set_up_win();
 	
 	const EventTypeSpec eventList3[] = {
@@ -258,6 +281,7 @@ int main(void)
 		{ kEventClassMouse, kEventMouseScroll}
 	};
 	
+	InstallWindowEventHandler(tilesPtr,NewEventHandlerUPP((EventHandlerProcPtr) paletteScrollHandler2),GetEventTypeCount(eventList3),eventList3,0,&scrollHandler3);
 	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) paletteScrollHandler),GetEventTypeCount(eventList3),eventList3,0,&scrollHandler);
 	InstallWindowEventHandler(mainPtr,NewEventHandlerUPP((EventHandlerProcPtr) viewScrollHandler),GetEventTypeCount(eventList4),eventList4,0,&scrollHandler2);
 
@@ -328,15 +352,22 @@ void Initialize(void)
 
 	//	Make a new window for drawing in, and it must be a color window.  
 	//	The window is full screen size, made smaller to make it more visible.
-	BitMap bitMap;
-	GetQDGlobalsScreenBits(&bitMap);
-	windRect = bitMap.bounds;
+	//	Don't want dock / top menubar to be included in the space, so use
+	//	GetAvailableWindowPositioningBounds rather than bitMap.bounds
+	
+//	BitMap bitMap;
+//	GetQDGlobalsScreenBits(&bitMap);
+//	windRect = bitMap.bounds;
+	
+	Rect activeScreenRect;
+	GetAvailableWindowPositioningBounds(NULL, &activeScreenRect);
+	windRect = activeScreenRect;	
 	
 	//find_quickdraw();
 	set_pixel_depth();
 	
 	//InsetRect(&windRect, 5, 34);
-	InsetRect(&windRect,(windRect.right - 750) / 2,(windRect.bottom - 550) / 2);
+	InsetRect(&windRect,((windRect.right - windRect.left) - DEFAULT_WINDOW_WIDTH) / 2,((windRect.bottom - windRect.top) - DEFAULT_WINDOW_HEIGHT) / 2); //tridash - larger window stuff
 	OffsetRect(&windRect,0,18);
 	// add room for new scrollbar
 	InsetRect(&windRect,-9,0);
@@ -345,19 +376,57 @@ void Initialize(void)
 	//windRect = mainPtr->portRect;	
 	
 	WindowAttributes  windowAttrs;
-	windowAttrs = kWindowCloseBoxAttribute | kWindowFullZoomAttribute | kWindowCollapseBoxAttribute;
+	windowAttrs = kWindowCloseBoxAttribute | kWindowFullZoomAttribute | kWindowCollapseBoxAttribute | kWindowResizableAttribute;
 	
+	OffsetRect(&windRect, 0, 0);
+
 	CreateNewWindow (kDocumentWindowClass, windowAttrs,&windRect, &mainPtr);
 	
 	ShowWindow (mainPtr);
 	ZeroRectCorner(&windRect);
 	
-	SetPort(GetWindowPort(mainPtr));	/* set window to current graf port */
+	//tridash - moving stuff to panels
+	
+	paletteRect = activeScreenRect;
+	windowAttrs = kWindowFullZoomAttribute | kWindowNoShadowAttribute;
+	InsetRect(&paletteRect,((paletteRect.right - paletteRect.left) - TOOL_PALETTE_WIDTH) / 2,((paletteRect.bottom - paletteRect.top) - TOOL_PALETTE_HEIGHT) / 2);
+	OffsetRect(&paletteRect, activeScreenRect.right-paletteRect.right, activeScreenRect.top + 16 - paletteRect.top); //TODO: get rid of the magic 16 (window title bar height)
+	
+	tilesRect = activeScreenRect;
+	InsetRect(&tilesRect,((tilesRect.right - tilesRect.left) - TILES_WINDOW_WIDTH) / 2, (paletteRect.bottom + 16 - tilesRect.top) / 2); //tridash - larger window stuff
+	OffsetRect(&tilesRect, activeScreenRect.right-tilesRect.right, activeScreenRect.bottom-tilesRect.bottom);
+
+	CreateNewWindow (kFloatingWindowClass, windowAttrs, &paletteRect, &palettePtr);
+	
+	SetWindowTitleWithCFString(palettePtr, CFSTR("Tools"));
+	
+	windowAttrs = kWindowFullZoomAttribute | kWindowNoShadowAttribute | kWindowResizableAttribute;
+	
+	CreateNewWindow (kFloatingWindowClass, windowAttrs, &tilesRect, &tilesPtr);
+	
+	SetWindowTitleWithCFString(tilesPtr, CFSTR("Tiles"));
+	
+	HMInstallWindowContentCallback(palettePtr,NewHMWindowContentUPP(paletteWindowTooltipContentCallback));
+	HMInstallWindowContentCallback(tilesPtr,NewHMWindowContentUPP(tileWindowTooltipContentCallback));
+	
+	ShowWindow(palettePtr);
+	ShowWindow(tilesPtr);
+	
+	ZeroRectCorner(&paletteRect);
+	ZeroRectCorner(&tilesRect);
+	
+	SetPort(GetWindowPort(tilesPtr));
 	
 	Rect right_sbar_rect;
 	Get_right_sbar_rect( &right_sbar_rect );
-	right_sbar = NewControl(mainPtr,&right_sbar_rect,title,TRUE,0,0,0,scrollBarProc,1);
+	right_sbar = NewControl(tilesPtr,&right_sbar_rect,title,TRUE,0,0,0,scrollBarProc,1);
 	
+	terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
+	SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
+	SetControlMaximum(right_sbar, get_right_sbar_max());
+	
+	SetPort(GetWindowPort(mainPtr));	/* set window to current graf port */
+		
 	undo = linkedList();
 	redo = linkedList();
 	
@@ -390,7 +459,7 @@ void Set_Window_Drag_Bdry()
 	//GetPortBounds(GetQDGlobalsThePort(), &Drag_Rect);
 	GetQDGlobalsScreenBits(&bitMap);
 	Drag_Rect = bitMap.bounds;
-
+	
 	//Drag_Rect = qd.screenBits.bounds;
 	//Drag_Rect = (**(GrayRgn)).rgnBBox;
 	Drag_Rect.left += DRAG_EDGE;
@@ -411,9 +480,9 @@ Boolean Handle_One_Event()
 	//if(event.what == osEvt)
 	//	fprintf(stdout,"   %i\n", event.message&1);
 	// the order of event handler is recovered to original JV version
-	if ((mouse_button_held == TRUE) && (event.what != 23) && (FrontWindow() == mainPtr)) {
+	if ((mouse_button_held == TRUE) && (event.what != 23) && (ActiveNonFloatingWindow() == mainPtr)) {
 		GlobalToLocal(&event.where);
-		handle_action(event.where,event);
+		handle_action(event.where,event,MAIN_WINDOW_NUM);
 	}
 	//printf("%i\n",event.what);
 	switch (event.what){
@@ -496,7 +565,7 @@ void Handle_Update( EventRecord * event )
 void handle_menu_choice(long choice)
 {
 	int menu,menu_item;
-
+	
 	if (choice != 0) {
 		menu = HiWord(choice);
 		menu_item = LoWord(choice);
@@ -568,6 +637,7 @@ void handle_file_menu(int item_hit)
                     update_item_menu();
                     purgeUndo();
                     purgeRedo();
+					update_terrain_window_title();
                     redraw_screen();
                     shut_down_menus();
                 }
@@ -614,12 +684,15 @@ void handle_campaign_menu(int item_hit)
 			current_drawing_mode = current_height_mode = 0;
 			editing_town = TRUE;
 			set_up_terrain_buttons();
+			reset_mode_number();
 			shut_down_menus();
 			//set_string("Drawing mode","");
 			DrawMenuBar();
 			reset_drawing_mode();
 			purgeUndo();
 			purgeRedo();
+			selected_object_type = SelectionType::None;
+			update_terrain_window_title();
 			redraw_screen();
 			break;
 		case 2: // outdoor section
@@ -631,6 +704,7 @@ void handle_campaign_menu(int item_hit)
 			current_drawing_mode = current_height_mode = 0;
 			editing_town = FALSE;
 			set_up_terrain_buttons();
+			reset_mode_number();
 			//set_string("Drawing mode","");
 			shut_down_menus();
 			clear_selected_copied_objects();
@@ -638,6 +712,8 @@ void handle_campaign_menu(int item_hit)
 			reset_drawing_mode();
 			purgeUndo();
 			purgeRedo();
+			selected_object_type = SelectionType::None;
+			update_terrain_window_title();
 			redraw_screen();
 			break;
 		case 3: // new town
@@ -654,7 +730,9 @@ void handle_campaign_menu(int item_hit)
 				cen_x = max_zone_dim[town_type] / 2; cen_y = max_zone_dim[town_type] / 2;
 				purgeUndo();
 				purgeRedo();
+				selected_object_type = SelectionType::None;
 				change_made_town = TRUE;
+				update_terrain_window_title();
 			}
 			redraw_screen();
 			break;
@@ -792,13 +870,15 @@ void handle_town_menu(int item_hit)
 				reset_small_drawn();
 				purgeUndo();
 				purgeRedo();
+				update_terrain_window_title();
 				redraw_screen();
 			}
 			break;
 		case 2: 
 			edit_town_details(); 
 			change_made_town = TRUE; 
-			set_up_terrain_buttons(); 
+			set_up_terrain_buttons();
+			update_terrain_window_title();
 			draw_main_screen(); 
 			break; // Town Details
 		case 3: 
@@ -806,10 +886,7 @@ void handle_town_menu(int item_hit)
 			change_made_town = TRUE; 
 			break; //Town Wandering Monsters
 		case 4: // Set Town Boundaries							
-			overall_mode = 17;
-			mode_count = 2;
-			set_cursor(5);
-			set_string("Set town boundary","Select upper left corner");
+			set_tool(17);
 			break;
 		case 5: frill_terrain(); change_made_town = TRUE; break;
 		case 6: unfrill_terrain(); change_made_town = TRUE; break;
@@ -820,9 +897,7 @@ void handle_town_menu(int item_hit)
 		case 9: //Set Starting Location
 			if (fancy_choice_dialog(867,0) == 2)
 					break;
-			set_string("Set Town Start Point","Where will party start?");
-			overall_mode = 72;
-			set_cursor(7);
+			set_tool(72);
 			break;
 		case 11: // add random
 			if (fancy_choice_dialog(863,0) == 2)
@@ -907,11 +982,18 @@ void handle_outdoor_menu(int item_hit)
 				reset_drawing_mode();
 				purgeUndo();
 				purgeRedo();
+				update_terrain_window_title();
 				redraw_screen();
 				change_made_outdoors = FALSE;
 			}
 			break;
-		case 2:  change_made_outdoors = TRUE; outdoor_details(); set_up_terrain_buttons(); draw_main_screen(); break; //Outdoor Details
+		case 2: //Outdoor Details
+			change_made_outdoors = TRUE;
+			outdoor_details();
+			set_up_terrain_buttons();
+			update_terrain_window_title();
+			draw_main_screen();
+			break;
 
 		case 3: edit_out_wand(0); change_made_outdoors = TRUE; break;
 		case 4: edit_out_wand(1);  change_made_outdoors = TRUE; break;
@@ -920,12 +1002,10 @@ void handle_outdoor_menu(int item_hit)
 		case 6: frill_terrain(); change_made_outdoors = TRUE; break;
 		case 7: unfrill_terrain(); change_made_outdoors = TRUE; break;
 		case 8: edit_out_strs(); change_made_outdoors = TRUE; break; //Edit Area Descriptions
-		case 10: 
+		case 10: //Set outdoor starting point
 			if (fancy_choice_dialog(864,0) == 2)
 				return;
-			set_string("Set Outdoor Start Point","Where will party start?");
-			overall_mode = 71;
-			set_cursor(7);
+			set_tool(71);
 			break; //Set Starting Location
 	}
 }
@@ -958,9 +1038,7 @@ void handle_edit_menu(int item_hit)
 				beep();
 				break;
 			}
-			set_string("Paste copied instance","Select location to place");
-			set_cursor(7);
-			overall_mode = 48;			
+			set_tool(48);
 			break;
 		case 7: // clear
 			delete_selected_instance();
@@ -1031,18 +1109,14 @@ OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef e
 		HIPoint pos;
 		GetEventParameter(eventRef,kEventParamWindowMouseLocation,typeHIPoint,NULL,sizeof(pos),NULL,&pos);
 		Point ppos = {(short)pos.y,(short)pos.x};
-		Rect paletteRect = terrain_buttons_rect;
-		paletteRect.left+=RIGHT_BUTTONS_X_SHIFT;
-		paletteRect.right+=RIGHT_BUTTONS_X_SHIFT+RIGHT_SCROLLBAR_WIDTH;
+		//Rect paletteRect = terrain_buttons_rect;
+		//paletteRect.left+=RIGHT_BUTTONS_X_SHIFT;
+		//paletteRect.right+=RIGHT_BUTTONS_X_SHIFT+RIGHT_SCROLLBAR_WIDTH;
 		//test if the event was in the right palette
-		if(PtInRect(ppos, &paletteRect))
-		   doScroll(right_sbar,-1*delta);
-		else{ //check to see if it fell in the terrian view
-			Rect whole_area_rect = terrain_viewport_3d;
-			if(cur_viewing_mode==0) //large icon 2D
-				SetRect(&whole_area_rect, large_edit_ter_rects[0][0].left, large_edit_ter_rects[0][0].top, large_edit_ter_rects[8][8].right, large_edit_ter_rects[8][8].bottom);
-			else if(cur_viewing_mode==1) //small icon 2D
-				SetRect(&whole_area_rect,small_edit_ter_rects[0][0].left,small_edit_ter_rects[0][0].top,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].right,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].bottom);
+		//if(PtInRect(ppos, &paletteRect))
+		 //  doScroll(right_sbar,-1*delta);
+		if (1){ //check to see if it fell in the terrian view
+			Rect whole_area_rect = terrainViewRect();
 			if(PtInRect(ppos, &whole_area_rect)){
 				//it was inside the viewport. Now we have to figure out exactly what scroll to do
 				//find out which axis it was
@@ -1083,6 +1157,29 @@ OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef e
 	return(result);
 }
 
+OSStatus paletteScrollHandler2(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
+	OSStatus result = eventNotHandledErr;
+	if(!file_is_loaded)
+		return(result);
+	UInt32      eventKind, eventClass;
+	eventClass = GetEventClass(eventRef);
+	eventKind  = GetEventKind(eventRef);
+	if(eventKind==kEventMouseWheelMoved){ //scroll wheel events
+		SInt32 delta;
+		GetEventParameter(eventRef,kEventParamMouseWheelDelta,typeLongInteger,NULL,sizeof(delta),NULL,&delta);
+		HIPoint pos;
+		GetEventParameter(eventRef,kEventParamWindowMouseLocation,typeHIPoint,NULL,sizeof(pos),NULL,&pos);
+		Point ppos = {(short)pos.y,(short)pos.x};
+		Rect paletteRect = terrain_buttons_rect;
+		paletteRect.left+=RIGHT_TILES_X_SHIFT;
+		paletteRect.right+=RIGHT_TILES_X_SHIFT+RIGHT_SCROLLBAR_WIDTH;
+		//test if the event was in the right palette
+		if(PtInRect(ppos, &paletteRect))
+			doScroll(right_sbar,-1*delta);
+	}
+	return(result);
+}
+
 OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
 	OSStatus result = eventNotHandledErr;
 	if(!file_is_loaded)
@@ -1094,11 +1191,7 @@ OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef even
 		HIPoint pos;
 		GetEventParameter(eventRef,kEventParamWindowMouseLocation,typeHIPoint,NULL,sizeof(pos),NULL,&pos);
 		Point ppos = {(short)pos.y,(short)pos.x};
-		Rect whole_area_rect = terrain_viewport_3d;
-		if(cur_viewing_mode==0) //large icon 2D
-			SetRect(&whole_area_rect, large_edit_ter_rects[0][0].left, large_edit_ter_rects[0][0].top, large_edit_ter_rects[8][8].right, large_edit_ter_rects[8][8].bottom);
-		else if(cur_viewing_mode==1) //small icon 2D
-			SetRect(&whole_area_rect,small_edit_ter_rects[0][0].left,small_edit_ter_rects[0][0].top,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].right,small_edit_ter_rects[MAX_TOWN_SIZE - 1][MAX_TOWN_SIZE - 1].bottom);
+		Rect whole_area_rect = terrainViewRect();
 		if(PtInRect(ppos, &whole_area_rect)){
 			SInt32 dx=0,dy=0;
 			GetEventParameter(eventRef,kEventParamMouseWheelSmoothHorizontalDelta,typeSInt32,NULL,sizeof(dx),NULL,&dx);
@@ -1169,7 +1262,7 @@ pascal void right_sbar_action(ControlHandle bar, short part){
 	}
 	doScroll(bar,delta);
 }
-
+extern Rect kRect3DEditScrn;
 Boolean Mouse_Pressed( EventRecord * event )
 {
 	WindowPtr	the_window;
@@ -1177,7 +1270,10 @@ Boolean Mouse_Pressed( EventRecord * event )
 	long menu_choice;
 	ControlHandle control_hit;
 	BitMap		screenbits;
-	Boolean All_Done = FALSE;	
+	Boolean All_Done = FALSE;
+	Rect	resized_rect;
+	static const Rect main_window_size_limit_rect = {225, 300, 5000, 5000};
+	static const Rect tile_window_size_limit_rect = {225, 326, 5000, 326}; //TODO: figure out correct limit on maximum height
 
 	the_part = FindWindow( event->where, &the_window);
 	
@@ -1188,6 +1284,85 @@ Boolean Mouse_Pressed( EventRecord * event )
 			break;
 		case inSysWindow:
 			break;
+		case inGrow:
+			if (the_window == mainPtr){
+				//TODO: enforce a different size limit when in 2D zoomed-out mode
+				ResizeWindow(the_window, event->where, &main_window_size_limit_rect, &resized_rect);
+				ZeroRectCorner(&resized_rect);
+				terrain_viewport_3d.bottom = resized_rect.bottom - 40;
+				terrain_viewport_3d.right = resized_rect.right - 40;
+				kRect3DEditScrn.bottom = resized_rect.bottom - 20;
+				kRect3DEditScrn.right = resized_rect.right - 20;
+				windRect = resized_rect;
+				DisposeGWorld(ter_draw_gworld);
+				NewGWorld(&ter_draw_gworld, 0,&resized_rect, NIL, NIL, kNativeEndianPixMap);
+				recalculate_2D_view_details();
+				recalculate_draw_distances();
+				set_up_view_buttons();
+				redraw_screen();
+				//TODO: do this properly, not just hacked on: redraw_screen() calls draws terrain with small_any_drawn = TRUE, so zoomed out view doesn't get fully redrawn
+				if (cur_viewing_mode == 1)
+				{
+					small_any_drawn = FALSE;
+					draw_terrain();
+				}
+			}
+			else if(the_window == tilesPtr){
+				ResizeWindow(the_window, event->where, &tile_window_size_limit_rect, &resized_rect);
+				tilesRect = resized_rect;
+				ZeroRectCorner(&tilesRect);
+				terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
+				SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
+				SetControlMaximum(right_sbar, get_right_sbar_max());
+				redraw_screen();
+			}
+
+			break;
+		case inZoomOut:
+			if (the_window == mainPtr){
+				if(cur_viewing_mode>=10){
+					if(!EqualRect(&terrain_viewport_3d, &default_terrain_viewport_3d)){
+						SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
+						terrain_viewport_3d = default_terrain_viewport_3d;
+						
+						windRect = default_terrain_viewport_3d;
+						InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
+						ZeroRectCorner(&windRect);
+						DisposeGWorld(ter_draw_gworld);
+						NewGWorld(&ter_draw_gworld, 0,&windRect, NIL, NIL, kNativeEndianPixMap);
+						
+						kRect3DEditScrn.bottom = DEFAULT_RECT3DEDIT_HEIGHT + TER_RECT_UL_X;
+						kRect3DEditScrn.right = DEFAULT_RECT3DEDIT_WIDTH + TER_RECT_UL_Y;
+						SetRect(&windRect, terrain_viewport_3d.left, terrain_viewport_3d.top, terrain_viewport_3d.right + 40, terrain_viewport_3d.bottom + 40);
+						recalculate_draw_distances();
+					}
+					//TODO: else make window big
+				}
+				else{ //TODO: specialize this for the 9 by 9 2D size
+					SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
+					terrain_viewport_3d = default_terrain_viewport_3d;
+					
+					windRect = default_terrain_viewport_3d;
+					InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
+					ZeroRectCorner(&windRect);
+					DisposeGWorld(ter_draw_gworld);
+					NewGWorld(&ter_draw_gworld, 0,&windRect, NIL, NIL, kNativeEndianPixMap);
+					
+					kRect3DEditScrn.bottom = DEFAULT_RECT3DEDIT_HEIGHT + TER_RECT_UL_X;
+					kRect3DEditScrn.right = DEFAULT_RECT3DEDIT_WIDTH + TER_RECT_UL_Y;
+					SetRect(&windRect, terrain_viewport_3d.left, terrain_viewport_3d.top, terrain_viewport_3d.right + 40, terrain_viewport_3d.bottom + 40);
+					recalculate_2D_view_details();
+				}
+				set_up_view_buttons();
+				redraw_screen();
+				//TODO: do this properly, not just hacked on: redraw_screen() calls draws terrain with small_any_drawn = TRUE, so zoomed out view doesn't get fully redrawn
+				if (cur_viewing_mode == 1)
+				{
+					small_any_drawn = FALSE;
+					draw_terrain();
+				}				
+			}
+			break;
 		case inDrag:
 			GetQDGlobalsScreenBits(&screenbits);
 			DragWindow(the_window, event->where, &screenbits.bounds);
@@ -1196,28 +1371,41 @@ Boolean Mouse_Pressed( EventRecord * event )
 			All_Done = TRUE;
 			break;
 		case inContent:
+			if (the_window == mainPtr){
 			SetPort(GetWindowPort(mainPtr));
 			GlobalToLocal(&(event->where));
-			content_part = FindControl(event->where,the_window,&control_hit); // hit sbar?
-			if (content_part != 0) {
-				switch (content_part) {
-					case inThumb:
-						content_part = TrackControl(control_hit,event->where,NIL);
-						if (control_hit == right_sbar){
-							if (content_part == inThumb) {
-								set_up_terrain_buttons();
-								place_right_buttons(0);
+				handle_action(event->where, *event, MAIN_WINDOW_NUM);
+			}
+			else if (the_window == palettePtr){
+				SetPort(GetWindowPort(palettePtr));
+				GlobalToLocal(&(event->where));
+				handleToolPaletteClick(event->where, *event);
+			}
+			else if (the_window == tilesPtr){
+				SetPort(GetWindowPort(tilesPtr));
+				GlobalToLocal(&(event->where));
+				content_part = FindControl(event->where,the_window,&control_hit); // hit sbar?
+				if (content_part != 0) {
+					switch (content_part) {
+						case inThumb:
+							content_part = TrackControl(control_hit,event->where,NIL);
+							if (control_hit == right_sbar){
+								if (content_part == inThumb) {
+									set_up_terrain_buttons();
+									place_right_buttons(0);
+								}
 							}
-						}
-						break;
-					case inUpButton: case inPageUp: case inDownButton: case inPageDown:
-						if (control_hit == right_sbar)
-							content_part = TrackControl(control_hit,event->where,(ControlActionUPP)right_sbar_action_UPP);
-						break;
-				}
-			} // a control hit
-			else  // ordinary click
-				handle_action(event->where, *event);
+							break;
+						case inUpButton: case inPageUp: case inDownButton: case inPageDown:
+							if (control_hit == right_sbar)
+								content_part = TrackControl(control_hit,event->where,(ControlActionUPP)right_sbar_action_UPP);
+							break;
+					}
+				} // a control hit				
+				else
+					handle_action(event->where, *event, TILES_WINDOW_NUM);
+			}
+			
 			break;
 	}
 	return All_Done;
