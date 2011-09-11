@@ -607,6 +607,18 @@ void handle_apple_menu(int item_hit)
 			fancy_choice_dialog(1062,0);
 			break;
 		case 2:
+		{
+			CFBundleRef mainBundle = CFBundleGetMainBundle();
+			if(mainBundle == NULL)
+				give_error("Internal Error: Failed to locate license file","",0);
+			CFURLRef resourceURL = CFBundleCopyResourceURL(mainBundle, CFSTR("Blades of Avernum Editor License"), CFSTR("pdf"), NULL);
+			if(resourceURL == NULL)
+				give_error("Internal Error: Failed to locate license file","",0);
+			LSOpenCFURLRef(resourceURL, NULL);
+			CFRelease(resourceURL);
+		}
+			break;
+		case 3:
 			if (change_made_town || change_made_outdoors) {
 				if (save_check(881) == FALSE)
 					break;							

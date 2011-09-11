@@ -10,6 +10,7 @@
 		8D0C4E8D0486CD37000505A6 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */; };
 		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
 		9D3AB05D137E257000B4F413 /* mode_buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D3AB05C137E257000B4F413 /* mode_buttons.png */; };
+		9D8A9600141D4D9300B69D51 /* Blades of Avernum Editor License.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 9D8A95FF141D4D9300B69D51 /* Blades of Avernum Editor License.pdf */; };
 		9DF52BC612CFC6DA00D01803 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DF52BC412CFC6DA00D01803 /* QuickTime.framework */; };
 		9DF52BC712CFC6DA00D01803 /* libstdc++-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DF52BC512CFC6DA00D01803 /* libstdc++-static.a */; };
 		9DF52BE212CFC74D00D01803 /* Bl A Editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF52BD612CFC74D00D01803 /* Bl A Editor.cpp */; };
@@ -88,6 +89,7 @@
 		508344B209E5C41E0093A071 /* 3D BoA Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3D BoA Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9D3AB05C137E257000B4F413 /* mode_buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mode_buttons.png; sourceTree = "<group>"; };
+		9D8A95FF141D4D9300B69D51 /* Blades of Avernum Editor License.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Blades of Avernum Editor License.pdf"; sourceTree = "<group>"; };
 		9DF52BC412CFC6DA00D01803 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
 		9DF52BC512CFC6DA00D01803 /* libstdc++-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libstdc++-static.a"; path = "/usr/lib/libstdc++-static.a"; sourceTree = "<absolute>"; };
 		9DF52BC912CFC71800D01803 /* global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = global.h; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 		20286C2CFDCF999611CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				9D8A95FF141D4D9300B69D51 /* Blades of Avernum Editor License.pdf */,
 				9DF52BEF12CFCCA300D01803 /* 3D_BoA_su_dsa_pub.pem */,
 				9DF52BF012CFCCA300D01803 /* image_resources */,
 				9DF52C1212CFCCA400D01803 /* BoAScen.icns */,
@@ -375,6 +378,7 @@
 				9DF52C3612CFCCA400D01803 /* town_buttons.png in Resources */,
 				9DF52C3712CFCCA400D01803 /* BoAScen.icns in Resources */,
 				9DF52C3812CFCCA400D01803 /* BoAEdAPPL.icns in Resources */,
+				9D8A9600141D4D9300B69D51 /* Blades of Avernum Editor License.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
