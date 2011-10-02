@@ -154,8 +154,8 @@ int toolIcons[83][3] = {
 	{0,6,1}, //paint bucket
 	{-1,-1,-1}, //tool 8 (does not exist)
 	{-1,-1,-1}, //tool 9 (does not exist)
-	{0,6,0}, //frame rectangle
-	{0,7,0}, //fill rectangle
+	{0,7,0}, //frame rectangle
+	{0,6,0}, //fill rectangle
 	{-1,-1,-1}, //tool 12 (does not exist)
 	{-1,-1,-1}, //tool 13 (does not exist)
 	{-1,-1,-1}, //tool 14 (does not exist)
@@ -240,8 +240,8 @@ const char* tool_names[83] = {
 	"Paint bucket",
 	"Tool 8 (Does not exist)",
 	"Tool 9 (Does not exist)",
-	"Frame Rectangle",
 	"Fill Rectangle",
+	"Frame Rectangle",
 	"Tool 12 (Does not exist)",
 	"Tool 13 (Does not exist)",
 	"Tool 14 (Does not exist)",
@@ -2378,6 +2378,7 @@ void set_new_creature(short selected_creature)
 	if(!strcmp("Unused",scen_data.scen_creatures[selected_creature].name) || !strcmp("Placeholder",scen_data.scen_creatures[selected_creature].name))
 		return;
 	set_tool(0);
+	current_drawing_mode = 3;
 	mode_count = selected_creature;
 }
 
@@ -2388,6 +2389,7 @@ void set_new_item(short selected_item)
 	if (!strcmp("Unused",scen_data.scen_items[selected_item].full_name))
 		return;
 	set_tool(0);
+	current_drawing_mode = 4;
 	mode_count = selected_item;
 }
 

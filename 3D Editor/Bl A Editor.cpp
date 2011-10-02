@@ -591,9 +591,15 @@ void handle_menu_choice(long choice)
 				break;
 			case 700: case 701: case 702: case 703: case 704:
 				set_new_item(menu_item + 100 * (menu - 700) - 1);
+				set_drawing_mode(4);
+				set_tool(0);
+				place_right_buttons(0);
 				break;
 			case 750: case 751: case 752: case 753: 
 				set_new_creature(menu_item + 64 * (menu - 750) - 1);
+				set_drawing_mode(3);
+				set_tool(0);
+				place_right_buttons(0);
 				break;
 		}
 	}
