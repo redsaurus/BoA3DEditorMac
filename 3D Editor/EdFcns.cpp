@@ -8,6 +8,8 @@
 //#include <stdio.h>
 //#include <string.h>
 #include "global.h"
+#include <stdexcept>
+#include "Undo.h"
 
 #define	MAX_RECURSION_DEPTH	200
 
@@ -47,6 +49,7 @@ bool object_sticky_draw;
 extern Boolean small_any_drawn;
 
 extern Boolean file_is_loaded,mouse_button_held;
+extern bool delimit_undo_on_mouse_up;
 extern short cen_x, cen_y;
 
 extern short mode_count;
@@ -353,8 +356,8 @@ static short recursive_depth = 0; // used for recursive hill/terrain correcting 
 static short recursive_hill_up_depth = 0;
 static short recursive_hill_down_depth = 0;
 
-linkedList undo;
-linkedList redo;
+Undo::UndoStack undo;
+Undo::UndoStack redo;
 
 // function prototype
 
@@ -563,6 +566,45 @@ void toggle_zoomedOut( void )
 	reset_small_drawn();
 	redraw_screen();
 }	
+
+template <typename UndoType>
+void modifyRectSide(Rect& rect, Undo::RectChangeStep::Side whichSide, unsigned int idx){
+	static const char* messages[]={"Set top boundary:","Set bottom boundary:","Set left boundary:","Set right boundary:"};
+	short* side=NULL;
+	short oldVal, min, max;
+	const char* msg;
+	switch(whichSide){
+		case Undo::RectChangeStep::TOP:
+			side=&rect.top;
+			min=0;
+			max=rect.bottom;
+			msg=messages[0];
+			break;
+		case Undo::RectChangeStep::BOTTOM:
+			side=&rect.bottom;
+			min=rect.top;
+			max=(editing_town?max_zone_dim[town_type]:OUTDOOR_SIZE);
+			msg=messages[1];
+			break;
+		case Undo::RectChangeStep::LEFT:
+			side=&rect.left;
+			min=0;
+			max=rect.right;
+			msg=messages[2];
+			break;
+		case Undo::RectChangeStep::RIGHT:
+			side=&rect.right;
+			min=rect.left;
+			max=(editing_town?max_zone_dim[town_type]:OUTDOOR_SIZE);
+			msg=messages[3];
+			break;
+	}
+	oldVal=*side;
+	*side=how_many_dlog(*side,min,max,msg);
+	if(*side!=oldVal)
+		pushUndoStep(new UndoType(*side,oldVal,whichSide,idx));	
+}
+
 
 //Handles mouse clicks
 // "Outdoor: drawing mode failure after moving section" fix
@@ -1130,65 +1172,43 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 				switch (lineHit) {
 					case 1:
 						if(editing_town){
+							short old_state = town.spec_id[selected_object_number];
 							town.spec_id[selected_object_number] = 
 							how_many_dlog(town.spec_id[selected_object_number],0,255,"Set special encounter town state number:");
+							if(town.spec_id[selected_object_number]!=old_state)
+								pushUndoStep(new Undo::SpecialEncounterStateChange(town.spec_id[selected_object_number], old_state, selected_object_number));
 						}
 						else{
+							short old_state = current_terrain.spec_id[selected_object_number];
 							current_terrain.spec_id[selected_object_number] = 
 							how_many_dlog(current_terrain.spec_id[selected_object_number],0,255,"Set special encounter outdoor state number:");
+							if(current_terrain.spec_id[selected_object_number]!=old_state)
+								pushUndoStep(new Undo::SpecialEncounterStateChange(current_terrain.spec_id[selected_object_number], old_state, selected_object_number));
 						}
 						break;
 					case 3:
-						if(editing_town){
-							town.special_rects[selected_object_number].top = 
-							how_many_dlog(town.special_rects[selected_object_number].top,0,
-										  town.special_rects[selected_object_number].bottom,"Set top boundary:");
-						}
-						else {
-							current_terrain.special_rects[selected_object_number].top = 
-							how_many_dlog(current_terrain.special_rects[selected_object_number].top,0,
-										  current_terrain.special_rects[selected_object_number].bottom,"Set top boundary:");
-						}
+						modifyRectSide<Undo::SpecialEncounterRectChange>((editing_town?
+																		  town.special_rects[selected_object_number]:
+																		  current_terrain.special_rects[selected_object_number]),
+																		 Undo::RectChangeStep::TOP, selected_object_number);
 						break;
 					case 4:
-						if(editing_town){
-							town.special_rects[selected_object_number].left = 
-							how_many_dlog(town.special_rects[selected_object_number].left,0,
-										  town.special_rects[selected_object_number].right,"Set left boundary:");
-						}
-						else{
-							current_terrain.special_rects[selected_object_number].left = 
-							how_many_dlog(current_terrain.special_rects[selected_object_number].left,0,
-										  current_terrain.special_rects[selected_object_number].right,"Set left boundary:");
-						}
+						modifyRectSide<Undo::SpecialEncounterRectChange>((editing_town?
+																		  town.special_rects[selected_object_number]:
+																		  current_terrain.special_rects[selected_object_number]),
+																		 Undo::RectChangeStep::LEFT, selected_object_number);
 						break;
 					case 5:
-						if(editing_town){
-							town.special_rects[selected_object_number].bottom = 
-							how_many_dlog(town.special_rects[selected_object_number].bottom,
-										  town.special_rects[selected_object_number].top,
-										  max_zone_dim[town_type],"Set bottom boundary:");
-						}
-						else {
-							current_terrain.special_rects[selected_object_number].bottom = 
-							how_many_dlog(current_terrain.special_rects[selected_object_number].bottom,
-										  current_terrain.special_rects[selected_object_number].top,
-										  OUTDOOR_SIZE,"Set bottom boundary:");
-						}
+						modifyRectSide<Undo::SpecialEncounterRectChange>((editing_town?
+																		  town.special_rects[selected_object_number]:
+																		  current_terrain.special_rects[selected_object_number]),
+																		 Undo::RectChangeStep::BOTTOM, selected_object_number);
 						break;
 					case 6:
-						if(editing_town){
-							town.special_rects[selected_object_number].right = 
-							how_many_dlog(town.special_rects[selected_object_number].right,
-										  town.special_rects[selected_object_number].left,
-										  max_zone_dim[town_type],"Set right boundary:");
-						}
-						else{
-							current_terrain.special_rects[selected_object_number].right = 
-							how_many_dlog(current_terrain.special_rects[selected_object_number].right,
-										  current_terrain.special_rects[selected_object_number].left,
-										  OUTDOOR_SIZE,"Set right boundary:");
-						}
+						modifyRectSide<Undo::SpecialEncounterRectChange>((editing_town?
+																		  town.special_rects[selected_object_number]:
+																		  current_terrain.special_rects[selected_object_number]),
+																		 Undo::RectChangeStep::RIGHT, selected_object_number);
 						break;
 					case 7: //Redraw
 						set_tool(25);
@@ -1207,56 +1227,28 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 					edit_area_rect_str(selected_object_number,(editing_town?1:0));
 					break;
 				case 3:
-					if(editing_town){
-						town.room_rect[selected_object_number].top = 
-						how_many_dlog(town.room_rect[selected_object_number].top,0,
-									  town.room_rect[selected_object_number].bottom,"Set top boundary:");
-					}
-					else {
-						current_terrain.info_rect[selected_object_number].top = 
-						how_many_dlog(current_terrain.info_rect[selected_object_number].top,0,
-									  current_terrain.info_rect[selected_object_number].bottom,"Set top boundary:");
-					}
+					modifyRectSide<Undo::DescriptionAreaRectChange>((editing_town?
+																	 town.room_rect[selected_object_number]:
+																	 current_terrain.info_rect[selected_object_number]),
+																	Undo::RectChangeStep::TOP, selected_object_number);
 					break;
 				case 4:
-					if(editing_town){
-						town.room_rect[selected_object_number].left = 
-						how_many_dlog(town.room_rect[selected_object_number].left,0,
-									  town.room_rect[selected_object_number].right,"Set left boundary:");
-					}
-					else{
-						current_terrain.info_rect[selected_object_number].left = 
-						how_many_dlog(current_terrain.info_rect[selected_object_number].left,0,
-									  current_terrain.info_rect[selected_object_number].right,"Set left boundary:");
-					}
+					modifyRectSide<Undo::DescriptionAreaRectChange>((editing_town?
+																	 town.room_rect[selected_object_number]:
+																	 current_terrain.info_rect[selected_object_number]),
+																	Undo::RectChangeStep::LEFT, selected_object_number);
 					break;
 				case 5:
-					if(editing_town){
-						town.room_rect[selected_object_number].bottom = 
-						how_many_dlog(town.room_rect[selected_object_number].bottom,
-									  town.room_rect[selected_object_number].top,
-									  max_zone_dim[town_type],"Set bottom boundary:");
-					}
-					else {
-						current_terrain.info_rect[selected_object_number].bottom = 
-						how_many_dlog(current_terrain.info_rect[selected_object_number].bottom,
-									  current_terrain.info_rect[selected_object_number].top,
-									  OUTDOOR_SIZE,"Set bottom boundary:");
-					}
+					modifyRectSide<Undo::DescriptionAreaRectChange>((editing_town?
+																	 town.room_rect[selected_object_number]:
+																	 current_terrain.info_rect[selected_object_number]),
+																	Undo::RectChangeStep::BOTTOM, selected_object_number);
 					break;
 				case 6:
-					if(editing_town){
-						town.room_rect[selected_object_number].right = 
-						how_many_dlog(town.room_rect[selected_object_number].right,
-									  town.room_rect[selected_object_number].left,
-									  max_zone_dim[town_type],"Set right boundary:");
-					}
-					else{
-						current_terrain.info_rect[selected_object_number].right = 
-						how_many_dlog(current_terrain.info_rect[selected_object_number].right,
-									  current_terrain.info_rect[selected_object_number].left,
-									  OUTDOOR_SIZE,"Set right boundary:");
-					}
+					modifyRectSide<Undo::DescriptionAreaRectChange>((editing_town?
+																	 town.room_rect[selected_object_number]:
+																	 current_terrain.info_rect[selected_object_number]),
+																	Undo::RectChangeStep::RIGHT, selected_object_number);
 					break;
 				case 7: //redraw
 					set_tool(27);
@@ -1278,30 +1270,26 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 								break;//the user cancelled the action
 							if (cre(temp,-1,scenario.num_towns - 1,"The town number you gave was out of range. It must be from 0 to the number of towns in the scenario - 1. ","",0))
 								break;
+							if(temp!=current_terrain.exit_dests[selected_object_number])
+								pushUndoStep(new Undo::TownEntranceTownChange(temp,current_terrain.exit_dests[selected_object_number],selected_object_number));
 							current_terrain.exit_dests[selected_object_number] = temp;
 						}
 						break;
 					case 3:
-						current_terrain.exit_rects[selected_object_number].top = 
-						how_many_dlog(current_terrain.exit_rects[selected_object_number].top,0,
-									  current_terrain.exit_rects[selected_object_number].bottom,"Set top boundary:");
+						modifyRectSide<Undo::TownEntranceRectChange>(current_terrain.exit_rects[selected_object_number],
+																	 Undo::RectChangeStep::TOP, selected_object_number);
 						break;
 					case 4:
-						current_terrain.exit_rects[selected_object_number].left = 
-						how_many_dlog(current_terrain.exit_rects[selected_object_number].left,0,
-									  current_terrain.exit_rects[selected_object_number].right,"Set left boundary:");
+						modifyRectSide<Undo::TownEntranceRectChange>(current_terrain.exit_rects[selected_object_number],
+																	 Undo::RectChangeStep::LEFT, selected_object_number);
 						break;
 					case 5:
-						current_terrain.exit_rects[selected_object_number].bottom = 
-						how_many_dlog(current_terrain.exit_rects[selected_object_number].bottom,
-									  current_terrain.exit_rects[selected_object_number].top,
-									  OUTDOOR_SIZE,"Set bottom boundary:");
+						modifyRectSide<Undo::TownEntranceRectChange>(current_terrain.exit_rects[selected_object_number],
+																	 Undo::RectChangeStep::BOTTOM, selected_object_number);
 						break;
 					case 6:
-						current_terrain.exit_rects[selected_object_number].right = 
-						how_many_dlog(current_terrain.exit_rects[selected_object_number].right,
-									  current_terrain.exit_rects[selected_object_number].left,
-									  OUTDOOR_SIZE,"Set right boundary:");
+						modifyRectSide<Undo::TownEntranceRectChange>(current_terrain.exit_rects[selected_object_number],
+																	 Undo::RectChangeStep::RIGHT, selected_object_number);
 						break;
 					case 7: //redraw
 						set_tool(26);
@@ -1318,7 +1306,7 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 				switch (lineHit) {
 					case 1: case 2: case 3: case 4: case 5: case 6: case 7:
 					{
-						edit_sign(selected_object_number);
+						edit_sign(selected_object_number,true);
 					}
 						break;
 					default:
@@ -1480,6 +1468,10 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 	
 	switch (overall_mode) {
 		case 0: // just change terrain or select item
+			if(!delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				delimit_undo_on_mouse_up=true;
+			}
 			switch (current_drawing_mode) {
 				case 0: // floor
 					
@@ -1537,6 +1529,10 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			
 		case 1: // 1 - large paintbrush
 			mouse_button_held = TRUE;
+			if(!delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				delimit_undo_on_mouse_up=true;
+			}
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,4,(option_hit != 0) ? 0 : 1,20);
 				ticks_to_wait = DENSE_TICKS;
@@ -1546,6 +1542,10 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			break;
 		case 2:// 2 - small paintbrush
 			mouse_button_held = TRUE;
+			if(!delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				delimit_undo_on_mouse_up=true;
+			}
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,1,(option_hit != 0) ? 0 : 1,20);
 				ticks_to_wait = DENSE_TICKS;
@@ -1555,6 +1555,10 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			break;
 		case 3:// 3 - large spray can
 			mouse_button_held = TRUE;
+			if(!delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				delimit_undo_on_mouse_up=true;
+			}
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,4,(option_hit != 0) ? 0 : 1,1);
 				ticks_to_wait = DENSE_TICKS;
@@ -1564,6 +1568,10 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			break;
 		case 4:// 4 - small spray can
 			mouse_button_held = TRUE;
+			if(!delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				delimit_undo_on_mouse_up=true;
+			}
 			if (current_drawing_mode == 2){
 				change_circle_height(spot_hit,2,(option_hit != 0) ? 0 : 1,1);
 				ticks_to_wait = DENSE_TICKS;
@@ -1576,11 +1584,12 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 		case 31: // 31 - place west entrance 
 		case 32: // 32 - place south entrance 
 		case 33: // 33 - place east entrance
+			pushUndoStep(new Undo::TownEntrancePointLocationChange(spot_hit, town.start_locs[overall_mode - 30], overall_mode - 30));
 			town.start_locs[overall_mode - 30].x = spot_hit.x; 
 			town.start_locs[overall_mode - 30].y = spot_hit.y; 
 			reset_drawing_mode(); 
 			break;		
-		case 40: // 40 - select instanc
+		case 40: // 40 - select instance
 			//TODO: this block is enormous; it should be its own function
 			if(editing_town){
 				SelectionType::SelectionType_e which_type=selected_object_type;
@@ -1855,7 +1864,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			if (editing_town == TRUE) {
 				for (x = 0; x < 15; x++){
 					if ((town.sign_locs[x].x == spot_hit.x) && (town.sign_locs[x].y == spot_hit.y)) {
-						edit_sign(x);
+						edit_sign(x,true);
 						x = 30;
 					}
 				}
@@ -1865,7 +1874,8 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 						if (town.sign_locs[x].x < 0) {
 							town.sign_locs[x].x = spot_hit.x;
 							town.sign_locs[x].y = spot_hit.y;
-							edit_sign(x);
+							edit_sign(x,false);
+							pushUndoStep(new Undo::CreateSign(x,spot_hit,town.sign_text[x],true));
 							x = 30;
 						}
 					}
@@ -1879,7 +1889,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			if (editing_town == FALSE) {
 				for (x = 0; x < 8; x++){
 					if ((current_terrain.sign_locs[x].x == spot_hit.x) && (current_terrain.sign_locs[x].y == spot_hit.y)) {
-						edit_sign(x);
+						edit_sign(x,true);
 						x = 30;
 					}
 				}
@@ -1889,7 +1899,8 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 						if (current_terrain.sign_locs[x].x < 0) {
 							current_terrain.sign_locs[x].x = spot_hit.x;
 							current_terrain.sign_locs[x].y = spot_hit.y;
-							edit_sign(x);
+							edit_sign(x,false);
+							pushUndoStep(new Undo::CreateSign(x,spot_hit,current_terrain.sign_text[x],true));
 							x = 30;
 						}
 					}
@@ -1898,7 +1909,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 					give_error("Either this space is not a sign, or you have already placed too many signs on this level.","",0);
 			}
 			reset_drawing_mode(); 
-			break;		
+			break;
 		case 60: // 60 - wandering monster pts
 			if (mouse_button_held == TRUE)
 				break;
@@ -1945,6 +1956,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				reset_drawing_mode(); 
 			break;		
 		case 67: // 67 - clean space
+			pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 			take_blocked(spot_hit.x,spot_hit.y); 
 			take_force_barrier(spot_hit.x,spot_hit.y); 
 			take_fire_barrier(spot_hit.x,spot_hit.y); 
@@ -1956,6 +1968,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			for (i = 0; i < 8; i++){
 				take_sfx(spot_hit.x,spot_hit.y,i);
 			}
+			pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 			if(!object_sticky_draw)
 				reset_drawing_mode(); 
 			break;		
@@ -1974,11 +1987,13 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				reset_drawing_mode();			
 			break;
 		case 71: //set outdoor start pt
+			pushUndoStep(new Undo::ScenStartLocationOutdoorChange(spot_hit,scenario.start_where_in_outdoor_section,cur_out,scenario.what_outdoor_section_start_in));
 			scenario.what_outdoor_section_start_in = cur_out;
 			scenario.start_where_in_outdoor_section = spot_hit;
 			reset_drawing_mode();
 			break;		
 		case 72: //set town start pt
+			pushUndoStep(new Undo::ScenStartLocationTownChange(spot_hit,scenario.what_start_loc_in_town,cur_town,scenario.start_in_what_town));
 			scenario.start_in_what_town = cur_town;
 			scenario.what_start_loc_in_town = spot_hit;
 			reset_drawing_mode();
@@ -2017,10 +2032,13 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 			current_terrain_drawn=ter_in_spot;
 			break;
 		case 7://paintbucket
+			//flood fill is recursive, so to avoid lots of extra nested groups, handle undo grouping from outside
+			pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 			if(current_drawing_mode==0)
 				flood_fill_floor(current_floor_drawn,floor_in_spot,spot_hit.x,spot_hit.y);
 			else if(current_drawing_mode==1)
 				flood_fill_terrain(current_terrain_drawn,ter_in_spot,spot_hit.x,spot_hit.y);
+			pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 			break;
 	}
 				
@@ -2056,25 +2074,27 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 							town.special_rects[i] = working_rect;
 							selected_object_type=SelectionType::SpecialEncounter;
 							selected_object_number=i;
-							i = 500;
+							pushUndoStep(new Undo::CreateSpecialEncounter(i,town.special_rects[i],town.spec_id[i],true));
+							i = NUM_TOWN_PLACED_SPECIALS+1;
 						}
 					}
-					if (i < 500) {
+					if(i == NUM_TOWN_PLACED_SPECIALS) {
 						give_error("Each town can have at most 60 locations with special encounters. You'll need to erase some special encounters before you can place more.","",0);
 						return;			
 					}
 				}
 				if (editing_town == FALSE) {
-					for (i = 0; i < 30; i++){
+					for (i = 0; i < NUM_OUT_PLACED_SPECIALS; i++){
 						if (current_terrain.spec_id[i] < 0) {
 							current_terrain.spec_id[i] = i+10;//edit_special_num(0,i);
 							current_terrain.special_rects[i] = working_rect;
 							selected_object_type=SelectionType::SpecialEncounter;
 							selected_object_number=i;
-							i = 500;
+							pushUndoStep(new Undo::CreateSpecialEncounter(i,current_terrain.special_rects[i],current_terrain.spec_id[i],true));
+							i = NUM_OUT_PLACED_SPECIALS+1;
 						}
 					}
-					if (i < 500) {
+					if (i == NUM_OUT_PLACED_SPECIALS) {
 						give_error("Each section can have at most 30 locations with special encounters. You'll need to erase some special encounters before you can place more.","",0);
 						return;			
 					}
@@ -2145,16 +2165,51 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 				break;
 			case 25: //redraw special enc
 				if(selected_object_type==SelectionType::SpecialEncounter && selected_object_number<(editing_town?NUM_TOWN_PLACED_SPECIALS:NUM_OUT_PLACED_SPECIALS)){
-					if(editing_town)
+					if(editing_town){
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+						if(working_rect.top!=town.special_rects[selected_object_number].top)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.top, town.special_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+						if(working_rect.bottom!=town.special_rects[selected_object_number].bottom)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.bottom, town.special_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+						if(working_rect.left!=town.special_rects[selected_object_number].left)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.left, town.special_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+						if(working_rect.right!=town.special_rects[selected_object_number].right)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.right, town.special_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+						
 						town.special_rects[selected_object_number] = working_rect;
-					else
+					}
+					else{ //outdoors
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+						if(working_rect.top!=current_terrain.special_rects[selected_object_number].top)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.top, current_terrain.special_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+						if(working_rect.bottom!=current_terrain.special_rects[selected_object_number].bottom)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.bottom, current_terrain.special_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+						if(working_rect.left!=current_terrain.special_rects[selected_object_number].left)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.left, current_terrain.special_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+						if(working_rect.right!=current_terrain.special_rects[selected_object_number].right)
+							pushUndoStep(new Undo::SpecialEncounterRectChange(working_rect.right, current_terrain.special_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+						
 						current_terrain.special_rects[selected_object_number] = working_rect;
+					}
 				}
 				set_tool(40); //selection
 				return;
 				break;
 			case 26: //redraw town entrance
 				if(selected_object_type==SelectionType::TownEntrance && selected_object_number<NUM_OUT_TOWN_ENTRANCES){
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+					if(working_rect.top!=current_terrain.exit_rects[selected_object_number].top)
+						pushUndoStep(new Undo::TownEntranceRectChange(working_rect.top, current_terrain.exit_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+					if(working_rect.bottom!=current_terrain.exit_rects[selected_object_number].bottom)
+						pushUndoStep(new Undo::TownEntranceRectChange(working_rect.bottom, current_terrain.exit_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+					if(working_rect.left!=current_terrain.exit_rects[selected_object_number].left)
+						pushUndoStep(new Undo::TownEntranceRectChange(working_rect.left, current_terrain.exit_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+					if(working_rect.right!=current_terrain.exit_rects[selected_object_number].right)
+						pushUndoStep(new Undo::TownEntranceRectChange(working_rect.right, current_terrain.exit_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+					
 					current_terrain.exit_rects[selected_object_number] = working_rect;
 				}
 				set_tool(40); //selection
@@ -2176,7 +2231,7 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 }
 
 void reset_drawing_mode(){
-	//TODO: what's the point of this secton? Is it just to cause redrawing?
+	//TODO: what's the point of this section? Is it just to cause redrawing?
 	if(current_drawing_mode == 0)
 		set_new_floor(current_floor_drawn);
 	else
@@ -2207,6 +2262,7 @@ void swap_terrain()
 	if(a < 0)
 		return;
 	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	int changingContainers=(scen_data.scen_terrains[b].special==40)-(scen_data.scen_terrains[a].special==40);
 	
 	for(i = 0; i < ((editing_town) ? max_zone_dim[town_type] : 48); i++){
@@ -2221,7 +2277,7 @@ void swap_terrain()
 					}
 					else 
 						current_terrain.terrain[i][j] = b;
-					appendChangeToLatestStep(new drawingChange(i,j,b,a,2));
+					pushUndoStep(new Undo::TerrainChange(i,j,b,a));
 				}
 			}
 			else{ //replace floor
@@ -2231,11 +2287,12 @@ void swap_terrain()
 						t_d.floor[i][j] = b;
 					else 
 						current_terrain.floor[i][j] = b;
-					appendChangeToLatestStep(new drawingChange(i,j,b,a,1));
+					pushUndoStep(new Undo::FloorChange(i,j,b,a));
 				}
 			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 //changes the current tool mode
@@ -2951,6 +3008,7 @@ void change_circle_height(location center,short radius,short lower_or_raise,shor
 //This is a scan-line flood-fill algorithm to replace all connected spaces of old_floor with new_floor
 //squares that touch corners are not considered connected
 int flood_fill_floor(short new_floor, short old_floor, int x, int y){
+	//flood fill is recursive, so to avoid lots of extra nested groups, handle undo grouping from outside
 	int minx=x, maxx=x;
 	if(floors_match(new_floor,old_floor))
 		return(-1);
@@ -3028,6 +3086,7 @@ int flood_fill_floor(short new_floor, short old_floor, int x, int y){
 }
 
 int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y){
+	//flood fill is recursive, so to avoid lots of extra nested groups, handle undo grouping from outside
 	int minx=x, maxx=x;
 	int changingContainers=(scen_data.scen_terrains[new_terrain].special==40)-(scen_data.scen_terrains[old_terrain].special==40);
 	if(new_terrain==old_terrain)
@@ -3066,9 +3125,9 @@ int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y){
 			t_d.terrain[i][y]=new_terrain;
 		else
 			current_terrain.terrain[i][y]=new_terrain;
+		pushUndoStep(new Undo::TerrainChange(i,y,new_terrain,old_terrain));
 		if(editing_town && changingContainers)
 			set_items_containment(i, y, changingContainers);
-		appendChangeToLatestStep(new drawingChange(i,y,new_terrain,old_terrain,2));
 	}
 	if(y>0){
 		for(i=minx; i<=maxx;i++){
@@ -3104,7 +3163,7 @@ void change_rect_terrain(Rect r,short terrain_type,short probability,Boolean hol
 {
 	location l;
 	short i,j;
-	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = 0; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); i++){
 		for (j = 0; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); j++) {
 			l.x = i;
@@ -3115,6 +3174,7 @@ void change_rect_terrain(Rect r,short terrain_type,short probability,Boolean hol
 				set_terrain(l,terrain_type);
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 //this function just copies the indicated rectangular area of the current zone onto the clipboard
@@ -3155,41 +3215,43 @@ void paste_terrain(location l,Boolean option_hit,Boolean alt_hit,Boolean ctrl_hi
 	Boolean pasteF = (!option_hit && !alt_hit && !ctrl_hit) || alt_hit;
 	Boolean pasteT = (!option_hit && !alt_hit && !ctrl_hit) || ctrl_hit;
 	Boolean pasteH = (!option_hit && !alt_hit && !ctrl_hit) || option_hit;
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = l.x; (i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)) && (i<=(l.x+clipboardSize.right)); i++){
 		for (j = l.y; (j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)) && (j<=(l.y+clipboardSize.bottom)); j++) {
 			x = i-l.x;
 			y = j-l.y;
 			if(editing_town){
 				if(pasteT){
+					pushUndoStep(new Undo::TerrainChange(i,j,clipboard.terrain[i-l.x][j-l.y],t_d.terrain[i][j]));
 					set_items_containment(i,j);
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.terrain[x][y],t_d.terrain[i][j],2));
 					t_d.terrain[i][j]=clipboard.terrain[i-l.x][j-l.y];
 				}
 				if(pasteF){
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.floor[x][y],t_d.floor[i][j],1));
+					pushUndoStep(new Undo::FloorChange(i,j,clipboard.floor[i-l.x][j-l.y],t_d.floor[i][j]));
 					t_d.floor[i][j]=clipboard.floor[i-l.x][j-l.y];
 				}
 				if(pasteH){
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.height[x][y],t_d.height[i][j],3));
+					pushUndoStep(new Undo::HeightChange(i,j,clipboard.height[i-l.x][j-l.y],t_d.height[i][j]));
 					t_d.height[i][j]=clipboard.height[i-l.x][j-l.y];
 				}
 			}
 			else{
-				if(pasteF){
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.terrain[x][y],current_terrain.terrain[i][j],2));
+				if(pasteT){
+					pushUndoStep(new Undo::TerrainChange(i,j,clipboard.terrain[x][y],current_terrain.terrain[i][j]));
 					current_terrain.terrain[i][j]=clipboard.terrain[x][y];
 				}
-				if(pasteT){
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.floor[x][y],current_terrain.floor[i][j],1));
+				if(pasteF){
+					pushUndoStep(new Undo::FloorChange(i,j,clipboard.floor[x][y],current_terrain.floor[i][j]));
 					current_terrain.floor[i][j]=clipboard.floor[x][y];
 				}
 				if(pasteH){
-					appendChangeToLatestStep(new drawingChange(i,j,clipboard.height[i-l.x][j-l.y],current_terrain.height[i][j],3));
+					pushUndoStep(new Undo::HeightChange(i,j,clipboard.height[x][y],current_terrain.height[i][j]));
 					current_terrain.height[i][j]=clipboard.height[x][y];
 				}
 			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 /*
@@ -3281,10 +3343,15 @@ void set_terrain(location l,short terrain_type)
 	}
 	
 	l2 = l;
+	if(terrain_type!=old_terrain){
+		if(current_drawing_mode==0)
+			pushUndoStep(new Undo::FloorChange(i,j,terrain_type,old_terrain));
+		else
+			pushUndoStep(new Undo::TerrainChange(i,j,terrain_type,old_terrain));
+	}
 	int changingContainers=(scen_data.scen_terrains[terrain_type].special==40)-(scen_data.scen_terrains[old_terrain].special==40);
 	if(changingContainers)
 		set_items_containment(i,j,changingContainers);
-	appendChangeToLatestStep(new drawingChange(i,j,terrain_type,old_terrain,current_drawing_mode==0?1:2));
 	
 	adjust_space(l);
 	l.x--;
@@ -3310,66 +3377,82 @@ void set_terrain(location l,short terrain_type)
 	if(current_drawing_mode>0){//if we just placed a floor, it can't be a sign
 		Boolean sign_error_received = FALSE;
 		ter_info = scen_data.scen_terrains[terrain_type];
-		if(ter_info.special == 39){ // town mode, is a sign
-			if(editing_town == TRUE){ /// it's a sign
-				for(i = 0; i < 15; i++){ // find is this sign has already been assigned
-					if(which_sign < 0){
-						if((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y))
-							which_sign = i;
+		if(ter_info.special == 39){ // it's a sign
+			if(editing_town == TRUE){ // town mode, is a sign
+				for(i = 0; i < 15; i++){ // find outwhether this sign has already been assigned
+					if((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y)){
+						which_sign = i;
+						break;
 					}
 				}
-				if(which_sign < 0) { // if not assigned, pick a new sign
+				if(which_sign>=0){ //found an existing sign
+					edit_sign(which_sign,true);
+					sign_error_received = FALSE;
+				}
+				else{ // if not assigned; pick a new sign
 					for(i = 0; i < 15; i++){
 						if(town.sign_locs[i].x == kNO_SIGN)
 							which_sign = i;
 					}
-				}
-				
-				if(which_sign >= 0){
-					town.sign_locs[which_sign] = l;
-					edit_sign(which_sign);
-					sign_error_received = FALSE;
-				}
-				else{
-					if(sign_error_received == FALSE){
-						give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
-						sign_error_received = TRUE;
+					if(which_sign >= 0){
+						town.sign_locs[which_sign] = l;
+						edit_sign(which_sign,false);
+						pushUndoStep(new Undo::CreateSign(which_sign,l,town.sign_text[which_sign],true));
+						sign_error_received = FALSE;
+					}
+					else{
+						if(sign_error_received == FALSE){
+							give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
+							sign_error_received = TRUE;
+						}
+					}
+					if(delimit_undo_on_mouse_up){
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+						delimit_undo_on_mouse_up=false;
 					}
 				}
-				mouse_button_held = FALSE;
 			}
 			if(editing_town == FALSE){ // outdoor mode, it's a sign
 				for(i = 0; i < 8; i++){ // find is this sign has already been assigned
-					if(which_sign < 0){
-						if((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y))
-							which_sign = i;
+					if((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y)){
+						which_sign = i;
+						break;
 					}
 				}
-				if(which_sign < 0){ // if not assigned, pick a new sign
+				if(which_sign>=0){ //found an existing sign
+					edit_sign(which_sign,true);
+					sign_error_received = FALSE;
+				}
+				else{ // if not assigned; pick a new sign
 					for(i = 0; i < 8; i++){
 						if(current_terrain.sign_locs[i].x == kNO_SIGN)
 							which_sign = i;
 					}
-				}
-				
-				if(which_sign >= 0){
-					current_terrain.sign_locs[which_sign] = l;
-					edit_sign(which_sign);
-					sign_error_received = FALSE;
-				}
-				else{
-					if(sign_error_received == FALSE){
-						give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
-						sign_error_received = TRUE;
+					if(which_sign >= 0){
+						current_terrain.sign_locs[which_sign] = l;
+						edit_sign(which_sign,false);
+						pushUndoStep(new Undo::CreateSign(which_sign,l,current_terrain.sign_text[which_sign],true));
+						sign_error_received = FALSE;
+					}
+					else{
+						if(sign_error_received == FALSE){
+							give_error("Towns can have at most 15 signs. Outdoor sections can have at most 8. When the party looks at this sign, they will get no message.","",0);
+							sign_error_received = TRUE;
+						}
+					}
+					if(delimit_undo_on_mouse_up){
+						pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+						delimit_undo_on_mouse_up=false;
 					}
 				}
-				mouse_button_held = FALSE;
 			}
+			mouse_button_held = FALSE;
 		}
 		else { // not a sign, so delete any signs placed here
 			if (editing_town == TRUE) {
-				for (i = 0; i < 15; i++){ // find is this spot has a sign atrtached to it, and erase it
+				for (i = 0; i < 15; i++){ // find is this spot has a sign attached to it, and erase it
 					if ((town.sign_locs[i].x == l.x) && (town.sign_locs[i].y == l.y)) {
+						pushUndoStep(new Undo::CreateSign(i,l,town.sign_text[i],false));
 						town.sign_locs[i].x = town.sign_locs[i].y = kNO_SIGN;
 						town.sign_text[i][0] = 0;
 					}
@@ -3378,6 +3461,7 @@ void set_terrain(location l,short terrain_type)
 			if (editing_town == FALSE) {
 				for (i = 0; i < 8; i++){// find is this spot has a sign attached to it, and erase it
 					if ((current_terrain.sign_locs[i].x == l.x) && (current_terrain.sign_locs[i].y == l.y)) {
+						pushUndoStep(new Undo::CreateSign(i,l,current_terrain.sign_text[i],false));
 						current_terrain.sign_locs[i].x = current_terrain.sign_locs[i].y = kNO_SIGN;
 						current_terrain.sign_text[i][0] = 0;
 					}
@@ -3476,9 +3560,8 @@ Boolean town_fix_grass_rocks(location l)
 		t_d.floor[i][j] = new_ter_to_place; 				
 	}
 	
-	if(store_ter!=t_d.floor[i][j]){
-		appendChangeToLatestStep(new drawingChange(i,j,t_d.floor[i][j],store_ter,1));
-	}
+	if(store_ter!=t_d.floor[i][j])
+		pushUndoStep(new Undo::FloorChange(i,j,t_d.floor[i][j],store_ter));
 	return(!(store_ter == t_d.floor[i][j]));
 }
 
@@ -3554,9 +3637,8 @@ Boolean out_fix_grass_rocks(location l)
 		
 		current_terrain.floor[i][j] = new_ter_to_place; 				
 	}
-	if(store_ter!=current_terrain.floor[i][j]){
-		appendChangeToLatestStep(new drawingChange(i,j,current_terrain.floor[i][j],store_ter,1));
-	}
+	if(store_ter!=current_terrain.floor[i][j])
+		pushUndoStep(new Undo::FloorChange(i,j,current_terrain.floor[i][j],store_ter));
 	return(store_ter != current_terrain.floor[i][j]);
 }
 
@@ -3633,9 +3715,8 @@ Boolean town_fix_rocks_water(location l)
 		}
 		t_d.floor[i][j] = new_ter_to_place; 
 	}
-	if(store_ter!=t_d.floor[i][j]){
-		appendChangeToLatestStep(new drawingChange(i,j,t_d.floor[i][j],store_ter,1));
-	}
+	if(store_ter!=t_d.floor[i][j])
+		pushUndoStep(new Undo::FloorChange(i,j,t_d.floor[i][j],store_ter));
 	return(store_ter != t_d.floor[i][j]);
 }
 
@@ -3702,9 +3783,8 @@ Boolean out_fix_rocks_water(location l)
 		}
 		current_terrain.floor[i][j] = new_ter_to_place; 
 	}
-	if(store_ter!=current_terrain.floor[i][j]){
-		appendChangeToLatestStep(new drawingChange(i,j,current_terrain.floor[i][j],store_ter,1));
-	}
+	if(store_ter!=current_terrain.floor[i][j])
+		pushUndoStep(new Undo::FloorChange(i,j,current_terrain.floor[i][j],store_ter));
 	return(store_ter != current_terrain.floor[i][j]);
 }
 
@@ -3786,7 +3866,7 @@ Boolean town_fix_hills(location l)
 		int changingContainers=(scen_data.scen_terrains[t_d.terrain[lx][ly]].special==40)-(scen_data.scen_terrains[store_ter].special==40);
 		if(changingContainers)
 			set_items_containment(lx,ly,changingContainers);
-		appendChangeToLatestStep(new drawingChange(lx,ly,t_d.terrain[lx][ly],store_ter,2));
+		pushUndoStep(new Undo::TerrainChange(lx,ly,t_d.terrain[lx][ly],store_ter));
 	}
 	return(store_ter != t_d.terrain[lx][ly]);
 }
@@ -3867,7 +3947,7 @@ Boolean out_fix_hills(location l)
 		current_terrain.terrain[lx][ly] = 0;
 	//record any change made to the undo list
 	if(store_ter != current_terrain.terrain[lx][ly])
-		appendChangeToLatestStep(new drawingChange(lx,ly,current_terrain.terrain[lx][ly],store_ter,2));
+		pushUndoStep(new Undo::TerrainChange(lx,ly,current_terrain.terrain[lx][ly],store_ter));
 	return(store_ter != current_terrain.terrain[lx][ly]);
 }
 
@@ -3997,11 +4077,11 @@ void change_height(location l,short lower_or_raise)
 		return ;
 	
 	if (editing_town) {
-		appendChangeToLatestStep(new drawingChange(i,j,minmax(1,100,(lower_or_raise == 0) ? (t_d.height[i][j] - 1) : (t_d.height[i][j] + 1)),t_d.height[i][j],3));
+		pushUndoStep(new Undo::HeightChange(i,j,minmax(1,100,(lower_or_raise == 0) ? (t_d.height[i][j] - 1) : (t_d.height[i][j] + 1)),t_d.height[i][j]));
 		t_d.height[i][j] = minmax(1,100,(lower_or_raise == 0) ? (t_d.height[i][j] - 1) : (t_d.height[i][j] + 1));
 	}
 	else{
-		appendChangeToLatestStep(new drawingChange(i,j,minmax(1,100,(lower_or_raise == 0) ? (current_terrain.height[i][j] - 1) : (current_terrain.height[i][j] + 1)),current_terrain.height[i][j],3));
+		pushUndoStep(new Undo::HeightChange(i,j,minmax(1,100,(lower_or_raise == 0) ? (current_terrain.height[i][j] - 1) : (current_terrain.height[i][j] + 1)),current_terrain.height[i][j]));
 		current_terrain.height[i][j] = minmax(1,100,(lower_or_raise == 0) ? (current_terrain.height[i][j] - 1) : (current_terrain.height[i][j] + 1));
 	}
 	
@@ -4094,7 +4174,7 @@ void recursive_adjust_space_height_lower(location l)
 			t_d.height[i][j] = height;
 		else 
 			current_terrain.height[i][j] = height;
-		appendChangeToLatestStep(new drawingChange(i,j,height,old_height,3));
+		pushUndoStep(new Undo::HeightChange(i,j,height,old_height));
 		//if (editing_town == TRUE)
 		//	else out_fix_hills(l);
 		recursive_hill_down_depth++;
@@ -4159,7 +4239,7 @@ void recursive_adjust_space_height_raise(location l)
 			t_d.height[i][j] = height;
 		else 
 			current_terrain.height[i][j] = height;
-		appendChangeToLatestStep(new drawingChange(i,j,height,old_height,3));
+		pushUndoStep(new Undo::HeightChange(i,j,height,old_height));
 		//if (editing_town == TRUE)
 		//	else out_fix_hills(l);
 		recursive_hill_up_depth++;
@@ -4354,23 +4434,37 @@ void delete_selected_instance(){
 				beep();
 				break;
 			case SelectionType::Creature:
-				if(selected_object_number<NUM_TOWN_PLACED_CREATURES)
+				if(selected_object_number<NUM_TOWN_PLACED_CREATURES){
+					pushUndoStep(new Undo::CreateCreature(selected_object_number,
+														  town.creatures[selected_object_number],false));
 					town.creatures[selected_object_number].number = -1;
+				}
 				break;
 			case SelectionType::Item:
-				if(selected_object_number<NUM_TOWN_PLACED_ITEMS)
+				if(selected_object_number<NUM_TOWN_PLACED_ITEMS){
+					pushUndoStep(new Undo::CreateItem(selected_object_number,
+													  town.preset_items[selected_object_number],false));
 					town.preset_items[selected_object_number].which_item = -1;
+				}
 				break;
 			case SelectionType::TerrainScript:
-				if(selected_object_number<NUM_TER_SCRIPTS)
+				if(selected_object_number<NUM_TER_SCRIPTS){
+					pushUndoStep(new Undo::CreateTerrainScript(selected_object_number,
+															   town.ter_scripts[selected_object_number],false));
 					town.ter_scripts[selected_object_number].exists = FALSE;
+				}
 				break;
 			case SelectionType::Waypoint:
-				if(selected_object_number<NUM_WAYPOINTS)
+				if(selected_object_number<NUM_WAYPOINTS){
+					pushUndoStep(new Undo::CreateWaypoint(selected_object_number,town.waypoints[selected_object_number],false));
 					town.waypoints[selected_object_number].x = -1;
+				}
 				break;
 			case SelectionType::SpecialEncounter:
 				if(selected_object_number<NUM_TOWN_PLACED_SPECIALS){
+					pushUndoStep(new Undo::CreateSpecialEncounter(selected_object_number,
+																  town.special_rects[selected_object_number],
+																  town.spec_id[selected_object_number],false));
 					town.spec_id[selected_object_number] = kNO_TOWN_SPECIALS;
 					SetRect(&town.special_rects[selected_object_number],-1,-1,-1,-1);
 				}
@@ -4383,7 +4477,9 @@ void delete_selected_instance(){
 				if(selected_object_number<15){
 					real_drawing_mode = current_drawing_mode;
 					current_drawing_mode = 1;
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 					set_terrain(town.sign_locs[selected_object_number],0);
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 					current_drawing_mode = real_drawing_mode;
 				}
 				break;
@@ -4398,6 +4494,9 @@ void delete_selected_instance(){
 				break;
 			case SelectionType::SpecialEncounter:
 				if(selected_object_number<NUM_OUT_PLACED_SPECIALS){
+					pushUndoStep(new Undo::CreateSpecialEncounter(selected_object_number,
+																  current_terrain.special_rects[selected_object_number],
+																  current_terrain.spec_id[selected_object_number],false));
 					current_terrain.spec_id[selected_object_number] = kNO_OUT_SPECIALS;
 					SetRect(&current_terrain.special_rects[selected_object_number],-1,-1,-1,-1);
 				}
@@ -4408,6 +4507,7 @@ void delete_selected_instance(){
 				break;
 			case SelectionType::TownEntrance:
 				if(selected_object_number<NUM_OUT_TOWN_ENTRANCES){
+					pushUndoStep(new Undo::CreateTownEntrance(selected_object_number,current_terrain.exit_rects[selected_object_number],current_terrain.exit_dests[selected_object_number],false));
 					current_terrain.exit_dests[selected_object_number] = kNO_OUT_TOWN_ENTRANCE;
 					current_terrain.exit_rects[selected_object_number].right = 0;
 				}
@@ -4416,7 +4516,9 @@ void delete_selected_instance(){
 				if(selected_object_number<8){
 					real_drawing_mode = current_drawing_mode;
 					current_drawing_mode = 1;
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 					set_terrain(current_terrain.sign_locs[selected_object_number],0);
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 					current_drawing_mode = real_drawing_mode;
 				}
 				break;
@@ -4666,6 +4768,7 @@ void shift_selected_instance(short dx,short dy){
 				loc.y += dy;
 				if(!loc_in_active_area(loc))
 					return;
+				pushUndoStep(new Undo::CreatureLocationChangeStep(loc, town.creatures[selected_object_number].start_loc, selected_object_number));
 				town.creatures[selected_object_number].start_loc = loc;
 			}
 			break;
@@ -4677,15 +4780,34 @@ void shift_selected_instance(short dx,short dy){
 				loc.y += dy;
 				if(!loc_in_active_area(loc))
 					return;
+				//because there may also be container shenanigans let's just make an undo group unconditionally
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				pushUndoStep(new Undo::ItemLocationChangeStep(loc, town.preset_items[selected_object_number].item_loc, selected_object_number));
 				town.preset_items[selected_object_number].item_loc =loc;
 				shift_item_locs(loc);
 				
 				if(wasContainer!=is_container(loc.x,loc.y)){
-					if(wasContainer) //the item was in a container and moved out
-						town.preset_items[selected_object_number].properties&=~item_type::contained_bit;
-					else //the item was not in a container, and moved into one
-						town.preset_items[selected_object_number].properties|=item_type::contained_bit;
+					if(wasContainer){ //the item was in a container and moved out
+						//although the item was on the same space as a container, it might have been manually marked uncontained
+						unsigned char new_properties=town.preset_items[selected_object_number].properties&~item_type::contained_bit;
+						if(new_properties!=town.preset_items[selected_object_number].properties){
+							pushUndoStep(new Undo::MiscItemPropertyChange(new_properties, town.preset_items[selected_object_number].properties, Undo::MiscItemPropertyChange::PROPERTY_MASK, selected_object_number));
+							town.preset_items[selected_object_number].properties=new_properties;
+							drawToolPalette(); //need to update display of the item's properties
+						}
+					}
+					else{ //the item was not in a container, and moved into one
+						//there really shouldn't be any items marked contained but not on spaces with containers, 
+						//but we don't currently seem to enforce that, so treat this case like the previous one
+						unsigned char new_properties=town.preset_items[selected_object_number].properties|item_type::contained_bit;
+						if(new_properties!=town.preset_items[selected_object_number].properties){
+							pushUndoStep(new Undo::MiscItemPropertyChange(new_properties, town.preset_items[selected_object_number].properties, Undo::MiscItemPropertyChange::PROPERTY_MASK, selected_object_number));
+							town.preset_items[selected_object_number].properties=new_properties;
+							drawToolPalette(); //need to update display of the item's properties
+						}
+					}
 				}
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 			}
 			break;
 		case SelectionType::TerrainScript:
@@ -4695,6 +4817,7 @@ void shift_selected_instance(short dx,short dy){
 				loc.y += dy;
 				if(!loc_in_active_area(loc))
 					return;
+				pushUndoStep(new Undo::TerrainScriptLocationChangeStep(loc, town.ter_scripts[selected_object_number].loc, selected_object_number));
 				town.ter_scripts[selected_object_number].loc = loc;
 			}
 			break;
@@ -4705,6 +4828,7 @@ void shift_selected_instance(short dx,short dy){
 				loc.y += dy;
 				if(!loc_in_active_area(loc))
 					return;
+				pushUndoStep(new Undo::WaypointLocationChangeStep(loc, town.waypoints[selected_object_number], selected_object_number));
 				town.waypoints[selected_object_number] = loc;
 			}
 			break;
@@ -4715,6 +4839,18 @@ void shift_selected_instance(short dx,short dy){
 					OffsetRect(&current_rect,dx,dy);
 					if(!r1_in_r2(current_rect, town.in_town_rect))
 						return;
+					
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+					if(current_rect.top!=town.special_rects[selected_object_number].top)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.top, town.special_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+					if(current_rect.bottom!=town.special_rects[selected_object_number].bottom)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.bottom, town.special_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+					if(current_rect.left!=town.special_rects[selected_object_number].left)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.left, town.special_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+					if(current_rect.right!=town.special_rects[selected_object_number].right)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.right, town.special_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+					
 					town.special_rects[selected_object_number]=current_rect;
 				}
 			}
@@ -4724,6 +4860,18 @@ void shift_selected_instance(short dx,short dy){
 					OffsetRect(&current_rect,dx,dy);
 					if(!r1_in_r2(current_rect, outdoor_bounds))
 						return;
+					
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+					if(current_rect.top!=current_terrain.special_rects[selected_object_number].top)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.top, current_terrain.special_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+					if(current_rect.bottom!=current_terrain.special_rects[selected_object_number].bottom)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.bottom, current_terrain.special_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+					if(current_rect.left!=current_terrain.special_rects[selected_object_number].left)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.left, current_terrain.special_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+					if(current_rect.right!=current_terrain.special_rects[selected_object_number].right)
+						pushUndoStep(new Undo::SpecialEncounterRectChange(current_rect.right, current_terrain.special_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+					
 					current_terrain.special_rects[selected_object_number]=current_rect;
 				}
 			}
@@ -4735,6 +4883,18 @@ void shift_selected_instance(short dx,short dy){
 					OffsetRect(&current_rect,dx,dy);
 					if(!r1_in_r2(current_rect, town.in_town_rect))
 						return;
+					
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+					if(current_rect.top!=town.room_rect[selected_object_number].top)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.top, town.room_rect[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+					if(current_rect.bottom!=town.room_rect[selected_object_number].bottom)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.bottom, town.room_rect[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+					if(current_rect.left!=town.room_rect[selected_object_number].left)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.left, town.room_rect[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+					if(current_rect.right!=town.room_rect[selected_object_number].right)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.right, town.room_rect[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+					
 					town.room_rect[selected_object_number]=current_rect;
 				}
 			}
@@ -4744,6 +4904,18 @@ void shift_selected_instance(short dx,short dy){
 					OffsetRect(&current_rect,dx,dy);
 					if(!r1_in_r2(current_rect, outdoor_bounds))
 						return;
+					
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+					if(current_rect.top!=current_terrain.info_rect[selected_object_number].top)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.top, current_terrain.info_rect[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+					if(current_rect.bottom!=current_terrain.info_rect[selected_object_number].bottom)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.bottom, current_terrain.info_rect[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+					if(current_rect.left!=current_terrain.info_rect[selected_object_number].left)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.left, current_terrain.info_rect[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+					if(current_rect.right!=current_terrain.info_rect[selected_object_number].right)
+						pushUndoStep(new Undo::DescriptionAreaRectChange(current_rect.right, current_terrain.info_rect[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+					pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+					
 					current_terrain.info_rect[selected_object_number]=current_rect;
 				}
 			}
@@ -4754,6 +4926,18 @@ void shift_selected_instance(short dx,short dy){
 				OffsetRect(&current_rect,dx,dy);
 				if(!r1_in_r2(current_rect, outdoor_bounds))
 					return;
+				
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+				if(current_rect.top!=current_terrain.exit_rects[selected_object_number].top)
+					pushUndoStep(new Undo::TownEntranceRectChange(current_rect.top, current_terrain.exit_rects[selected_object_number].top, Undo::RectChangeStep::TOP, selected_object_number));
+				if(current_rect.bottom!=current_terrain.exit_rects[selected_object_number].bottom)
+					pushUndoStep(new Undo::TownEntranceRectChange(current_rect.bottom, current_terrain.exit_rects[selected_object_number].bottom, Undo::RectChangeStep::BOTTOM, selected_object_number));
+				if(current_rect.left!=current_terrain.exit_rects[selected_object_number].left)
+					pushUndoStep(new Undo::TownEntranceRectChange(current_rect.left, current_terrain.exit_rects[selected_object_number].left, Undo::RectChangeStep::LEFT, selected_object_number));
+				if(current_rect.right!=current_terrain.exit_rects[selected_object_number].right)
+					pushUndoStep(new Undo::TownEntranceRectChange(current_rect.right, current_terrain.exit_rects[selected_object_number].right, Undo::RectChangeStep::RIGHT, selected_object_number));
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+				
 				current_terrain.exit_rects[selected_object_number]=current_rect;
 			}
 			break;
@@ -4772,6 +4956,7 @@ void rotate_selected_instance(int dir)
 			facing+=4;
 		else if(facing>3)
 			facing-=4;
+		pushUndoStep(new Undo::MiscCreaturePropertyChange(facing, town.creatures[selected_object_number].facing, Undo::MiscCreaturePropertyChange::FACING, selected_object_number));
 		town.creatures[selected_object_number].facing = facing;
 		drawToolDetails();
 	}
@@ -4788,6 +4973,7 @@ void jumpToSelectedInstance(){
 	if(selected_object_type==SelectionType::None)
 		return;
 	location loc=selected_instance_location();
+	//TODO: the 2D in-bounds logic here is out of date, it needs to take into acount the curent window dimensions
 	if((cur_viewing_mode == 0 && (abs(loc.x-cen_x)>4 || abs(loc.y-cen_y)>4)) || ((cur_viewing_mode==10 || cur_viewing_mode==11) && out_of_view_3D(loc))){
 		cen_x = loc.x;
 		cen_y = loc.y;
@@ -4803,6 +4989,7 @@ void create_navpoint(location spot_hit)
 		if (town.waypoints[i].x < 0) {
 			town.waypoints[i] = spot_hit;
 			setSelection(SelectionType::Waypoint, i, false);
+			pushUndoStep(new Undo::CreateWaypoint(i,spot_hit,true));
 			return;
 		}
 	}
@@ -4816,6 +5003,7 @@ void delete_navpoint(location spot_hit)
 		if (same_point(town.waypoints[i],spot_hit)) {
 			town.waypoints[i].x = kINVAL_TOWN_LOC_X;
 			town.waypoints[i].y = kINVAL_TOWN_LOC_Y;
+			pushUndoStep(new Undo::CreateWaypoint(i,spot_hit,false));
 			return;
 		}
 	}
@@ -4831,6 +5019,7 @@ void frill_terrain()
 	if(town.external_floor_type == -1)
 		edge_correct = 1;
 	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = edge_correct; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; i++){
 		for (j = edge_correct; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48)-edge_correct; j++) {
 			old_terrain_type = terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
@@ -4870,14 +5059,23 @@ void frill_terrain()
 			if ((floor_type == 41) && (get_ran(1,1,20) < 2))
 				floor_type = 43;
 			
-			if (editing_town == TRUE)
-				t_d.terrain[i][j] = terrain_type;
-			else current_terrain.terrain[i][j] = terrain_type;
-			if (editing_town == TRUE)
-				t_d.floor[i][j] = floor_type;
-			else current_terrain.floor[i][j] = floor_type;
+			if(terrain_type!=old_terrain_type){
+				pushUndoStep(new Undo::TerrainChange(i,j,terrain_type,old_terrain_type));
+				if (editing_town == TRUE)
+					t_d.terrain[i][j] = terrain_type;
+				else
+					current_terrain.terrain[i][j] = terrain_type;
+			}
+			if(floor_type!=old_floor_type){
+				pushUndoStep(new Undo::FloorChange(i,j,floor_type,old_floor_type));
+				if (editing_town == TRUE)
+					t_d.floor[i][j] = floor_type;
+				else
+					current_terrain.floor[i][j] = floor_type;
+			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 	draw_terrain();
 }
 
@@ -4887,6 +5085,7 @@ void unfrill_terrain()
 	short terrain_type, old_terrain_type;
 	unsigned char floor_type, old_floor_type;
 	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = 0; i < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); i++){
 		for (j = 0; j < ((editing_town == TRUE) ? max_zone_dim[town_type] : 48); j++) {
 			old_terrain_type = terrain_type = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
@@ -4922,14 +5121,23 @@ void unfrill_terrain()
 			if (floor_type == 44)
 				floor_type = 41;
 			
-			if (editing_town == TRUE)
-				t_d.terrain[i][j] = terrain_type;
-			else current_terrain.terrain[i][j] = terrain_type;
-			if (editing_town == TRUE)
-				t_d.floor[i][j] = floor_type;
-			else current_terrain.floor[i][j] = floor_type;
+			if(terrain_type!=old_terrain_type){
+				pushUndoStep(new Undo::TerrainChange(i,j,terrain_type,old_terrain_type));
+				if (editing_town == TRUE)
+					t_d.terrain[i][j] = terrain_type;
+				else
+					current_terrain.terrain[i][j] = terrain_type;
+			}
+			if(floor_type!=old_floor_type){
+				pushUndoStep(new Undo::FloorChange(i,j,floor_type,old_floor_type));
+				if (editing_town == TRUE)
+					t_d.floor[i][j] = floor_type;
+				else
+					current_terrain.floor[i][j] = floor_type;
+			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 	draw_terrain();
 }
 
@@ -4973,6 +5181,7 @@ void create_new_creature(short c_to_create,location create_loc,creature_start_ty
 			if (town.creatures[i].start_attitude < 2)
 				town.creatures[i].start_attitude = 2;
 			town.creatures[i].character_id = cur_town * 100 + i;
+			pushUndoStep(new Undo::CreateCreature(i,town.creatures[i],true));
 			
 			return;
 		}	
@@ -5016,6 +5225,7 @@ Boolean create_new_item(short item_to_create,location create_loc,Boolean propert
 			if(is_container(create_loc.x, create_loc.y))
 			   town.preset_items[i].properties |= item_type::contained_bit;
 			shift_item_locs(create_loc);
+			pushUndoStep(new Undo::CreateItem(i,town.preset_items[i],true));
 			
 			return TRUE;
 		}
@@ -5056,6 +5266,7 @@ Boolean create_new_ter_script(const char *ter_script_name,location create_loc,in
 			town.ter_scripts[i].exists = TRUE;
 			strcpy(town.ter_scripts[i].script_name,ter_script_name);
 			town.ter_scripts[i].loc = create_loc;
+			pushUndoStep(new Undo::CreateTerrainScript(i,town.ter_scripts[i],true));
 			
 			return TRUE;
 		}	
@@ -5126,6 +5337,7 @@ void create_town_entry(Rect rect_hit){
 				current_terrain.exit_rects[x] = rect_hit;
 				selected_object_type=SelectionType::TownEntrance;
 				selected_object_number=x;
+				pushUndoStep(new Undo::CreateTownEntrance(selected_object_number,current_terrain.exit_rects[x],current_terrain.exit_dests[x],true));
 			}
 			return;
 		}
@@ -5142,6 +5354,8 @@ void edit_town_entry(location spot_hit){
 			if(y==-1)
 				return;//the user cancelled the action
 			if (cre(y,-1,scenario.num_towns - 1,"The town number you gave was out of range. It must be from 0 to the number of towns in the scenario - 1. ","",0) == TRUE) return;
+			if(current_terrain.exit_dests[x]!=y)
+				pushUndoStep(new Undo::TownEntranceTownChange(y,current_terrain.exit_dests[x],x));
 			current_terrain.exit_dests[x] = y;
 			return;
 		}
@@ -5154,18 +5368,20 @@ void set_rect_height(Rect r){
 	h = get_a_number(872,0,0,99);
 	if ((h < 1) || (h > 100))
 		return;
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = r.left; i < r.right + 1; i++){
 		for (j = r.top; j < r.bottom + 1; j++) {
 			if (editing_town && (t_d.height[i][j] != h)){
-				appendChangeToLatestStep(new drawingChange(i,j,h,t_d.height[i][j],3));
+				pushUndoStep(new Undo::HeightChange(i,j,h,t_d.height[i][j]));
 				t_d.height[i][j] = h;
 			}
 			else if(!editing_town && current_terrain.height[i][j] != h){
-				appendChangeToLatestStep(new drawingChange(i,j,h,current_terrain.height[i][j],3));
+				pushUndoStep(new Undo::HeightChange(i,j,h,current_terrain.height[i][j]));
 				current_terrain.height[i][j] = h;
 			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 void add_rect_height(Rect r)
@@ -5175,6 +5391,7 @@ void add_rect_height(Rect r)
 	h = get_a_number(880,0,-99,99);
 	if ((h < -100) || (h > 100))
 		return;
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = r.left; i < r.right + 1; i++){
 		for (j = r.top; j < r.bottom + 1; j++) {
 			if (editing_town){
@@ -5183,7 +5400,7 @@ void add_rect_height(Rect r)
 					newh=0;
 				else if(newh>99)
 					newh=99;
-				appendChangeToLatestStep(new drawingChange(i,j,newh,t_d.height[i][j],3));
+				pushUndoStep(new Undo::HeightChange(i,j,newh,t_d.height[i][j]));
 				t_d.height[i][j] = newh;
 			}
 			else if(!editing_town){
@@ -5192,11 +5409,12 @@ void add_rect_height(Rect r)
 					newh=0;
 				else if(newh>99)
 					newh=99;
-				appendChangeToLatestStep(new drawingChange(i,j,newh,current_terrain.height[i][j],3));
+				pushUndoStep(new Undo::HeightChange(i,j,newh,current_terrain.height[i][j]));
 				current_terrain.height[i][j] = newh;
 			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 // put a bit of terrain down without doing redrawing or anything odd and without drawing anything
@@ -5217,6 +5435,7 @@ void transform_walls(Rect theWorking_rect)
 	short i,j;
 	short ter,new_ter;
 	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = theWorking_rect.left; i <= theWorking_rect.right; i++){
 		for (j = theWorking_rect.top;j <= theWorking_rect.bottom; j++) {
 			new_ter = ter = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
@@ -5225,13 +5444,14 @@ void transform_walls(Rect theWorking_rect)
 			else if ((ter >= 38) && (ter <= 73))
 				new_ter = ter - 36;
 			if(new_ter!=ter)
-				appendChangeToLatestStep(new drawingChange(i,j,new_ter,ter,2));
+				pushUndoStep(new Undo::TerrainChange(i,j,new_ter,ter));
 			if (editing_town == TRUE)
 				t_d.terrain[i][j] = new_ter;
 			else 
 				current_terrain.terrain[i][j] = new_ter;
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 Boolean is_not_darkness_floor(short i,short j) 
@@ -5257,6 +5477,7 @@ void place_bounding_walls(Rect theWorking_rect)
 	if (theWorking_rect.bottom == ((editing_town == TRUE) ? max_zone_dim[town_type] : 48) - 1)
 		theWorking_rect.bottom = ((editing_town == TRUE) ? max_zone_dim[town_type] : 48) - 2;
 	
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
 	for (i = theWorking_rect.left; i <= theWorking_rect.right; i++){
 		for (j = theWorking_rect.top;j <= theWorking_rect.bottom; j++) {
 			ter = (editing_town == TRUE) ? t_d.terrain[i][j] : current_terrain.terrain[i][j];
@@ -5307,7 +5528,7 @@ void place_bounding_walls(Rect theWorking_rect)
 					new_ter = 5;
 				}
 				if(new_ter!=ter)
-					appendChangeToLatestStep(new drawingChange(i,j,new_ter,ter,2));
+					pushUndoStep(new Undo::TerrainChange(i,j,new_ter,ter));
 				if (editing_town)
 					t_d.terrain[i][j] = new_ter;
 				else
@@ -5315,6 +5536,7 @@ void place_bounding_walls(Rect theWorking_rect)
 			}
 		}
 	}
+	pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 }
 
 Boolean is_wall(short x, short y)
@@ -6670,111 +6892,45 @@ Boolean clean_up_from_scrolling( int map_size, short dx, short dy )
 
 //undo system functions
 
-//This should not be called directly except by appendChangeToLatestStep
-//Calls from the editing functions to register undo steps should go to 
-//appendChangeToLatestStep and lockLatestStep
-void pushNewUndoStep()
-{
-	undo.push(new drawingUndoStep());
+void updateUndoMenu(){
+	CFStringRef temp=CFStringCreateWithCString(kCFAllocatorDefault, ("Undo "+undo.currentDescription()).c_str(), kCFStringEncodingASCII);
+	SetMenuItemTextWithCFString(GetMenuHandle(570), 1, temp);
+	CFRelease(temp);
+	temp=CFStringCreateWithCString(kCFAllocatorDefault, ("Redo "+redo.currentDescription()).c_str(), kCFStringEncodingASCII);
+	SetMenuItemTextWithCFString(GetMenuHandle(570), 2, temp);
+	CFRelease(temp);
+}
+
+//Adds an undo step to the history
+//s should have been allocated with operator new; 
+//the undo system assumes responsibility for deleting it
+void pushUndoStep(Undo::UndoStep* s){
+	undo.appendChange(s);
 	purgeRedo();
-}
-
-//should only be called by redo
-//adds an entire undo step to the undo stack. During editing undo steps 
-//should be accumulated using appendChangeToLatestStep.
-void pushUndoStep(drawingUndoStep* s)
-{
-	undo.push(s);
-}
-
-//retrieves the most recent undo step and removes it from the undo stack. 
-//This should only be called by undo()
-drawingUndoStep* popUndoStep()
-{
-	if(undo.size()==0)
-		return(NULL);
-	return((drawingUndoStep*)(undo.pop()));
-}
-
-//Adds a change to the most recent undo step. If there is no step in the stack, or the most recent 
-//step is locked, a new step which contains the indicated change is created, and pushed onto the stack. 
-//Operations should call appendChangeToLatestStep repeatedly to accumulate changes and then call lockLatestStep 
-//when the set of changes is complete. This forces a new step to be begun when the next changes are registered. 
-//When the user selects the undo command the most recent undo step should include all of the logically related 
-//changes; that is all of the changes that have been registered since the last call to lockLatestStep
-void appendChangeToLatestStep(drawingChange* c)
-{
-	if(undo.size()==0 || ((drawingUndoStep*)(undo.itemAtIndex(0)))->locked)
-		pushNewUndoStep();
-	((drawingUndoStep*)(undo.itemAtIndex(0)))->appendChange(c);
-}
-
-//locks the most recent undo step, so that any new changes, even if they are of a matching type 
-//will be forced to go to a new step which can be undone seperately
-void lockLatestStep()
-{
-	if(undo.size()==0)
-		return;
-	((drawingUndoStep*)(undo.itemAtIndex(0)))->locked=TRUE;
+	updateUndoMenu();
 }
 
 //should be called every time a new zone is loaded
 //Otherwise the user could still undo changes made in other zones, but they would be undone 
 //in the _current_ zone, which would make a mess and serve no purpose. Therefore existing undo steps
 //must be invalidated and removed by calling this function when the zone is switched.
-void purgeUndo()
-{
-	while(undo.size()>0){
-		drawingUndoStep* temp = (drawingUndoStep*)undo.pop();
-		delete temp;
-	}
+void purgeUndo(){
+	undo.clear();
+	updateUndoMenu();
 }
 
 //This is the actual undo operation that should be called when the user wants to undo editing changes
-void performUndo()
-{
-	if(undo.size()==0){//there are no steps to undo; complain
-		beep();
-		return;
-	}
-	drawingUndoStep* s = popUndoStep();
-	//actually perform the operations to reverse whatever was done
-	for(int i=0; i<s->numChanges(); i++){
-		drawingChange* c = s->getChange(i);
-		if(editing_town){
-			if(c->type==1)
-				t_d.floor[c->x][c->y]=c->oldval;
-			else if(c->type==2)
-				t_d.terrain[c->x][c->y]=c->oldval;
-			else if(c->type==3)
-				t_d.height[c->x][c->y]=c->oldval;
+void performUndo(){
+	try{
+		if(!undo.applyLast(redo)){
+			beep();
+			return;
 		}
-		else{
-			if(c->type==1)
-				current_terrain.floor[c->x][c->y]=c->oldval;
-			else if(c->type==2)
-				current_terrain.terrain[c->x][c->y]=c->oldval;
-			else if(c->type==3)
-				current_terrain.height[c->x][c->y]=c->oldval;
-		}
+	} catch(std::exception& ex){
+		give_error(ex.what(),"It may be a good idea to exit the program immediately.",0);
 	}
-	//add this step to the redo list so that it can be un-undone
-	s->invert();
-	pushRedoStep(s);
+	updateUndoMenu();
 	redraw_screen();
-}
-
-//adds a redo step to the redo stack. Should only be called by undo()
-void pushRedoStep(drawingUndoStep* s)
-{
-	redo.push(s);
-}
-
-drawingUndoStep* popRedoStep()
-{
-	if(redo.size()==0)
-		return(NULL);
-	return((drawingUndoStep*)(redo.pop()));
 }
 
 //should be called every time a new zone is loaded _and_ every time the user executes an editing operation
@@ -6788,44 +6944,21 @@ drawingUndoStep* popRedoStep()
 //be purged to eliminate nonsensical redo operations. However, if the user undoes one or more operations 
 //without doing anything else, the redo steps must not be purged, in order to allow the user to move freely
 //back and forth through the recorded states. 
-void purgeRedo()
-{
-	while(redo.size()>0){
-		drawingUndoStep* temp = (drawingUndoStep*)redo.pop();
-		delete temp;
-	}
+void purgeRedo(){
+	redo.clear();
+	updateUndoMenu();
 }
 
 //This is the actual redo operation that should be called when the user wants to redo editing changes that were undone
-void performRedo()
-{
-	if(redo.size()==0){//there are no steps to redo; complain
-		beep();
-		return;
-	}
-	drawingUndoStep* s = popRedoStep();
-	//actually perform the operations to reverse whatever was undone
-	for(int i=0; i<s->numChanges(); i++){
-		drawingChange* c = s->getChange(i);
-		if(editing_town){
-			if(c->type==1)
-				t_d.floor[c->x][c->y]=c->oldval;
-			else if(c->type==2)
-				t_d.terrain[c->x][c->y]=c->oldval;
-			else if(c->type==3)
-				t_d.height[c->x][c->y]=c->oldval;
+void performRedo(){
+	try{
+		if(!redo.applyLast(undo)){
+			beep();
+			return;
 		}
-		else{
-			if(c->type==1)
-				current_terrain.floor[c->x][c->y]=c->oldval;
-			else if(c->type==2)
-				current_terrain.terrain[c->x][c->y]=c->oldval;
-			else if(c->type==3)
-				current_terrain.height[c->x][c->y]=c->oldval;
-		}
+	} catch(std::exception& ex){
+		give_error(ex.what(),"It may be a good idea to exit the program immediately.",0);
 	}
-	//add this step to the redo list so that it can be undone again
-	s->invert();
-	s->locked = TRUE;//don't let this step accumulate any more changes than it has
-	pushUndoStep(s);
+	updateUndoMenu();
+	redraw_screen();
 }

@@ -48,6 +48,7 @@
 
 #include <Sparkle/SUCarbonAPI.h>
 #include "global.h"
+#include "Undo.h"
 
 extern Rect terrain_rects[516]; //was 264
 
@@ -66,6 +67,7 @@ EventHandlerRef scrollHandler2;
 EventHandlerRef scrollHandler3;
 Boolean scroll_dialog_lock = FALSE;
 Boolean mouse_button_held = FALSE;
+bool delimit_undo_on_mouse_up = false;
 Boolean play_sounds = TRUE;
 short cen_x, cen_y;
 short ticks_to_wait = SPARSE_TICKS;
@@ -191,9 +193,6 @@ unsigned short selected_object_number;
 item_type copied_item;
 creature_start_type copied_creature;
 in_town_on_ter_script_type copied_ter_script;
-
-extern linkedList undo;
-extern linkedList redo;
 
 FSSpec default_directory;
 
@@ -420,15 +419,9 @@ void Initialize(void)
 	Rect right_sbar_rect;
 	Get_right_sbar_rect( &right_sbar_rect );
 	right_sbar = NewControl(tilesPtr,&right_sbar_rect,title,TRUE,0,0,0,scrollBarProc,1);
-	
 	terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
 	SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
 	SetControlMaximum(right_sbar, get_right_sbar_max());
-	
-	SetPort(GetWindowPort(mainPtr));	/* set window to current graf port */
-		
-	undo = linkedList();
-	redo = linkedList();
 	
 	load_builtin_images();
 	
@@ -517,7 +510,10 @@ Boolean Handle_One_Event()
 		case mouseUp:
 			ticks_to_wait = SPARSE_TICKS;
 			mouse_button_held = FALSE;
-			lockLatestStep();
+			if(delimit_undo_on_mouse_up){
+				pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+				delimit_undo_on_mouse_up=false;
+			}
 			break;
 		case activateEvt:
 			Handle_Activate();

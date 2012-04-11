@@ -1,5 +1,6 @@
 #include "global.h"
 #include "QuickTime/QuickTime.h"
+#include "Undo.h"
 
 extern scenario_data_type scenario;
 extern zone_names_data_type zone_names;
@@ -4850,6 +4851,7 @@ void make_field_type(short i,short j,short field_type){
 			town.preset_fields[k].field_loc.x = i;
 			town.preset_fields[k].field_loc.y = j;
 			town.preset_fields[k].field_type = field_type;
+			pushUndoStep(new Undo::CreateField(k, town.preset_fields[k], true));
 			return;
 		}
 	}
@@ -4865,7 +4867,8 @@ void take_field_type(short i,short j,short field_type){
 		if ((town.preset_fields[k].field_type == field_type) &&
 			(town.preset_fields[k].field_loc.x == i) &&
 			(town.preset_fields[k].field_loc.y == j)) {
-			town.preset_fields[k].field_type = -1;
+			pushUndoStep(new Undo::CreateField(k, town.preset_fields[k], false));
+			town.preset_fields[k].clear_preset_field_type();
 			return;
 		}
 	}

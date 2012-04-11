@@ -7,6 +7,7 @@
 //#include <stdio.h>
 //#include <string.h>
 #include "global.h"
+#include "Undo.h"
 
 extern ModalFilterUPP main_dialog_UPP;
 extern short cen_x, cen_y;
@@ -204,7 +205,7 @@ void edit_placed_monst(short which_m)
 
 }
 
-void edit_sign(short which_sign)
+void edit_sign(short which_sign, bool handleUndo)
 {
 	char new_text[256];
 	if (editing_town)
@@ -212,11 +213,16 @@ void edit_sign(short which_sign)
 	else
 		get_str_dlog(current_terrain.sign_text[which_sign],"What should this sign say?",new_text);
 
-	if (editing_town)
+	if (editing_town){
+		if(handleUndo && strcmp(new_text,town.sign_text[which_sign]))
+			pushUndoStep(new Undo::SignTextChange(new_text,town.sign_text[which_sign],which_sign));
 		strcpy(town.sign_text[which_sign],new_text);
-		else strcpy(current_terrain.sign_text[which_sign],new_text);
-
-
+	}
+	else{
+		if(handleUndo && strcmp(new_text,current_terrain.sign_text[which_sign]))
+			pushUndoStep(new Undo::SignTextChange(new_text,current_terrain.sign_text[which_sign],which_sign));
+		strcpy(current_terrain.sign_text[which_sign],new_text);
+	}
 }
 
 void get_a_number_event_filter (short item_hit)
@@ -1135,9 +1141,14 @@ void edit_area_rect_event_filter (short item_hit)
 			dialog_not_toast = FALSE; 
 			CDGT(840,2,(char *) str);
 			str[29] = 0;
-			if (editing_town == FALSE)
+			if (editing_town == FALSE){
+				pushUndoStep(new Undo::DescriptionAreaTextChange((char*)&str[0],&current_terrain.info_rect_text[store_which_str][0],store_which_str));
 				sprintf(current_terrain.info_rect_text[store_which_str],"%s",(char *) str);
-				else sprintf(town.info_rect_text[store_which_str],"%s",(char *) str);
+			}
+			else{
+				pushUndoStep(new Undo::DescriptionAreaTextChange((char*)&str[0],&town.info_rect_text[store_which_str][0],store_which_str));
+				sprintf(town.info_rect_text[store_which_str],"%s",(char *) str);
+			}
 			break;
 
 		case 3:
