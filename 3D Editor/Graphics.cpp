@@ -3733,7 +3733,7 @@ void place_right_buttons(short mode)
 		case 3:
 			selected_ter = mode_count;
 			draw_position = selected_ter - TILES_N_COLS * GetControlValue(right_sbar);
-			if(draw_position<0 || draw_position>=draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(TER_BUTTON_HEIGHT_3D+1)))
+			if(draw_position<0 || draw_position>=TILES_N_COLS*ceil((terrain_buttons_rect.bottom-terrain_buttons_rect.top)/(TER_BUTTON_HEIGHT_3D+1)))
 				selected_ter=-1;
 			else
 				to_rect = terrain_rects_3D[draw_position];
@@ -5246,7 +5246,7 @@ void drawBasicDrawingToolDetails(){
 		char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
 		
 		if((current_drawing_mode==3 || current_drawing_mode==4) && object_sticky_draw){ //placing cretaures or items in sticky mode
-			sprintf((char*)draw_str,"  (Sticky mode ON)",name);
+			sprintf((char*)draw_str,"  (Sticky mode ON)");
 			char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
 		}
 	}
