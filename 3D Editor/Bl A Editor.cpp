@@ -82,6 +82,7 @@ Boolean file_is_loaded = FALSE;
 short max_zone_dim[3] = {64,48,32};
 
 ControlHandle right_sbar;
+ControlHandle tiles_zoom_slider;
 static ControlActionUPP right_sbar_action_UPP;
 pascal void right_sbar_action(ControlHandle bar, short part);
 short store_control_value = 0;
@@ -115,6 +116,7 @@ Boolean editing_town = FALSE;
 short cur_viewing_mode = 10; // 0 - big icons 1 - small icons 10 - big 3D icons 11 - 3D view as in game
 short overall_mode = 0;
 short previous_tool = 0;
+short tile_zoom_level = 1;
 // 0 - 9 - different terrain painting modes
 // 0 - neutral state, editing terrain/spaces with pencil
 // 1 - large paintbrush
@@ -199,6 +201,7 @@ FSSpec default_directory;
 extern bool setUpCreaturePalette;
 extern bool setUpItemPalette;
 extern Rect terrain_buttons_rect;
+extern Rect mode_buttons_rect;
 extern Rect terrain_viewport_3d;
 
 extern unsigned int terrain_width_2d;
@@ -422,6 +425,13 @@ void Initialize(void)
 	terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
 	SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
 	SetControlMaximum(right_sbar, get_right_sbar_max());
+    
+    Rect tiles_zoom_slider_rect;
+    tiles_zoom_slider_rect.top = 0;
+    tiles_zoom_slider_rect.left = tilesRect.right - 80;
+    tiles_zoom_slider_rect.right = tilesRect.right;
+    tiles_zoom_slider_rect.bottom = 10;
+    CreateSliderControl(tilesPtr, &tiles_zoom_slider_rect, 1, 0, 3, 0, 4, false, NULL, &tiles_zoom_slider);
 	
 	load_builtin_images();
 	
@@ -1107,7 +1117,8 @@ void doScroll(ControlHandle bar, short delta){
 	SetControlValue(bar,new_setting);
 	store_control_value = new_setting;
 	if (new_setting != old_setting)
-		place_right_buttons(0);
+	//	place_right_buttons(0);
+        redraw_screen();
 }
 
 OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData) {
@@ -1276,6 +1287,26 @@ pascal void right_sbar_action(ControlHandle bar, short part){
 	}
 	doScroll(bar,delta);
 }
+
+void tiles_zoom_slider_change(ControlHandle slider){
+    
+    short zoom_slider = GetControl32BitValue(slider);
+        
+    if (zoom_slider == tile_zoom_level){
+        return;
+    }
+    
+    tile_zoom_level = zoom_slider;
+    zoom_tiles_recalculate();
+    set_up_terrain_rects();
+    make_tile_gworlds();
+    SetControlMaximum(right_sbar, get_right_sbar_max());
+    setUpCreaturePalette = false;
+    setUpItemPalette = false;
+    set_up_terrain_buttons();
+    redraw_screen();
+}
+
 extern Rect kRect3DEditScrn;
 Boolean Mouse_Pressed( EventRecord * event )
 {
@@ -1287,7 +1318,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 	Boolean All_Done = FALSE;
 	Rect	resized_rect;
 	static const Rect main_window_size_limit_rect = {225, 300, 5000, 5000};
-	static const Rect tile_window_size_limit_rect = {225, 326, 5000, 326}; //TODO: figure out correct limit on maximum height
+	static const Rect tile_window_size_limit_rect = {225, 326, 5000, 5000};//326}; //TODO: figure out correct limit on maximum height
 
 	the_part = FindWindow( event->where, &the_window);
 	
@@ -1326,8 +1357,19 @@ Boolean Mouse_Pressed( EventRecord * event )
 				tilesRect = resized_rect;
 				ZeroRectCorner(&tilesRect);
 				terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
+                terrain_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;//
+                mode_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;//
 				SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
+                MoveControl(right_sbar, tilesRect.right - RIGHT_SCROLLBAR_WIDTH, 20);//
+                MoveControl(tiles_zoom_slider, tilesRect.right - 80, 0);//
+                reset_mode_number();//
+                resize_recalculate_num_tiles();//
+                set_up_terrain_rects();//
+                make_tile_gworlds();//
 				SetControlMaximum(right_sbar, get_right_sbar_max());
+                setUpCreaturePalette = false;//
+                setUpItemPalette = false;//
+                set_up_terrain_buttons();//
 				redraw_screen();
 			}
 
@@ -1376,6 +1418,23 @@ Boolean Mouse_Pressed( EventRecord * event )
 					draw_terrain();
 				}				
 			}
+            else if (the_window == tilesPtr){
+                SizeWindow(the_window, TILES_WINDOW_WIDTH, tilesRect.bottom - tilesRect.top, FALSE);
+                tilesRect.right = tilesRect.left + TILES_WINDOW_WIDTH;
+                terrain_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
+                mode_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
+                MoveControl(right_sbar, tilesRect.right - RIGHT_SCROLLBAR_WIDTH, 20);
+                MoveControl(tiles_zoom_slider, tilesRect.right - 80, 0);//
+                reset_mode_number();
+                resize_recalculate_num_tiles();
+                set_up_terrain_rects();
+                make_tile_gworlds();
+				SetControlMaximum(right_sbar, get_right_sbar_max());
+                setUpCreaturePalette = false;
+                setUpItemPalette = false;
+                set_up_terrain_buttons();
+				redraw_screen();
+            }
 			break;
 		case inDrag:
 			GetQDGlobalsScreenBits(&screenbits);
@@ -1402,6 +1461,11 @@ Boolean Mouse_Pressed( EventRecord * event )
 				if (content_part != 0) {
 					switch (content_part) {
 						case inThumb:
+                            if (control_hit == tiles_zoom_slider){
+                                content_part = TrackControl(control_hit,event->where,NIL);
+                                tiles_zoom_slider_change(control_hit);
+                            }
+                            else{
 							content_part = TrackControl(control_hit,event->where,NIL);
 							if (control_hit == right_sbar){
 								if (content_part == inThumb) {
@@ -1409,6 +1473,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 									place_right_buttons(0);
 								}
 							}
+                            }
 							break;
 						case inUpButton: case inPageUp: case inDownButton: case inPageDown:
 							if (control_hit == right_sbar)

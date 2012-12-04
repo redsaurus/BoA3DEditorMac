@@ -87,9 +87,14 @@ extern const Rect default_terrain_viewport_3d;
 #define OUTDOOR_CREATURE_WIDTH_3D   11
 #define OUTDOOR_CREATURE_HEIGHT_3D	16
 
-#define	TER_BUTTON_HEIGHT_3D	27//default is 19
+#define	TER_BUTTON_HEIGHT_3D	terrain_button_height//default is 19
+#define	TER_BUTTON_HEIGHT_3D_OLD	19
+#define TER_BUTTON_HEIGHT_3D_STD	27
+#define TER_BUTTON_HEIGHT_3D_MID	41
+#define TER_BUTTON_HEIGHT_3D_BIG	55
 
-#define TILES_N_COLS 12
+#define TILES_N_COLS tiles_n_columns
+#define TILES_N_COLS_STD 12
 
 // new blades consts
 #define	SCRIPT_NAME_LEN	14
@@ -101,8 +106,12 @@ extern const Rect default_terrain_viewport_3d;
 
 #define NUM_WAYPOINTS	10
 
-#define	TER_BUTTON_SIZE	24//default is 16
+#define	TER_BUTTON_SIZE	terrain_button_width//default is 16
+#define TER_BUTTON_SIZE_BIG 46
+#define TER_BUTTON_SIZE_MID 34
+#define	TER_BUTTON_SIZE_STD	23//24
 #define TER_BUTTON_SIZE_OLD 16
+
 #define	PALETTE_BUT_HEIGHT		17
 #define	PALETTE_BUT_WIDTH		25
 
@@ -1621,6 +1630,10 @@ void Set_up_win ();
 void load_main_screen();
 void recalculate_2D_view_details();
 void recalculate_draw_distances();
+void resize_recalculate_num_tiles();
+void zoom_tiles_recalculate();
+void set_up_terrain_rects();
+void make_tile_gworlds(bool first_time=false);
 bool set_view_mode(int mode);
 void redraw_screen();
 void draw_main_screen();

@@ -29,6 +29,11 @@ extern int TER_RECT_UL_Y_2d_big;
 extern int TER_RECT_UL_X_2d_small;
 extern int TER_RECT_UL_Y_2d_small;
 
+extern int terrain_button_height;
+extern int terrain_button_width;
+
+extern int tiles_n_columns;
+
 extern int indoor_draw_distance;
 extern int outdoor_draw_distance;
 

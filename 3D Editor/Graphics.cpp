@@ -29,6 +29,8 @@ extern short cen_x, cen_y;
 extern short overall_mode;
 extern short mode_count;
 
+extern short tile_zoom_level;
+
 extern short available_dlog_buttons[NUM_DLOG_B];
 extern short max_zone_dim[3];
 extern short geneva_font_num;
@@ -39,6 +41,7 @@ extern Rect paletteRect;
 extern void draw_mode_buttons(int mode);
 
 extern ControlHandle right_sbar;
+extern ControlHandle tiles_zoom_slider;
 
 extern Boolean file_is_loaded;
 
@@ -94,7 +97,7 @@ PixPatHandle bg[14];
 // Other game rectangles
 Rect terrain_buttons_rect = TILES_DRAW_RECT;
 const Rect function_buttons_rect = {0,0,168,227};
-const Rect mode_buttons_rect = {0,0,20,TILES_WINDOW_WIDTH};
+Rect mode_buttons_rect = {0,0,20,TILES_WINDOW_WIDTH};
 Rect terrain_rect_gr_size = DEFAULT_TERRAIN_RECT_GR_SIZE;
 const Rect base_small_button_from = {0,0,10,10};
 const Rect base_small_3D_button_from = {40,0,51,16};
@@ -110,6 +113,11 @@ int TER_RECT_UL_Y_2d_big;
 int TER_RECT_UL_X_2d_small;
 int TER_RECT_UL_Y_2d_small;
 
+int terrain_button_height = TER_BUTTON_HEIGHT_3D_STD;
+int terrain_button_width = TER_BUTTON_SIZE_STD;
+
+int tiles_n_columns = TILES_N_COLS_STD;
+
 int indoor_draw_distance = DEFAULT_INDOOR_DRAW_DISTANCE;
 int outdoor_draw_distance = DEFAULT_OUTDOOR_DRAW_DISTANCE;
 
@@ -117,6 +125,12 @@ Rect creature_buttons_size;
 Rect item_buttons_size;
 Rect terrain_buttons_size;
 Rect floor_buttons_size;
+
+unsigned int terrain_num_rows = TERRAIN_NUM_ROWS;
+unsigned int creature_num_rows = CREATURE_NUM_ROWS;
+unsigned int item_num_rows = ITEM_NUM_ROWS;
+unsigned int floor_num_rows = FLOOR_NUM_ROWS;
+
 // Rect blue_button_from = {112,91,126,107};						
 // Rect start_button_from = {112,70,119,91};
 // Rect left_button_base = {5,5,21,200};
@@ -167,7 +181,7 @@ int get_right_sbar_max(){
 	switch(current_drawing_mode){
 		case 0: //floors
 			iconHeight=TER_BUTTON_SIZE;
-			iconRows=(256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
+			iconRows=floor_num_rows;
 			break;
 		case 1: //terrains
 		case 2: //heights, which means just draw terrain icons
@@ -175,15 +189,15 @@ int get_right_sbar_max(){
 				iconHeight=TER_BUTTON_HEIGHT_3D;
 			else
 				iconHeight=TER_BUTTON_SIZE;
-			iconRows=(512/TILES_N_COLS)+((512%TILES_N_COLS)>0);
+			iconRows=terrain_num_rows;
 			break;
 		case 3: //creatures
 			iconHeight=TER_BUTTON_HEIGHT_3D;
-			iconRows=(256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
+			iconRows=creature_num_rows;
 			break;
 		case 4: //items
 			iconHeight=TER_BUTTON_SIZE;
-			iconRows=(500/TILES_N_COLS)+((500%TILES_N_COLS)>0);
+			iconRows=item_num_rows;
 			break;
 	}
 	
@@ -195,6 +209,23 @@ int get_right_sbar_max(){
 	if(max<0)
 		max=0;
 	return(max);
+}
+
+void set_up_terrain_rects()
+{
+    int i;
+    
+    for (i = 0; i < 516; i++) //was 264
+        SetRect(&terrain_rects[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1),
+            3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE);
+    for (i = 0; i < 516; i++) //was 228
+        SetRect(&terrain_rects_3D[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1),
+            3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1) + TER_BUTTON_HEIGHT_3D);
+    
+    floor_num_rows = (256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
+    terrain_num_rows = (512/TILES_N_COLS)+((512%TILES_N_COLS)>0);
+    item_num_rows = (500/TILES_N_COLS)+((500%TILES_N_COLS)>0);
+    creature_num_rows = (256/TILES_N_COLS)+((256%TILES_N_COLS)>0);
 }
 
 void Set_up_win ()
@@ -212,13 +243,8 @@ void Set_up_win ()
 	
 	set_up_view_buttons(); //initialises view button rects
 	
-	for (i = 0; i < 516; i++) //was 264
-		SetRect(&terrain_rects[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1),
-				3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE);
-	for (i = 0; i < 516; i++) //was 228
-		SetRect(&terrain_rects_3D[i],3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1),2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1),
-				3 + (i % TILES_N_COLS) * (TER_BUTTON_SIZE + 1) + TER_BUTTON_SIZE,2 + (i / TILES_N_COLS) * (TER_BUTTON_HEIGHT_3D + 1) + TER_BUTTON_HEIGHT_3D);
-	
+    set_up_terrain_rects();
+    
 	for (i = num_builtin_sheets_in_library; i < MAX_NUM_SHEETS_IN_LIBRARY; i++) {
 		graphics_library[i] = NULL;
 	}
@@ -241,6 +267,77 @@ void Set_up_win ()
 	load_main_screen();
 }
 
+void resize_recalculate_num_tiles()
+{
+	unsigned int whole_buttons_width;
+    
+	whole_buttons_width = terrain_buttons_rect.right - terrain_buttons_rect.left;
+    
+	tiles_n_columns = whole_buttons_width / (terrain_button_width + 1);
+}
+
+void zoom_tiles_recalculate()
+{
+	switch(tile_zoom_level){
+        case 0:
+            terrain_button_width = TER_BUTTON_SIZE_OLD;
+            terrain_button_height = TER_BUTTON_HEIGHT_3D_OLD;
+            break;
+        case 2:
+            terrain_button_width = TER_BUTTON_SIZE_MID;
+            terrain_button_height = TER_BUTTON_HEIGHT_3D_MID;
+            break;
+        case 3:
+            terrain_button_width = TER_BUTTON_SIZE_BIG;
+            terrain_button_height = TER_BUTTON_HEIGHT_3D_BIG;
+            break;
+        case 1:
+            terrain_button_width = TER_BUTTON_SIZE_STD;
+            terrain_button_height = TER_BUTTON_HEIGHT_3D_STD;
+            break;
+	}
+    
+	resize_recalculate_num_tiles();
+}
+
+void make_tile_gworlds(bool first_time)
+{
+    if (!first_time){
+        DisposeGWorld(creature_buttons_gworld);
+        DisposeGWorld(item_buttons_gworld);
+        DisposeGWorld(floor_buttons_gworld);
+        DisposeGWorld(terrain_buttons_gworld);
+    }
+    
+    creature_buttons_size.top=0;
+	creature_buttons_size.left=0;
+	creature_buttons_size.bottom=1+creature_num_rows*(1+TER_BUTTON_HEIGHT_3D);
+	creature_buttons_size.right=terrain_buttons_rect.right - terrain_buttons_rect.left;
+	
+	NewGWorld(&creature_buttons_gworld, 0,&creature_buttons_size, NIL, NIL, kNativeEndianPixMap);
+	
+	item_buttons_size.top=0;
+	item_buttons_size.left=0;
+	item_buttons_size.bottom=1+item_num_rows*(1+TER_BUTTON_SIZE);
+	item_buttons_size.right=terrain_buttons_rect.right - terrain_buttons_rect.left;
+	
+	NewGWorld(&item_buttons_gworld, 0,&item_buttons_size, NIL, NIL, kNativeEndianPixMap);
+	
+	floor_buttons_size.top=0;
+	floor_buttons_size.left=0;
+	floor_buttons_size.bottom=1+floor_num_rows*(1+TER_BUTTON_SIZE);
+	floor_buttons_size.right=terrain_buttons_rect.right - terrain_buttons_rect.left;
+	
+	NewGWorld(&floor_buttons_gworld, 0,&floor_buttons_size, NIL, NIL, kNativeEndianPixMap);
+	
+	terrain_buttons_size.top=0;
+	terrain_buttons_size.left=0;
+	terrain_buttons_size.bottom=1+terrain_num_rows*(1+TER_BUTTON_HEIGHT_3D);
+	terrain_buttons_size.right=terrain_buttons_rect.right - terrain_buttons_rect.left;
+	
+	NewGWorld(&terrain_buttons_gworld, 0,&terrain_buttons_size, NIL, NIL, kNativeEndianPixMap);
+}
+
 void load_main_screen()
 {
 	Str255 fn1 = "\pGeneva";
@@ -256,33 +353,9 @@ void load_main_screen()
 	//	if (dungeon_font_num == 0)
 	//		GetFNum(fn3,&dungeon_font_num);
 	
-	creature_buttons_size.top=0;
-	creature_buttons_size.left=0;
-	creature_buttons_size.bottom=1+CREATURE_NUM_ROWS*(1+TER_BUTTON_HEIGHT_3D);
-	creature_buttons_size.right=TILES_DRAW_RECT_WIDTH;
-	
-	NewGWorld(&creature_buttons_gworld, 0,&creature_buttons_size, NIL, NIL, kNativeEndianPixMap);
-	
-	item_buttons_size.top=0;
-	item_buttons_size.left=0;
-	item_buttons_size.bottom=1+ITEM_NUM_ROWS*(1+TER_BUTTON_SIZE);
-	item_buttons_size.right=TILES_DRAW_RECT_WIDTH;
-	
-	NewGWorld(&item_buttons_gworld, 0,&item_buttons_size, NIL, NIL, kNativeEndianPixMap);
-	
-	floor_buttons_size.top=0;
-	floor_buttons_size.left=0;
-	floor_buttons_size.bottom=1+FLOOR_NUM_ROWS*(1+TER_BUTTON_SIZE);
-	floor_buttons_size.right=TILES_DRAW_RECT_WIDTH;
-	
-	NewGWorld(&floor_buttons_gworld, 0,&floor_buttons_size, NIL, NIL, kNativeEndianPixMap);
-	
-	terrain_buttons_size.top=0;
-	terrain_buttons_size.left=0;
-	terrain_buttons_size.bottom=1+TERRAIN_NUM_ROWS*(1+TER_BUTTON_HEIGHT_3D);
-	terrain_buttons_size.right=TILES_DRAW_RECT_WIDTH;
-	
-	NewGWorld(&terrain_buttons_gworld, 0,&terrain_buttons_size, NIL, NIL, kNativeEndianPixMap);
+
+    make_tile_gworlds(true);
+    
 	NewGWorld(&function_buttons_gworld, 0,&function_buttons_rect, NIL, NIL, kNativeEndianPixMap);
 	
 	SetPort((GrafPtr) function_buttons_gworld);
@@ -392,6 +465,7 @@ void draw_main_screen()
 	draw_view_buttons();
 	SetPort(GetWindowPort(tilesPtr));
 	Draw1Control(right_sbar);
+    Draw1Control(tiles_zoom_slider);
 	SetPort(old_port);
 }
 
@@ -402,7 +476,7 @@ void reset_mode_number()
 	int i;
 	short offset;
 	
-	offset = TILES_WINDOW_WIDTH / 2;//find middle of tiles window..
+	offset = (tilesRect.right - tilesRect.left) / 2;//find middle of tiles window..
 	
 	offset -= (PALETTE_BUT_WIDTH * ((editing_town) ? 5 : 3))  / 2;//..and shift over by either 3/2 or 5/2 buttons worth to centre the buttons
 		
@@ -3697,13 +3771,13 @@ void place_right_buttons(short mode)
 		Rect from_rect = terrain_buttons_rect;
 		OffsetRect(&from_rect,0,-20);
 		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_HEIGHT_3D));
-		rect_draw_some_item(creature_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
+		rect_draw_some_item(creature_buttons_gworld,from_rect,creature_buttons_gworld,to_rect,0,1);
 	}
 	else if(current_drawing_mode==4){
 		Rect from_rect = terrain_buttons_rect;
 		OffsetRect(&from_rect,0,-20);
 		OffsetRect(&from_rect,0,GetControlValue(right_sbar)*(1+TER_BUTTON_SIZE));
-		rect_draw_some_item(item_buttons_gworld,from_rect,terrain_buttons_gworld,to_rect,0,1);
+		rect_draw_some_item(item_buttons_gworld,from_rect,item_buttons_gworld,to_rect,0,1);
 	}
 	FrameRect(&to_rect);
 	
