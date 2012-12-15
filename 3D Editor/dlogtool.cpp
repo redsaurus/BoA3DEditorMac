@@ -463,7 +463,7 @@ short cd_kill_dialog(short dlog_num,short parent_message)
 
 	DisposeDialog((DialogPtr) dlgs[which_dlg]);
 	dlg_keys[which_dlg] = -1;
-	if (dlg_parent[which_dlg] != NULL)
+	if (dlg_parent[which_dlg] != NULL){
 //  BUG FIX:  In OS X 10.4, there was an error on what used to be this line.  Instead of checking for the mainPtr, 
 //            the editor just used GetDialogWindow, which screws up the editor.  The following code fixes that bug.
         if (dlg_parent[which_dlg] != mainPtr){
@@ -473,6 +473,7 @@ short cd_kill_dialog(short dlog_num,short parent_message)
             SetPort(GetWindowPort(mainPtr));        // NO IDEA IF THIS WORKS!!
 			ShowFloatingWindows();
 		}
+	}
 	if (FrontWindow() != mainPtr)
 		redraw_screen();
 	dialog_not_toast = TRUE;
@@ -1264,7 +1265,7 @@ void cd_press_button(short dlog_num, short item_num, EDLGBtnRes mode )
 
 	// no press action for radio buttons
 	//removed the restriction to eDLGBtnResCompatible mode so that radio buttons don't get random bits of text drawn over them when clicked
-	if ((dlg_item_type[item_index] == 2)/* && (mode == eDLGBtnResCompatible) */) {
+	if (dlg_item_type[item_index] == 2 /*&& mode == eDLGBtnResCompatible*/) {
 		play_sound(34);
 		return;
 	}

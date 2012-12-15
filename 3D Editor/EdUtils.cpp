@@ -88,10 +88,9 @@ void RedAlert_big (char *str1,char *str2,char *str3,char *str4,short num,char *s
 void display_error_dialog(StringPtr theStr,Boolean shut_down)
 {
 	#define		kRedAlertID		128
-	short		whoCares;
 
 	ParamText(theStr, "\p", "\p", "\p");		// Replace ^0 in alert with error mssg.
-	whoCares = Alert(kRedAlertID, 0L);			// Bring up alert.
+	Alert(kRedAlertID, 0L);                     // Bring up alert.
 	if (shut_down == TRUE)
 		ExitToShell();								// Quit to Finder.
 }

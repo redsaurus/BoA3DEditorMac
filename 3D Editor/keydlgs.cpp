@@ -60,7 +60,6 @@ short fancy_choice_dialog(short which_dlog,short parent)
 			sprintf(buffer,"3D Blades of Avernum Editor unknown version | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.");
 		}
 		else{
-			CFRelease(infoURL);
 			CFStringRef errorString;
 			//convert the data into dictionary form
 			CFDictionaryRef properties=(CFDictionaryRef)CFPropertyListCreateFromXMLData(NULL, plistData, kCFPropertyListImmutable, &errorString);
@@ -69,8 +68,10 @@ short fancy_choice_dialog(short which_dlog,short parent)
 			CFStringRef infoStr = (CFStringRef)CFDictionaryGetValue((CFDictionaryRef)properties, CFSTR("CFBundleGetInfoString"));
 			sprintf(buffer,"3D Blades of Avernum Editor version %s | Based on the Blades of Avernum Editor v1.1 |  Copyright 2004, Spiderweb Software, Inc., All rights reserved.",
 					CFStringGetCStringPtr(infoStr, kCFStringEncodingMacRoman));
+			CFRelease(properties);
 		}
 		cd_set_item_text(1062, 7, buffer);
+		CFRelease(infoURL);
 	}
 	while (dialog_not_toast)
 		ModalDialog(main_dialog_UPP, &item_hit);

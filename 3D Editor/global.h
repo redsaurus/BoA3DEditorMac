@@ -1390,6 +1390,8 @@ bool get_always_show_heights();
 void write_always_show_heights(bool show);
 bool get_allow_arrow_key_navigation();
 void write_allow_arrow_key_navigation(bool allow);
+bool get_saved_window_bounds(unsigned int which, Rect& windRect);
+void write_window_bounds(unsigned int which, const Rect& windRect);
 bool find_app();
 
 // dlogtool

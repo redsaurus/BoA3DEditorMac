@@ -74,6 +74,7 @@ text_block_type::~text_block_type()
 // file_location: 0 - in main data folder, 1 - in scenario folder
 Boolean text_block_type::load_text_file_into_buffer(char *file_name_to_load,short file_location)
 {
+	assert(file_location==0 || file_location==1);
 	Str255 file_name;
 	long file_length = 0;
 	OSErr error = noErr;

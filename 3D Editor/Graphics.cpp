@@ -3159,7 +3159,7 @@ void draw_ter_large()
 			}
 			
 			if(((editing_town == FALSE) && ((x_coord <= -1) || (x_coord >= 48) || (y_coord <= -1) || (y_coord >= 48))) ||
-			   (editing_town == TRUE) && ((x_coord <= -1) || (x_coord >= max_zone_dim[town_type]) || (y_coord <= -1) || (y_coord >= max_zone_dim[town_type])) ) {
+			   ((editing_town == TRUE) && ((x_coord <= -1) || (x_coord >= max_zone_dim[town_type]) || (y_coord <= -1) || (y_coord >= max_zone_dim[town_type])) )) {
 				continue;
 			}
 			put_rect_in_gworld(ter_draw_gworld,destRect,0,0,0);
@@ -3703,7 +3703,9 @@ void update_terrain_window_title(){
 		sprintf((char *) draw_str, "Town/Dungeon %d: %s", cur_town, town.town_name);
 	else
 		sprintf((char *) draw_str, "Outdoors: %s, Section X = %d, Y = %d", current_terrain.name, cur_out.x, cur_out.y);
-	SetWindowTitleWithCFString(mainPtr, CFStringCreateWithCString(NULL, (char *)draw_str, kCFStringEncodingUTF8));
+	CFStringRef title=CFStringCreateWithCString(NULL, (char *)draw_str, kCFStringEncodingUTF8);
+	SetWindowTitleWithCFString(mainPtr, title);
+	CFRelease(title);
 }
 
 void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gworld,Rect targ_rect,char masked,short main_win)
@@ -6399,8 +6401,10 @@ OSStatus tileWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse
 	}
 	else if (inRequest == kHMDisposeContent) {// being asked to clean up a tootip
 		if(ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString==allocatedString){
-			CFRelease(allocatedString);
-			allocatedString=NULL;
+			if(allocatedString!=NULL){
+				CFRelease(allocatedString);
+				allocatedString=NULL;
+			}
 		}
     }
 	return status;

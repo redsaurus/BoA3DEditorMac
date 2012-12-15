@@ -626,8 +626,10 @@ void handle_apple_menu(int item_hit)
 			CFURLRef resourceURL = CFBundleCopyResourceURL(mainBundle, CFSTR("Blades of Avernum Editor License"), CFSTR("pdf"), NULL);
 			if(resourceURL == NULL)
 				give_error("Internal Error: Failed to locate license file","",0);
-			LSOpenCFURLRef(resourceURL, NULL);
-			CFRelease(resourceURL);
+			else{
+				LSOpenCFURLRef(resourceURL, NULL);
+				CFRelease(resourceURL);
+			}
 		}
 			break;
 		case 3:
