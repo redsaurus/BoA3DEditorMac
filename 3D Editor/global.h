@@ -1606,9 +1606,9 @@ void RedAlert_big_color (char *str1,char *str2,char *str3,char *str4,short num,c
 void RedAlert_big (char *str1,char *str2,char *str3,char *str4,short num,char *str5);
 void display_error_dialog(StringPtr theStr,Boolean shut_down);
 void ZeroRectCorner (Rect *theRect);
-short rect_width (Rect *theRect);
-short rect_height (Rect *theRect);
-Boolean rects_touch(Rect *r1,Rect *r2);
+short rect_width (const Rect *theRect);
+short rect_height (const Rect *theRect);
+Boolean rects_touch(const Rect *r1,const Rect *r2);
 short rect_dist(Rect *r1,Rect *r2);
 Boolean rect_empty(Rect *r);
 Rect rect_union(Rect *r1,Rect *r2);
@@ -1624,6 +1624,7 @@ void ASB_big (const char *str1,const char *str2,const char *str3,const char *str
 void ASB_big_color (const char *str1,const char *str2,const char *str3,const char *str4,short num,const char *str5,short dummy);
 void CenterRectInRect (Rect *rectA, Rect *rectB);
 int coord2Index(int coord, int base, int step);
+Rect largestNonOverlapping(Rect bounds, const Rect* obstaclesBegin, const Rect* obstaclesEnd);
 
 // Graphics.c
 void Get_right_sbar_rect( Rect * rect );

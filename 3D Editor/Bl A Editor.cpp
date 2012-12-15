@@ -1413,7 +1413,35 @@ Boolean Mouse_Pressed( EventRecord * event )
 						SetRect(&windRect, terrain_viewport_3d.left, terrain_viewport_3d.top, terrain_viewport_3d.right + 40, terrain_viewport_3d.bottom + 40);
 						recalculate_draw_distances();
 					}
-					//TODO: else make window big
+					else{
+						//TODO: this assumes that all windows are on the main screen
+						//Should eventually use GetWindowGreatestAreaDevice to determine which screen the main window should be on,
+						//and compute intersections of secondary windows with that device
+						Rect screenBounds;
+						GetAvailableWindowPositioningBounds(NULL,&screenBounds);
+						Rect floatingWindows[2];
+						GetWindowBounds(palettePtr, kWindowStructureRgn, &floatingWindows[0]);
+						GetWindowBounds(tilesPtr, kWindowStructureRgn, &floatingWindows[1]);
+						windRect=largestNonOverlapping(screenBounds,&floatingWindows[0],&floatingWindows[0]+2);
+						SetWindowBounds (mainPtr,kWindowStructureRgn,&windRect);
+						//note that in the next line we switch to working with kWindowContentRgn instaead of kWindowStructureRgn
+						GetWindowBounds(mainPtr, kWindowContentRgn, &windRect);
+						write_window_bounds(0, windRect);
+						ZeroRectCorner(&windRect);
+						
+						terrain_viewport_3d=windRect;
+						InsetRect(&terrain_viewport_3d, 20, 20);
+						ZeroRectCorner(&terrain_viewport_3d);
+						Rect ter_draw_rect=terrain_viewport_3d;
+						InsetRect(&ter_draw_rect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
+						ZeroRectCorner(&ter_draw_rect);
+						DisposeGWorld(ter_draw_gworld);
+						NewGWorld(&ter_draw_gworld, 0,&ter_draw_rect, NIL, NIL, kNativeEndianPixMap);
+						
+						kRect3DEditScrn.bottom = windRect.bottom - 20;
+						kRect3DEditScrn.right = windRect.right - 20;
+						recalculate_draw_distances();
+					}
 				}
 				else{ //TODO: specialize this for the 9 by 9 2D size
 					SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);

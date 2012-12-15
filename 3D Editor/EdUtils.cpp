@@ -10,6 +10,7 @@
 //#include "string.h"
 //#include "stdio.h"
 #include "global.h"
+#include <vector>
 
 extern town_record_type town;
 extern scen_item_data_type scen_data;
@@ -105,19 +106,19 @@ void ZeroRectCorner (Rect *theRect)
 
 
 // Handy function for returning the absolute width of a rectangle.
-short rect_width (Rect *theRect)
+short rect_width (const Rect *theRect)
 {
 	return (theRect->right - theRect->left);
 }
 
 // Handy function for returning the absolute height of a rectangle.
-short rect_height (Rect *theRect)
+short rect_height (const Rect *theRect)
 {
 	return (theRect->bottom - theRect->top);
 }
 
 // Other rectangle functions
-Boolean rects_touch(Rect *r1,Rect *r2)
+Boolean rects_touch(const Rect *r1,const Rect *r2)
 {
 	if (r1->right <= r2->left)
 		return (FALSE);
@@ -244,5 +245,57 @@ int coord2Index(int coord, int base, int step){
 	int result=numer/step;
 	if(numer<0)
 		result-=1;
+	return(result);
+}
+
+//Finds the largest possible rectangle which can be fit inside of bounds
+//without overlapping any of the rectangles in obstacles.
+//This function has poor worst case behavior (~O(4^obstacles.size()))
+//but should be tolerable when the number of obstacle rectangles is small (~<5)
+Rect largestNonOverlapping(Rect bounds, const Rect* obstaclesBegin, const Rect* obstaclesEnd){
+	std::vector<Rect> possibilities(1,bounds);
+	for(const Rect* obstacle=obstaclesBegin;
+	    obstacle!=obstaclesEnd; obstacle++){
+		std::vector<Rect> updatedPossibilities;
+		for(std::vector<Rect>::const_iterator possible=possibilities.begin(), possibleEnd=possibilities.end();
+	        possible!=possibleEnd; possible++){
+	    	if(!rects_touch(&*obstacle,&*possible))
+	    		updatedPossibilities.push_back(*possible);
+	    	else{
+	    		if(obstacle->top>possible->top){
+	    			Rect r=*possible;
+	    			r.bottom=obstacle->top;
+	    			updatedPossibilities.push_back(r);
+	    		}
+	    		if(obstacle->left>possible->left){
+	    			Rect r=*possible;
+	    			r.right=obstacle->left;
+	    			updatedPossibilities.push_back(r);
+	    		}
+	    		if(obstacle->bottom<possible->bottom){
+	    			Rect r=*possible;
+	    			r.top=obstacle->bottom;
+	    			updatedPossibilities.push_back(r);
+	    		}
+	    		if(obstacle->right<possible->right){
+	    			Rect r=*possible;
+	    			r.left=obstacle->right;
+	    			updatedPossibilities.push_back(r);
+	    		}
+	    	}
+	    }
+		possibilities.swap(updatedPossibilities);
+	}
+	Rect result=bounds;
+	long bestArea=0;
+	for(std::vector<Rect>::const_iterator possible=possibilities.begin(), possibleEnd=possibilities.end();
+	    possible!=possibleEnd; possible++){
+	    long area=possible->bottom-possible->top;
+		area*=possible->right-possible->left;
+		if(area>bestArea){
+			bestArea=area;
+			result=*possible;
+		}
+	}
 	return(result);
 }
