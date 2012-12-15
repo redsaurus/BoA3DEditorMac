@@ -209,6 +209,8 @@ extern unsigned int terrain_height_2d;
 extern int TER_RECT_UL_X_2d_big;
 extern int TER_RECT_UL_Y_2d_big;
 
+extern Rect kRect3DEditScrn;
+
 /* Prototypes */
 int main(void);
 void Initialize(void);
@@ -241,6 +243,7 @@ OSStatus paletteScrollHandler2(EventHandlerCallRef eventHandlerCallRef,EventRef 
 OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 
 extern GWorldPtr ter_draw_gworld;
+extern Rect terrain_rect_gr_size;
 
 //MW specified argument and return type.
 int main(void)
@@ -381,11 +384,17 @@ void Initialize(void)
 	windowAttrs = kWindowCloseBoxAttribute | kWindowFullZoomAttribute | kWindowCollapseBoxAttribute | kWindowResizableAttribute;
 	
 	OffsetRect(&windRect, 0, 0);
+	get_saved_window_bounds(0, windRect);
 
 	CreateNewWindow (kDocumentWindowClass, windowAttrs,&windRect, &mainPtr);
 	
 	ShowWindow (mainPtr);
 	ZeroRectCorner(&windRect);
+	terrain_viewport_3d.bottom = windRect.bottom - 40;
+	terrain_viewport_3d.right = windRect.right - 40;
+	kRect3DEditScrn.bottom = windRect.bottom - 20;
+	kRect3DEditScrn.right = windRect.right - 20;
+	terrain_rect_gr_size=terrain_viewport_3d;
 	
 	//tridash - moving stuff to panels
 	
@@ -398,13 +407,20 @@ void Initialize(void)
 	InsetRect(&tilesRect,((tilesRect.right - tilesRect.left) - TILES_WINDOW_WIDTH) / 2, (paletteRect.bottom + 16 - tilesRect.top) / 2); //tridash - larger window stuff
 	OffsetRect(&tilesRect, activeScreenRect.right-tilesRect.right, activeScreenRect.bottom-tilesRect.bottom);
 
+	get_saved_window_bounds(1, paletteRect);
 	CreateNewWindow (kFloatingWindowClass, windowAttrs, &paletteRect, &palettePtr);
 	
 	SetWindowTitleWithCFString(palettePtr, CFSTR("Tools"));
 	
 	windowAttrs = kWindowFullZoomAttribute | kWindowNoShadowAttribute | kWindowResizableAttribute;
 	
+	get_saved_window_bounds(2, tilesRect);
 	CreateNewWindow (kFloatingWindowClass, windowAttrs, &tilesRect, &tilesPtr);
+	ZeroRectCorner(&tilesRect);
+	terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
+	terrain_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
+	mode_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
+	resize_recalculate_num_tiles();
 	
 	SetWindowTitleWithCFString(tilesPtr, CFSTR("Tiles"));
 	
@@ -1309,7 +1325,6 @@ void tiles_zoom_slider_change(ControlHandle slider){
     redraw_screen();
 }
 
-extern Rect kRect3DEditScrn;
 Boolean Mouse_Pressed( EventRecord * event )
 {
 	WindowPtr	the_window;
@@ -1335,6 +1350,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 			if (the_window == mainPtr){
 				//TODO: enforce a different size limit when in 2D zoomed-out mode
 				ResizeWindow(the_window, event->where, &main_window_size_limit_rect, &resized_rect);
+				write_window_bounds(0, resized_rect);
 				ZeroRectCorner(&resized_rect);
 				terrain_viewport_3d.bottom = resized_rect.bottom - 40;
 				terrain_viewport_3d.right = resized_rect.right - 40;
@@ -1356,6 +1372,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 			}
 			else if(the_window == tilesPtr){
 				ResizeWindow(the_window, event->where, &tile_window_size_limit_rect, &resized_rect);
+				write_window_bounds(2, resized_rect);
 				tilesRect = resized_rect;
 				ZeroRectCorner(&tilesRect);
 				terrain_buttons_rect.bottom=tilesRect.bottom-tilesRect.top-11;
@@ -1383,6 +1400,8 @@ Boolean Mouse_Pressed( EventRecord * event )
 						SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
 						terrain_viewport_3d = default_terrain_viewport_3d;
 						
+						GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+						write_window_bounds(0, windRect);
 						windRect = default_terrain_viewport_3d;
 						InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
 						ZeroRectCorner(&windRect);
@@ -1400,6 +1419,8 @@ Boolean Mouse_Pressed( EventRecord * event )
 					SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
 					terrain_viewport_3d = default_terrain_viewport_3d;
 					
+					GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+					write_window_bounds(0, windRect);
 					windRect = default_terrain_viewport_3d;
 					InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
 					ZeroRectCorner(&windRect);
@@ -1422,6 +1443,8 @@ Boolean Mouse_Pressed( EventRecord * event )
 			}
             else if (the_window == tilesPtr){
                 SizeWindow(the_window, TILES_WINDOW_WIDTH, tilesRect.bottom - tilesRect.top, FALSE);
+				GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+				write_window_bounds(2, windRect);
                 tilesRect.right = tilesRect.left + TILES_WINDOW_WIDTH;
                 terrain_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
                 mode_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
@@ -1441,6 +1464,13 @@ Boolean Mouse_Pressed( EventRecord * event )
 		case inDrag:
 			GetQDGlobalsScreenBits(&screenbits);
 			DragWindow(the_window, event->where, &screenbits.bounds);
+			GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+			if(the_window==mainPtr)
+				write_window_bounds(0, windRect);
+			else if(the_window==palettePtr)
+				write_window_bounds(1, windRect);
+			else if(the_window==tilesPtr)
+				write_window_bounds(2, windRect);
 			break;
 		case inGoAway:
 			All_Done = TRUE;

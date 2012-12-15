@@ -538,6 +538,56 @@ void write_allow_arrow_key_navigation(bool allow)
 {
 	write_user_pref_bool_value(3,allow);
 }
+
+#define NUM_WINDOW_STATE_KEYS 3
+CFStringRef WINDOW_STATE_PREF_KEYS[NUM_WINDOW_STATE_KEYS] = {CFSTR("MainWindowBounds"), CFSTR("ToolPaletteBounds"), CFSTR("TilesWindowBounds")};
+
+bool get_saved_window_bounds(unsigned int which, Rect& windRect){
+	if(which>=NUM_WINDOW_STATE_KEYS)
+		return(FALSE);
+	
+	Boolean okay=true;
+	CFPropertyListRef data = CFPreferencesCopyAppValue(WINDOW_STATE_PREF_KEYS[which], kCFPreferencesCurrentApplication);
+	if(data==NULL)
+		okay=false;
+	else if(CFGetTypeID(data)==CFArrayGetTypeID()){
+		CFArrayRef arr = static_cast<CFArrayRef>(data);
+		if(CFArrayGetCount(arr)!=4)
+			okay=false;
+		if(okay){
+			Rect bounds;
+			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,0)),kCFNumberShortType,&bounds.top);
+			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,1)),kCFNumberShortType,&bounds.left);
+			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,2)),kCFNumberShortType,&bounds.bottom);
+			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,3)),kCFNumberShortType,&bounds.right);
+			windRect=bounds;
+		}
+	}
+	else
+		okay=false;
+	if(data!=NULL)
+		CFRelease(data);
+	return(okay);
+}
+
+void write_window_bounds(unsigned int which, const Rect& windRect){
+	if(which>=NUM_WINDOW_STATE_KEYS)
+		return;
+	
+	CFNumberRef numbers[4]={
+		CFNumberCreate(NULL, kCFNumberShortType, &windRect.top),
+		CFNumberCreate(NULL, kCFNumberShortType, &windRect.left),
+		CFNumberCreate(NULL, kCFNumberShortType, &windRect.bottom),
+		CFNumberCreate(NULL, kCFNumberShortType, &windRect.right)
+	};
+	CFArrayRef arr=CFArrayCreate(NULL, (const void**)&numbers, 4, NULL);
+	CFPreferencesSetAppValue (WINDOW_STATE_PREF_KEYS[which], arr, kCFPreferencesCurrentApplication);
+	CFPreferencesAppSynchronize (kCFPreferencesCurrentApplication);
+	
+	for(int i=0; i<4; i++)
+		CFRelease(numbers[i]);
+	CFRelease(arr);
+}
 //end user preference settings functions
 
 void setup_startDirVol_from_defaultFolder( void )
