@@ -1633,6 +1633,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 				write_window_bounds(1, windRect);
 			else if(the_window==tilesPtr)
 				write_window_bounds(2, windRect);
+			ZeroRectCorner(&windRect);
 			break;
 		case inGoAway:
 			All_Done = TRUE;
