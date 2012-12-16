@@ -336,6 +336,13 @@ Boolean SWIsOSX( void )
 	return ( err == noErr && ((unsigned long)gestaltResponse >= 0x1000));
 }
 
+static pascal void ControlUserPaneBackgroundProc (ControlHandle control, ControlBackgroundPtr)
+{
+	PixPatHandle background = GetPixPat (142);
+	BackPixPat(background);
+//	printf("setting colour background!\n");
+}
+
 //	Initialize everything for the program, make sure we can run
 void Initialize(void)
 {
@@ -451,6 +458,11 @@ void Initialize(void)
 	tiles_zoom_slider_rect.bottom = 10;
 	CreateSliderControl(tilesPtr, &tiles_zoom_slider_rect, 1, 0, 3, 0, 4, false, NULL, &tiles_zoom_slider);
 	
+	ControlUserPaneBackgroundUPP upp = NewControlUserPaneBackgroundUPP (ControlUserPaneBackgroundProc);	
+
+	ControlBackgroundRec rec = { 0, true };
+	InvokeControlUserPaneBackgroundUPP(tiles_zoom_slider, &rec, upp);
+
 	load_builtin_images();
 	
 	const MenuCommand kSparkleUpdate = FOUR_CHAR_CODE('sCUP');
