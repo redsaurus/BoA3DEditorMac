@@ -210,6 +210,7 @@ extern int TER_RECT_UL_X_2d_big;
 extern int TER_RECT_UL_Y_2d_big;
 
 extern Rect kRect3DEditScrn;
+Rect tiles_zoom_slider_rect;
 
 /* Prototypes */
 int main(void);
@@ -241,6 +242,7 @@ void doScroll(ControlHandle bar, short delta);
 OSStatus paletteScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 OSStatus paletteScrollHandler2(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
 OSStatus viewScrollHandler(EventHandlerCallRef eventHandlerCallRef,EventRef eventRef, void* userData);
+void tiles_zoom_slider_change(short zoom_slider);
 
 extern GWorldPtr ter_draw_gworld;
 extern Rect terrain_rect_gr_size;
@@ -442,12 +444,11 @@ void Initialize(void)
 	SizeControl(right_sbar, RIGHT_SCROLLBAR_WIDTH, tilesRect.bottom-tilesRect.top-20-11);
 	SetControlMaximum(right_sbar, get_right_sbar_max());
     
-    Rect tiles_zoom_slider_rect;
-    tiles_zoom_slider_rect.top = 0;
-    tiles_zoom_slider_rect.left = tilesRect.right - 80;
-    tiles_zoom_slider_rect.right = tilesRect.right;
-    tiles_zoom_slider_rect.bottom = 10;
-    CreateSliderControl(tilesPtr, &tiles_zoom_slider_rect, 1, 0, 3, 0, 4, false, NULL, &tiles_zoom_slider);
+	tiles_zoom_slider_rect.top = 0;
+	tiles_zoom_slider_rect.left = tilesRect.right - 80;
+	tiles_zoom_slider_rect.right = tilesRect.right;
+	tiles_zoom_slider_rect.bottom = 10;
+	CreateSliderControl(tilesPtr, &tiles_zoom_slider_rect, 1, 0, 3, 0, 4, false, NULL, &tiles_zoom_slider);
 	
 	load_builtin_images();
 	
@@ -460,14 +461,14 @@ void Initialize(void)
 void init_user_prefs()
 {
 	play_sounds = get_should_play_sounds();
-	CheckMenuItem (GetMenuHandle(570),9,play_sounds);
+	CheckMenuItem (GetMenuHandle(570),18,play_sounds);
 	use_strict_adjusts = get_should_use_strict_adjusts();
-	CheckMenuItem (GetMenuHandle(570),10,use_strict_adjusts);
+	CheckMenuItem (GetMenuHandle(570),19,use_strict_adjusts);
 	always_draw_heights = get_always_show_heights();
-	CheckMenuItem (GetMenuHandle(570),11,always_draw_heights);
+	CheckMenuItem (GetMenuHandle(570),20,always_draw_heights);
 	allow_arrow_key_navigation = get_allow_arrow_key_navigation();
-	CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
-	CheckMenuItem (GetMenuHandle(570),13,get_user_pref_bool_value(4,false));
+	CheckMenuItem (GetMenuHandle(570),21,allow_arrow_key_navigation);
+	CheckMenuItem (GetMenuHandle(570),22,get_user_pref_bool_value(4,false));
 	tile_zoom_level = get_saved_tile_zoom_level();
 	SetControl32BitValue (tiles_zoom_slider,tile_zoom_level);
 	zoom_tiles_recalculate();
@@ -517,14 +518,10 @@ Boolean Handle_One_Event()
 					if(event.what != autoKey){
 						BringToFront(mainPtr);
 						SetPort(GetWindowPort(mainPtr));
-						if(chr>='1' && chr<=(editing_town ? '5' : '3')){ //TODO: remove this temporary hack
-							set_drawing_mode(chr-'1');
-							draw_main_screen();
-						}
-						else{
-							menu_choice = MenuKey(chr);
-							handle_menu_choice(menu_choice);
-						}
+						if(chr=='=' && (event.modifiers & shiftKey))
+							chr='+';
+						menu_choice = MenuKey(chr);
+						handle_menu_choice(menu_choice);
 					}
 				}
 				else if (chr == 'Q')
@@ -726,7 +723,8 @@ void handle_campaign_menu(int item_hit)
 			//TODO: set change_made_outdoors based on state of undo stack
 			small_any_drawn = FALSE;
 			cen_x = max_zone_dim[town_type] / 2; cen_y = max_zone_dim[town_type] / 2;
-			current_drawing_mode = current_height_mode = 0;
+			current_height_mode = 0;
+			set_drawing_mode(0);
 			editing_town = TRUE;
 			set_up_terrain_buttons();
 			reset_mode_number();
@@ -746,7 +744,8 @@ void handle_campaign_menu(int item_hit)
 			//TODO: set change_made_town based on state of undo stack
 			small_any_drawn = FALSE;
 			cen_x = 24; cen_y = 24;
-			current_drawing_mode = current_height_mode = 0;
+			current_height_mode = 0;
+			set_drawing_mode(0);
 			editing_town = FALSE;
 			set_up_terrain_buttons();
 			reset_mode_number();
@@ -1092,13 +1091,49 @@ void handle_edit_menu(int item_hit)
 			else
 				change_made_outdoors = TRUE;
 			break;
-		case 9: // toggle sound
+		case 9: //draw floors
+			set_drawing_mode(0);
+			draw_main_screen();
+			break;
+		case 10: //draw terrains
+			set_drawing_mode(1);
+			draw_main_screen();
+			break;
+		case 11: //draw heights
+			set_drawing_mode(2);
+			draw_main_screen();
+			break;
+		case 12: //place creatures
+			if(editing_town){
+				set_drawing_mode(4);
+				draw_main_screen();
+			}
+			else
+				beep();
+			break;
+		case 13: //place items
+			if(editing_town){
+				set_drawing_mode(5);
+				draw_main_screen();
+			}
+			else
+				beep();
+			break;
+		case 15: //increase tile size
+			tile_zoom_level<3 ? tiles_zoom_slider_change(tile_zoom_level+1) : beep();
+			SetControl32BitValue(tiles_zoom_slider, tile_zoom_level);
+			break;
+		case 16: //decrease tile size
+			tile_zoom_level>0 ? tiles_zoom_slider_change(tile_zoom_level-1) : beep();
+			SetControl32BitValue(tiles_zoom_slider, tile_zoom_level);
+			break;
+		case 18: // toggle sound
 			play_sounds = !play_sounds;
 			CheckMenuItem (GetMenuHandle(570),9,play_sounds);
 			write_should_play_sounds(play_sounds);
 			play_sound(0);
 			break;
-		case 10: // toggle adjust usage
+		case 19: // toggle adjust usage
 			use_strict_adjusts = !use_strict_adjusts;
 			CheckMenuItem (GetMenuHandle(570),10,use_strict_adjusts);
 			write_should_use_strict_adjusts(use_strict_adjusts);
@@ -1110,17 +1145,17 @@ void handle_edit_menu(int item_hit)
 			else
 				redraw_screen();
 			break;
-		case 11: // toggle height labelling
+		case 20: // toggle height labelling
 			always_draw_heights = !always_draw_heights;
 			CheckMenuItem (GetMenuHandle(570),11,always_draw_heights);
 			write_always_show_heights(always_draw_heights);
 			break;
-		case 12: //toggle arrow key handling
+		case 21: //toggle arrow key handling
 			allow_arrow_key_navigation = !allow_arrow_key_navigation;
 			CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
 			write_allow_arrow_key_navigation(allow_arrow_key_navigation);
 			break;
-		case 13: //toggle auto-update checking
+		case 22: //toggle auto-update checking
 			{
 				bool temp = !get_user_pref_bool_value(4,false);
 				CheckMenuItem (GetMenuHandle(570),13,temp);
@@ -1309,10 +1344,7 @@ pascal void right_sbar_action(ControlHandle bar, short part){
 	doScroll(bar,delta);
 }
 
-void tiles_zoom_slider_change(ControlHandle slider){
-    
-    short zoom_slider = GetControl32BitValue(slider);
-        
+void tiles_zoom_slider_change(short zoom_slider){
     if (zoom_slider == tile_zoom_level)
         return;
     
@@ -1526,7 +1558,7 @@ Boolean Mouse_Pressed( EventRecord * event )
 						case inThumb:
                             if (control_hit == tiles_zoom_slider){
                                 content_part = TrackControl(control_hit,event->where,NIL);
-                                tiles_zoom_slider_change(control_hit);
+                                tiles_zoom_slider_change(GetControl32BitValue(control_hit));
 								ticks_to_wait = SPARSE_TICKS;
 								mouse_button_held = FALSE;
                             }

@@ -1398,7 +1398,9 @@ void handleToolPaletteClick(Point the_point, EventRecord event){
 
 //switches between floor, terrain, and height drawing modes
 void set_drawing_mode(short new_mode){
+	CheckMenuItem (GetMenuHandle(570),9+current_drawing_mode,false);
 	current_drawing_mode = new_mode;
+	CheckMenuItem (GetMenuHandle(570),9+current_drawing_mode,true);
 	GrafPtr		old_port;
 
 	GetPort (&old_port);
@@ -2536,6 +2538,7 @@ bool handle_tenKey( char *chr, char chr2, EventRecord event )
 }
 
 //returns true if loc is not conveniently visible from the current 3D viewport
+//TODO: This is wrong when the main window has been resized!
 bool out_of_view_3D(location loc){
 	if(cen_x-loc.x>10 || loc.x-cen_x>9 || cen_y-loc.y>10 || loc.y-cen_y>9)
 		return(true);
@@ -4275,7 +4278,10 @@ void shut_down_menus()
 		cur_menu = GetMenuHandle(570); DisableMenuItem(cur_menu,1 );
 		DisableMenuItem(cur_menu,2 );  DisableMenuItem(cur_menu,4 );
 		DisableMenuItem(cur_menu,5 );  DisableMenuItem(cur_menu,6 );  
-		DisableMenuItem(cur_menu,7 );  EnableMenuItem(cur_menu,9 );
+		DisableMenuItem(cur_menu,7 );  DisableMenuItem(cur_menu,9 );
+		DisableMenuItem(cur_menu,10);  DisableMenuItem(cur_menu,11);
+		DisableMenuItem(cur_menu,12);  DisableMenuItem(cur_menu,13);
+		DisableMenuItem(cur_menu,15);  DisableMenuItem(cur_menu,16);
 		cur_menu = GetMenuHandle(600); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(650); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(651); DisableMenuItem(cur_menu,0 );
@@ -4294,6 +4300,9 @@ void shut_down_menus()
 		cur_menu = GetMHandle(550); EnableMenuItem(cur_menu,2 );
 		
 		cur_menu = GetMenuHandle(570); EnableMenuItem(cur_menu,0 );
+		EnableMenuItem(cur_menu,9 );   EnableMenuItem(cur_menu,10);
+		EnableMenuItem(cur_menu,11);   EnableMenuItem(cur_menu,15);
+		EnableMenuItem(cur_menu,16);
 		cur_menu = GetMenuHandle(600); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(650); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(651); EnableMenuItem(cur_menu,0 );
@@ -4311,7 +4320,8 @@ void shut_down_menus()
 		cur_menu = GetMenuHandle(570); EnableMenuItem(cur_menu,1 );
 		EnableMenuItem(cur_menu,2 );   DisableMenuItem(cur_menu,4 );  
 		DisableMenuItem(cur_menu,5 );  DisableMenuItem(cur_menu,6 );
-		DisableMenuItem(cur_menu,7 );  EnableMenuItem(cur_menu,9 ); 
+		DisableMenuItem(cur_menu,7 );  DisableMenuItem(cur_menu,12);
+		DisableMenuItem(cur_menu,13);
 		cur_menu = GetMenuHandle(650); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(700); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(701); DisableMenuItem(cur_menu,0 );
@@ -4329,7 +4339,8 @@ void shut_down_menus()
 		cur_menu = GetMenuHandle(570); EnableMenuItem(cur_menu,1 );
 		EnableMenuItem(cur_menu,2 );   EnableMenuItem(cur_menu,4 );
 		EnableMenuItem(cur_menu,5 );   EnableMenuItem(cur_menu,6 );
-		EnableMenuItem(cur_menu,7 );   EnableMenuItem(cur_menu,9 );
+		EnableMenuItem(cur_menu,7 );   EnableMenuItem(cur_menu,12);
+		EnableMenuItem(cur_menu,13);
 		cur_menu = GetMenuHandle(650); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(700); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(701); EnableMenuItem(cur_menu,0 );

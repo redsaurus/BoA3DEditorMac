@@ -42,6 +42,7 @@ extern void draw_mode_buttons(int mode);
 
 extern ControlHandle right_sbar;
 extern ControlHandle tiles_zoom_slider;
+extern Rect tiles_zoom_slider_rect;
 
 extern Boolean file_is_loaded;
 
@@ -448,7 +449,6 @@ void redraw_screen()
 		
 	small_any_drawn = TRUE;
 	draw_main_screen();
-	drawToolPalette();
 	
 	SetPort (old_port);
 }
@@ -465,7 +465,7 @@ void draw_main_screen()
 	draw_view_buttons();
 	SetPort(GetWindowPort(tilesPtr));
 	Draw1Control(right_sbar);
-    Draw1Control(tiles_zoom_slider);
+	Draw1Control(tiles_zoom_slider);
 	SetPort(old_port);
 }
 
@@ -3722,7 +3722,7 @@ void rect_draw_some_item (GWorldPtr src_gworld,Rect src_rect,GWorldPtr targ_gwor
 	GetPort(&cur_port);
 	if (main_win == 0){
 		if (masked == 1) 
-			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(targ_gworld), &src_rect, &targ_rect, transparent , NULL);	
+			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(targ_gworld), &src_rect, &targ_rect, transparent , NULL);
 		else 
 			CopyBits( GetPortBitMapForCopyBits(src_gworld), GetPortBitMapForCopyBits(targ_gworld), &src_rect, &targ_rect, (masked == 10) ? addOver : 0, NULL);
 	}  
@@ -6300,6 +6300,14 @@ OSStatus tileWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse
 			SetRect(&ioHelpContent->absHotRect, ofInterest.left+idx*PALETTE_BUT_WIDTH, ofInterest.top, ofInterest.left+(idx+1)*PALETTE_BUT_WIDTH, ofInterest.bottom);
 			
 			ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+			willShowTooltip = true;
+		}
+		//HACK: There's something not right about the bounds of tiles_zoom_slider_rect, so we use
+		//a temporary Rect (and comma operator shenanigans) to put a tooltip on the right region
+		else if(ofInterest=tiles_zoom_slider_rect,tiles_zoom_slider_rect.bottom=19,PtInRect(inGlobalMouse,&tiles_zoom_slider_rect)){
+			ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Drag to change displayed tile size");
+			ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+			ioHelpContent->absHotRect=tiles_zoom_slider_rect;
 			willShowTooltip = true;
 		}
 		else if(PtInRect(inGlobalMouse,&terrain_buttons_rect)){
