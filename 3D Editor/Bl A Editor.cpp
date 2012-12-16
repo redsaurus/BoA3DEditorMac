@@ -1180,11 +1180,9 @@ void handle_edit_menu(int item_hit)
 			break;
 		case 15: //increase tile size
 			tile_zoom_level<3 ? tiles_zoom_slider_change(tile_zoom_level+1) : beep();
-			SetControl32BitValue(tiles_zoom_slider, tile_zoom_level);
 			break;
 		case 16: //decrease tile size
 			tile_zoom_level>0 ? tiles_zoom_slider_change(tile_zoom_level-1) : beep();
-			SetControl32BitValue(tiles_zoom_slider, tile_zoom_level);
 			break;
 		case 18: // toggle sound
 			play_sounds = !play_sounds;
@@ -1404,8 +1402,11 @@ pascal void right_sbar_action(ControlHandle bar, short part){
 }
 
 void tiles_zoom_slider_change(short zoom_slider){
-    if (zoom_slider == tile_zoom_level)
+    if (zoom_slider == tile_zoom_level){
+		//this isn't useless, it's needed in case the user drags the slider around and then puts it back where it was
+		redraw_screen();
         return;
+	}
     
     tile_zoom_level = zoom_slider;
 	if(tile_zoom_level==0)
@@ -1416,6 +1417,8 @@ void tiles_zoom_slider_change(short zoom_slider){
 		DisableMenuItem(GetMenuHandle(570), 15);
 	else
 		EnableMenuItem(GetMenuHandle(570), 15);
+	//necessary in case this function was called through a keyboard shortcut
+	SetControl32BitValue(tiles_zoom_slider, tile_zoom_level);
 	write_tile_zoom_level(tile_zoom_level);
     zoom_tiles_recalculate();
     set_up_terrain_rects();
