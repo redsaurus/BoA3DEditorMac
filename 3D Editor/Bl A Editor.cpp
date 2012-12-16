@@ -520,7 +520,7 @@ Boolean Handle_One_Event()
 					if(event.what != autoKey){
 						BringToFront(mainPtr);
 						SetPort(GetWindowPort(mainPtr));
-						if(chr=='=' && (event.modifiers & shiftKey))
+						if(chr=='=')
 							chr='+';
 						menu_choice = MenuKey(chr);
 						handle_menu_choice(menu_choice);
@@ -967,7 +967,7 @@ void handle_town_menu(int item_hit)
 			if(strlen(town.town_script))
 				open_script_with_editor(town.town_script);
 			else
-				beep(); //TODO: explain the beeping
+				give_error("There is no script specified for this town.", "You can set the town script using Town > Town Details", 0);
 			break;
 		case 9: //edit town dialogue script
 			if(strlen(town.town_script)){
@@ -977,7 +977,7 @@ void handle_town_menu(int item_hit)
 				free(script_name);
 			}
 			else
-				beep(); //TODO: explain the beeping
+				give_error("There is no script specified for this town.", "You can set the town script using Town > Town Details", 0);
 			break;
 		case 11: //Set Starting Location
 			if (fancy_choice_dialog(867,0) == 2)
@@ -1091,7 +1091,7 @@ void handle_outdoor_menu(int item_hit)
 			if(strlen(current_terrain.section_script))
 				open_script_with_editor(current_terrain.section_script);
 			else
-				beep(); //TODO: explain beeping
+				give_error("There is no script specified for this outdoor section.", "You can set the section script using Outdoors > Outdoor Details", 0);
 			break;
 		case 11: //Set outdoor starting point
 			if (fancy_choice_dialog(864,0) == 2)
@@ -1396,6 +1396,14 @@ void tiles_zoom_slider_change(short zoom_slider){
         return;
     
     tile_zoom_level = zoom_slider;
+	if(tile_zoom_level==0)
+		DisableMenuItem(GetMenuHandle(570), 16);
+	else
+		EnableMenuItem(GetMenuHandle(570), 16);
+	if(tile_zoom_level==3)
+		DisableMenuItem(GetMenuHandle(570), 15);
+	else
+		EnableMenuItem(GetMenuHandle(570), 15);
 	write_tile_zoom_level(tile_zoom_level);
     zoom_tiles_recalculate();
     set_up_terrain_rects();
@@ -1492,7 +1500,6 @@ Boolean Mouse_Pressed( EventRecord * event )
 						
 						kRect3DEditScrn.bottom = DEFAULT_RECT3DEDIT_HEIGHT + TER_RECT_UL_X;
 						kRect3DEditScrn.right = DEFAULT_RECT3DEDIT_WIDTH + TER_RECT_UL_Y;
-						SetRect(&windRect, terrain_viewport_3d.left, terrain_viewport_3d.top, terrain_viewport_3d.right + 40, terrain_viewport_3d.bottom + 40);
 						recalculate_draw_distances();
 					}
 					else{
@@ -1526,21 +1533,51 @@ Boolean Mouse_Pressed( EventRecord * event )
 					}
 				}
 				else{ //TODO: specialize this for the 9 by 9 2D size
-					SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
-					terrain_viewport_3d = default_terrain_viewport_3d;
-					
-					GetWindowBounds(the_window, kWindowContentRgn, &windRect);
-					write_window_bounds(0, windRect);
-					windRect = default_terrain_viewport_3d;
-					InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
-					ZeroRectCorner(&windRect);
-					DisposeGWorld(ter_draw_gworld);
-					NewGWorld(&ter_draw_gworld, 0,&windRect, NIL, NIL, kNativeEndianPixMap);
-					
-					kRect3DEditScrn.bottom = DEFAULT_RECT3DEDIT_HEIGHT + TER_RECT_UL_X;
-					kRect3DEditScrn.right = DEFAULT_RECT3DEDIT_WIDTH + TER_RECT_UL_Y;
-					SetRect(&windRect, terrain_viewport_3d.left, terrain_viewport_3d.top, terrain_viewport_3d.right + 40, terrain_viewport_3d.bottom + 40);
-					recalculate_2D_view_details();
+					if(!EqualRect(&terrain_viewport_3d, &default_terrain_viewport_3d)){
+						SizeWindow(the_window, DEFAULT_RECT3DEDIT_WIDTH + 40, DEFAULT_RECT3DEDIT_HEIGHT + 40, FALSE);
+						terrain_viewport_3d = default_terrain_viewport_3d;
+						
+						GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+						write_window_bounds(0, windRect);
+						windRect = default_terrain_viewport_3d;
+						InsetRect(&windRect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
+						ZeroRectCorner(&windRect);
+						DisposeGWorld(ter_draw_gworld);
+						NewGWorld(&ter_draw_gworld, 0,&windRect, NIL, NIL, kNativeEndianPixMap);
+						
+						kRect3DEditScrn.bottom = DEFAULT_RECT3DEDIT_HEIGHT + TER_RECT_UL_X;
+						kRect3DEditScrn.right = DEFAULT_RECT3DEDIT_WIDTH + TER_RECT_UL_Y;
+						recalculate_2D_view_details();
+					}
+					else{
+						//TODO: this assumes that all windows are on the main screen
+						//Should eventually use GetWindowGreatestAreaDevice to determine which screen the main window should be on,
+						//and compute intersections of secondary windows with that device
+						Rect screenBounds;
+						GetAvailableWindowPositioningBounds(NULL,&screenBounds);
+						Rect floatingWindows[2];
+						GetWindowBounds(palettePtr, kWindowStructureRgn, &floatingWindows[0]);
+						GetWindowBounds(tilesPtr, kWindowStructureRgn, &floatingWindows[1]);
+						windRect=largestNonOverlapping(screenBounds,&floatingWindows[0],&floatingWindows[0]+2);
+						SetWindowBounds (mainPtr,kWindowStructureRgn,&windRect);
+						//note that in the next line we switch to working with kWindowContentRgn instaead of kWindowStructureRgn
+						GetWindowBounds(mainPtr, kWindowContentRgn, &windRect);
+						write_window_bounds(0, windRect);
+						ZeroRectCorner(&windRect);
+						
+						terrain_viewport_3d=windRect;
+						InsetRect(&terrain_viewport_3d, 20, 20);
+						ZeroRectCorner(&terrain_viewport_3d);
+						Rect ter_draw_rect=terrain_viewport_3d;
+						InsetRect(&ter_draw_rect, -TER_RECT_UL_X, -TER_RECT_UL_Y);
+						ZeroRectCorner(&ter_draw_rect);
+						DisposeGWorld(ter_draw_gworld);
+						NewGWorld(&ter_draw_gworld, 0,&ter_draw_rect, NIL, NIL, kNativeEndianPixMap);
+						
+						kRect3DEditScrn.bottom = windRect.bottom - 20;
+						kRect3DEditScrn.right = windRect.right - 20;
+						recalculate_2D_view_details();
+					}
 				}
 				set_up_view_buttons();
 				redraw_screen();

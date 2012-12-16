@@ -6104,6 +6104,11 @@ bool open_script_with_editor(const char* script_name){
 	sprintf((char*)finalPath,"%s/%s.txt",(char*)scenPath,script_name);
 	FSRef finalRef;
 	err=FSPathMakeRef (&finalPath[0],&finalRef,NULL);
+	if(err==fnfErr){
+		char buffer[512];
+		sprintf(buffer,"The script '%s' does not exist in the scenario directory",script_name);
+		give_error(buffer, "", 0);
+	}
 	if(err!=noErr) return(false);
 	LSLaunchFSRefSpec openSpec;
 	openSpec.appRef=&script_editor_ref;
