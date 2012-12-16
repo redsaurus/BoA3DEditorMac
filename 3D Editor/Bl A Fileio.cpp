@@ -556,11 +556,12 @@ bool get_saved_window_bounds(unsigned int which, Rect& windRect){
 			okay=false;
 		if(okay){
 			Rect bounds;
-			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,0)),kCFNumberShortType,&bounds.top);
-			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,1)),kCFNumberShortType,&bounds.left);
-			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,2)),kCFNumberShortType,&bounds.bottom);
-			CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,3)),kCFNumberShortType,&bounds.right);
-			windRect=bounds;
+			okay&=CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,0)),kCFNumberShortType,&bounds.top);
+			okay&=CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,1)),kCFNumberShortType,&bounds.left);
+			okay&=CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,2)),kCFNumberShortType,&bounds.bottom);
+			okay&=CFNumberGetValue(static_cast<CFNumberRef>(CFArrayGetValueAtIndex(arr,3)),kCFNumberShortType,&bounds.right);
+			if(okay)
+				windRect=bounds;
 		}
 	}
 	else
@@ -587,6 +588,33 @@ void write_window_bounds(unsigned int which, const Rect& windRect){
 	for(int i=0; i<4; i++)
 		CFRelease(numbers[i]);
 	CFRelease(arr);
+}
+
+CFStringRef TILE_ZOOM_PREF_KEY=CFSTR("TileZoomLevel");
+
+short get_saved_tile_zoom_level(){
+	const short default_zoom_level=1;
+	CFPropertyListRef data = CFPreferencesCopyAppValue(TILE_ZOOM_PREF_KEY, kCFPreferencesCurrentApplication);
+	if(data==NULL)
+		return(default_zoom_level);
+	if(CFGetTypeID(data)==CFNumberGetTypeID()){
+		CFNumberRef num = static_cast<CFNumberRef>(data);
+		short result;
+		bool success=CFNumberGetValue(num,kCFNumberShortType,&result);
+		CFRelease(num);
+		return(success?result:default_zoom_level);
+	}
+	else{
+		CFRelease(data);
+		return(default_zoom_level);
+	}
+}
+
+void write_tile_zoom_level(short tile_zoom_level){
+	CFNumberRef num=CFNumberCreate(NULL, kCFNumberShortType, &tile_zoom_level);
+	CFPreferencesSetAppValue(TILE_ZOOM_PREF_KEY, num, kCFPreferencesCurrentApplication);
+	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+	CFRelease(num);
 }
 //end user preference settings functions
 

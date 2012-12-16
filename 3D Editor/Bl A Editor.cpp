@@ -274,7 +274,6 @@ int main(void)
 
 	make_cursor_sword();
 	Set_Window_Drag_Bdry();//TODO: this doesn't seem to actually do anything?
-	Set_up_win();
 	
 	const EventTypeSpec eventList3[] = {
 	//{ kEventClassMouse, kEventMouseDown }, 
@@ -305,6 +304,7 @@ int main(void)
 	
 	SUSparkleInitializeForCarbon();
 	init_user_prefs();
+	Set_up_win();
 	//apple_menu = GetMenuHandle(500);
 	//AppendResMenu(apple_menu, 'DRVR');
 	shut_down_menus();
@@ -468,6 +468,9 @@ void init_user_prefs()
 	allow_arrow_key_navigation = get_allow_arrow_key_navigation();
 	CheckMenuItem (GetMenuHandle(570),12,allow_arrow_key_navigation);
 	CheckMenuItem (GetMenuHandle(570),13,get_user_pref_bool_value(4,false));
+	tile_zoom_level = get_saved_tile_zoom_level();
+	SetControl32BitValue (tiles_zoom_slider,tile_zoom_level);
+	zoom_tiles_recalculate();
 }
 
 void Set_Window_Drag_Bdry()
@@ -1310,11 +1313,11 @@ void tiles_zoom_slider_change(ControlHandle slider){
     
     short zoom_slider = GetControl32BitValue(slider);
         
-    if (zoom_slider == tile_zoom_level){
+    if (zoom_slider == tile_zoom_level)
         return;
-    }
     
     tile_zoom_level = zoom_slider;
+	write_tile_zoom_level(tile_zoom_level);
     zoom_tiles_recalculate();
     set_up_terrain_rects();
     make_tile_gworlds();
@@ -1524,6 +1527,8 @@ Boolean Mouse_Pressed( EventRecord * event )
                             if (control_hit == tiles_zoom_slider){
                                 content_part = TrackControl(control_hit,event->where,NIL);
                                 tiles_zoom_slider_change(control_hit);
+								ticks_to_wait = SPARSE_TICKS;
+								mouse_button_held = FALSE;
                             }
                             else{
 							content_part = TrackControl(control_hit,event->where,NIL);

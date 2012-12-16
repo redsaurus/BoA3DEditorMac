@@ -1392,6 +1392,8 @@ bool get_allow_arrow_key_navigation();
 void write_allow_arrow_key_navigation(bool allow);
 bool get_saved_window_bounds(unsigned int which, Rect& windRect);
 void write_window_bounds(unsigned int which, const Rect& windRect);
+short get_saved_tile_zoom_level();
+void write_tile_zoom_level(short tile_zoom_level);
 bool find_app();
 
 // dlogtool
