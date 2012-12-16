@@ -648,8 +648,7 @@ void write_editor_application(){
 		return;
 	UInt8 appPath[512];
 	OSErr err = FSRefMakePath (&script_editor_ref,&appPath[0],510);
-	if(err!=noErr){ return;}
-	printf("app path is %s\n",appPath);
+	if(err!=noErr) return;
 	CFStringRef pathStr=CFStringCreateWithCString(NULL, (const char*)appPath, kCFStringEncodingMacRoman);
 	CFPreferencesSetAppValue(EDITOR_APPLICATION_PATH_KEY, pathStr, kCFPreferencesCurrentApplication);
 	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
