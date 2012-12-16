@@ -94,6 +94,7 @@ ModalFilterUPP main_dialog_UPP;
 // DATA TO EDIT
 scenario_data_type scenario;
 town_record_type town;
+extern outdoor_record_type current_terrain;
 // big_tr_type t_d;
 // outdoor_record_type current_terrain;
 scen_item_data_type scen_data;
@@ -472,6 +473,7 @@ void init_user_prefs()
 	tile_zoom_level = get_saved_tile_zoom_level();
 	SetControl32BitValue (tiles_zoom_slider,tile_zoom_level);
 	zoom_tiles_recalculate();
+	get_editor_application();
 }
 
 void Set_Window_Drag_Bdry()
@@ -655,6 +657,9 @@ void handle_apple_menu(int item_hit)
 			}
 			SUSparkleCheckForUpdates(true);
 			break;
+		case 4:
+			select_script_editor();
+			break;
 		default:
 			//GetMenuItemText (apple_menu,item_hit,desk_acc_name);
 			//desk_acc_num = OpenDeskAcc(desk_acc_name);
@@ -795,7 +800,28 @@ void handle_campaign_menu(int item_hit)
 		case 9: // intro text 3
 			edit_scen_intro(2);
 			break;
-		case 12: // reload scen script
+		case 10: //edit scenario script
+			{
+				char* script_name=get_scenario_filename();
+				if(script_name){
+					open_script_with_editor(script_name);
+					free(script_name);
+				}
+			}
+			break;
+		case 11: //edit scenario data script
+			{
+				char* base_script_name=get_scenario_filename();
+				if(base_script_name){
+					char* script_name=(char*)malloc(strlen(base_script_name)+4);
+					sprintf(script_name,"%sdata",base_script_name);
+					open_script_with_editor(script_name);
+					free(base_script_name);
+					free(script_name);
+				}
+			}
+			break;
+		case 14: // reload scen script
 			if (fancy_choice_dialog(871,0) == 2)
 				break;
 			scen_data.clear_scen_item_data_type();
@@ -817,14 +843,14 @@ void handle_campaign_menu(int item_hit)
 			place_right_buttons(0);
 			redraw_screen();
 			break;
-		case 13: // Clean Up Walls
+		case 15: // Clean Up Walls
 			if (fancy_choice_dialog(873,0) == 2)
 				break;
 			clean_walls(); 
 			redraw_screen();
 			change_made_town = TRUE;
 			break;
-		case 14: //   Import Town
+		case 16: //   Import Town
 			clear_selected_copied_objects();
 			if(import_boa_town()){
 				purgeUndo();
@@ -833,7 +859,7 @@ void handle_campaign_menu(int item_hit)
 			}
 			redraw_screen();
 			break;
-		case 15: //   Import Outdoor Section
+		case 17: //   Import Outdoor Section
 			clear_selected_copied_objects();
 			if(import_boa_outdoors()){
 				purgeUndo();
@@ -842,15 +868,15 @@ void handle_campaign_menu(int item_hit)
 			}
 			redraw_screen();
 			break;
-		case 16: //   Set Variable Town Entry
+		case 18: //   Set Variable Town Entry
 			edit_add_town();
 			change_made_town = TRUE;
 			break;
-		case 17: //   Edit Item Placement Shortcuts
+		case 19: //   Edit Item Placement Shortcuts
 			edit_item_placement();
 			change_made_town = TRUE;
 			break;
-		case 18: //   Delete Last Town
+		case 20: //   Delete Last Town
 			if (change_made_town || change_made_outdoors) {
 				give_error("You need to save the changes made to your scenario before you can delete a town.","",0);
 				return;
@@ -874,11 +900,11 @@ void handle_campaign_menu(int item_hit)
 				redraw_screen();
 			}
 			break;
-		case 19: //   Write Scenario Data to Text File
+		case 21: //   Write Scenario Data to Text File
 			if (fancy_choice_dialog(866,0) == 1)
 				start_data_dump();
 			break;
-		case 20: //   Change Outdoor Size
+		case 22: //   Change Outdoor Size
 			if (change_made_town || change_made_outdoors) {
 				give_error("You need to save the changes made to your scenario before you can change the outdoor size.","",0);
 				return;
@@ -937,33 +963,48 @@ void handle_town_menu(int item_hit)
 		case 7:  //Edit Area Descriptions
 			 edit_town_strs();
 			 break;
-			
-		case 9: //Set Starting Location
+		case 8: //edit town script
+			if(strlen(town.town_script))
+				open_script_with_editor(town.town_script);
+			else
+				beep(); //TODO: explain the beeping
+			break;
+		case 9: //edit town dialogue script
+			if(strlen(town.town_script)){
+				char* script_name=(char*)malloc(strlen(town.town_script)+3);
+				sprintf(script_name,"%sdlg",town.town_script);
+				open_script_with_editor(script_name);
+				free(script_name);
+			}
+			else
+				beep(); //TODO: explain the beeping
+			break;
+		case 11: //Set Starting Location
 			if (fancy_choice_dialog(867,0) == 2)
 					break;
 			set_tool(72);
 			break;
-		case 11: // add random
+		case 13: // add random
 			if (fancy_choice_dialog(863,0) == 2)
 				break;
 			place_items_in_town();
 			change_made_town = TRUE; 
 			redraw_screen();
 			break;
-		case 12:
+		case 14:
 			//TODO: should this continue to exist?
 			set_all_items_containment();
 			draw_terrain();
 			change_made_town = TRUE; 
 			break;
-		case 13:  // set not prop
+		case 15:  // set not prop
 			for (i = 0; i < 144; i++)
 				town.preset_items[i].properties = town.preset_items[i].properties & 253;
 			fancy_choice_dialog(861,0);
 			draw_terrain();
 			change_made_town = TRUE; 
 			break;
-		case 14:  // clear all items
+		case 16:  // clear all items
 			if (fancy_choice_dialog(862,0) == 2)
 				break;
 			for (i = 0; i < 144; i++)
@@ -972,7 +1013,7 @@ void handle_town_menu(int item_hit)
 			change_made_town = TRUE; 
 			redraw_screen();
 			break;
-		case 17: //clear all creatures
+		case 19: //clear all creatures
 			if (fancy_choice_dialog(878,0) == 2)
 				break;
 			for (i = 0; i < 80; i++)
@@ -981,7 +1022,7 @@ void handle_town_menu(int item_hit)
 			change_made_town = TRUE; 
 				redraw_screen();
 			break;
-		case 18: // clear special encs
+		case 20: // clear special encs
 			if (fancy_choice_dialog(877,0) == 2)
 				break;
 			for (x = 0; x < NUM_TOWN_PLACED_SPECIALS; x++) {
@@ -991,7 +1032,7 @@ void handle_town_menu(int item_hit)
 			change_made_town = TRUE; 
 			redraw_screen();
 			break;
-		case 19://change town size
+		case 21://change town size
 			if (change_made_town || change_made_outdoors) {
 				give_error("You need to save the changes made to your scenario before you can add a new town.","",0);
 				return;
@@ -1046,7 +1087,13 @@ void handle_outdoor_menu(int item_hit)
 		case 6: frill_terrain(); change_made_outdoors = TRUE; break;
 		case 7: unfrill_terrain(); change_made_outdoors = TRUE; break;
 		case 8: edit_out_strs(); change_made_outdoors = TRUE; break; //Edit Area Descriptions
-		case 10: //Set outdoor starting point
+		case 9:
+			if(strlen(current_terrain.section_script))
+				open_script_with_editor(current_terrain.section_script);
+			else
+				beep(); //TODO: explain beeping
+			break;
+		case 11: //Set outdoor starting point
 			if (fancy_choice_dialog(864,0) == 2)
 				return;
 			set_tool(71);

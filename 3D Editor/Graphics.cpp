@@ -5533,8 +5533,13 @@ void drawSelectionToolDetails(){
 						sprintf((char*)draw_str,"  Script: %s", scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script);
 				}
 				else 
-					sprintf((char*)draw_str,"  Script: %s",town.creatures[selected_object_number].char_script); 
-				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+					sprintf((char*)draw_str,"  Script: %s",town.creatures[selected_object_number].char_script);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[2],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				{
+					Rect edit_button_rect=tool_details_text_lines[2];
+					edit_button_rect.left+=210;
+					char_win_draw_string(GetWindowPort(palettePtr),edit_button_rect,"[Edit]",2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				}
 				
 				sprintf((char*)draw_str,"  Attitude: %s",attitude_types[town.creatures[selected_object_number].start_attitude - 2]); 
 				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[3],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
@@ -5603,8 +5608,13 @@ void drawSelectionToolDetails(){
 				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[0],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
 				
 				sprintf((char*)draw_str,"  Script: %s",
-						town.ter_scripts[selected_object_number].script_name); 
-				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);		
+						town.ter_scripts[selected_object_number].script_name);
+				char_win_draw_string(GetWindowPort(palettePtr),tool_details_text_lines[1],(char*)draw_str,2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				{
+					Rect edit_button_rect=tool_details_text_lines[1];
+					edit_button_rect.left+=210;
+					char_win_draw_string(GetWindowPort(palettePtr),edit_button_rect,"[Edit]",2,TOOL_PALETTE_TEXT_LINE_HEIGHT);
+				}
 				for (short i = 0; i < 8; i++) {
 					sprintf((char*)draw_str,"  Memory Cell %d: %d",
 							i,town.ter_scripts[selected_object_number].memory_cells[i]); 

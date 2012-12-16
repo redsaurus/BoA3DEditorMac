@@ -95,6 +95,9 @@ static outdoor_record_type warrior_grove_out;
 
 static short scen_resource_file = -1;
 
+bool script_editor_set=false;
+FSRef script_editor_ref;
+
 // data for Blades of Exile porting
 static scenario_data_type temp_scenario;
 static old_blades_scenario_data_type boe_scenario;
@@ -615,6 +618,42 @@ void write_tile_zoom_level(short tile_zoom_level){
 	CFPreferencesSetAppValue(TILE_ZOOM_PREF_KEY, num, kCFPreferencesCurrentApplication);
 	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 	CFRelease(num);
+}
+
+CFStringRef EDITOR_APPLICATION_PATH_KEY=CFSTR("ScriptEditorPath");
+
+bool get_editor_application(){
+	CFPropertyListRef data = CFPreferencesCopyAppValue(EDITOR_APPLICATION_PATH_KEY, kCFPreferencesCurrentApplication);
+	if(data==NULL)
+		return(false);
+	if(CFGetTypeID(data)==CFStringGetTypeID()){
+		CFStringRef str = static_cast<CFStringRef>(data);
+		char buffer[512];
+		bool success=CFStringGetCString (str,(char*)buffer,512,kCFStringEncodingMacRoman);
+		CFRelease(str);
+		if(!success) return(false);
+		success=FSPathMakeRef((const UInt8 *)buffer,&script_editor_ref,NULL)==noErr;
+		if(success)
+			script_editor_set=true;
+		return(success);
+	}
+	else{
+		CFRelease(data);
+		return(false);
+	}
+}
+
+void write_editor_application(){
+	if(!script_editor_set)
+		return;
+	UInt8 appPath[512];
+	OSErr err = FSRefMakePath (&script_editor_ref,&appPath[0],510);
+	if(err!=noErr){ return;}
+	printf("app path is %s\n",appPath);
+	CFStringRef pathStr=CFStringCreateWithCString(NULL, (const char*)appPath, kCFStringEncodingMacRoman);
+	CFPreferencesSetAppValue(EDITOR_APPLICATION_PATH_KEY, pathStr, kCFPreferencesCurrentApplication);
+	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+	CFRelease(pathStr);
 }
 //end user preference settings functions
 
@@ -5961,12 +6000,8 @@ void kludge_correct_old_bad_data()
 		}
 	}
 }
-
-//so this was a test function which was going to be the basis of a new feature:
-//the feature was to be able to open various files making up the scenario in 
-//other programs. This does work fine, but I couldn't get submenus in the
-//menu bar to work, making it difficult to create a usable UI for this. 
-bool find_app()
+ 
+bool select_script_editor()
 {
 	bool result = false;
 	OSStatus err;
@@ -5979,11 +6014,11 @@ bool find_app()
 	option.optionFlags = /*kNavDefaultNavDlogOptions&*/kNavSupportPackages;
 	option.location = defaultPos;
 	option.clientName = CFSTR( "3D BoA Editor" );
-	option.windowTitle = CFSTR( "Locate the TextEdit Application" );
+	option.windowTitle = CFSTR( "Locate the Your Editor Application" );
 	option.actionButtonLabel = CFSTR( "Choose" );
 	option.cancelButtonLabel = NULL;
 	option.saveFileName = NULL;
-	option.message = CFSTR("message");
+	option.message = CFSTR("Select the application you wish to use to edit scripts");
 	option.preferenceKey = 0;
 	option.popupExtension = NULL;
 	option.modality = kWindowModalityAppModal;
@@ -5993,53 +6028,91 @@ bool find_app()
 		NavUserAction action = NavDialogGetUserAction( dlog );
 		if ( action == kNavUserActionChoose ) {
 			err = NavDialogGetReply( dlog, &reply );
+			if( err != noErr )
+				return(false);
 			if ( reply.validRecord ) {
 				SInt32 itemCount;
 				DescType actualType;
 				AEKeyword junkKeyword;
 				Size junkSize;
-				OSErr osErr;
 				
-				osErr = AECountItems(&reply.selection, &itemCount);
+				err = AECountItems(&reply.selection, &itemCount);
+				if( err != noErr )
+					return(false);
 				if( itemCount == 1 ) {
-					osErr = AEGetNthPtr(&reply.selection, 1, typeFSS, &junkKeyword, &actualType, &appSpec, sizeof(appSpec), &junkSize);
-					if( osErr != noErr )
-					{
+					err = AEGetNthPtr(&reply.selection, 1, typeFSS, &junkKeyword, &actualType, &appSpec, sizeof(appSpec), &junkSize);
+					if( err != noErr )
 						return(false);
-					}
 				}
 			}
 		}
 		NavDialogDispose( dlog );
 	}
-	else{ printf("bad!\n"); return(false);}
-	FSRef appRef;
-	err = FSpMakeFSRef (&appSpec,&appRef);
-	if(err!=noErr){ return(false);}
+	else return(false);
+	err = FSpMakeFSRef (&appSpec,&script_editor_ref);
+	if(err!=noErr) return(false);
+	
+	result=(err==noErr);
+	script_editor_set=result;
+	if(script_editor_set)
+		write_editor_application();
+	return result;
+}
+
+//If the result is non-NULL the caller is responsible for fee()'ing it
+//Reurns NULL if a problem occurs
+char* get_scenario_filename(){
+	if(!file_is_loaded)
+		return(NULL);
 	FSRef scenRef;
+	OSErr err;
 	err = FSpMakeFSRef (&current_scenario_file_info,&scenRef);
-	if(err!=noErr){ return(false);}
-	UInt8 appPath[512];
-	err = FSRefMakePath (&appRef,&appPath[0],510);
-	if(err!=noErr){ return(false);}
+	if(err!=noErr) return(NULL);
 	UInt8 scenPath[512];
 	err = FSRefMakePath (&scenRef,&scenPath[0],510);
-	if(err!=noErr){ return(false);}
+	if(err!=noErr) return(NULL);
+	UInt8* dir=(UInt8*)strrchr((char*)scenPath,'/');
 	UInt8* ext=(UInt8*)strrchr((char*)scenPath,'.');
-	*ext='\0';//clumsy way to chop off the extension
-	UInt8 finalPath[512];
-	sprintf((char*)finalPath,"%s.txt",(char*)scenPath);
+	if(!dir || !ext || dir>=ext || (ext-dir)>512)
+		return(NULL);
+	dir++;
+	char* name=(char*)malloc(ext-dir+1);
+	*ext='\0';
+	strcpy(name, (char*)dir);
+	return(name);
+}
+
+bool open_script_with_editor(const char* script_name){
+	if(!file_is_loaded)
+		return(false);
+	OSErr err;
+	//if editor not set, prompt user
+	if(!script_editor_set){
+		if(!select_script_editor())
+			return(false);
+	}
+	
+	FSRef scenRef;
+	err = FSpMakeFSRef (&current_scenario_file_info,&scenRef);
+	if(err!=noErr) return(false);
+	UInt8 scenPath[512];
+	err = FSRefMakePath (&scenRef,&scenPath[0],510);
+	if(err!=noErr) return(false);
+	//printf("scen path is %s\n",scenPath);
+	UInt8* dir=(UInt8*)strrchr((char*)scenPath,'/');
+	*dir='\0';//clumsy way to truncate to the directory path
+	UInt8 finalPath[1024];
+	sprintf((char*)finalPath,"%s/%s.txt",(char*)scenPath,script_name);
 	FSRef finalRef;
-	FSPathMakeRef (&finalPath[0],&finalRef,NULL);
+	err=FSPathMakeRef (&finalPath[0],&finalRef,NULL);
+	if(err!=noErr) return(false);
 	LSLaunchFSRefSpec openSpec;
-	openSpec.appRef=&appRef;
+	openSpec.appRef=&script_editor_ref;
 	openSpec.numDocs=1;
 	openSpec.itemRefs=&finalRef;
 	openSpec.passThruParams=NULL;
 	openSpec.launchFlags=kLSLaunchDefaults;
 	openSpec.asyncRefCon=NULL;
-	LSOpenFromRefSpec(&openSpec,NULL);
-	printf("app path is %s\n",appPath);
-	printf("scen path is %s\n",scenPath);
-	return result;
+	err=LSOpenFromRefSpec(&openSpec,NULL);
+	return(err==noErr);
 }

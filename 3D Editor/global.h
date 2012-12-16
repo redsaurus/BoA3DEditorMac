@@ -1394,7 +1394,10 @@ bool get_saved_window_bounds(unsigned int which, Rect& windRect);
 void write_window_bounds(unsigned int which, const Rect& windRect);
 short get_saved_tile_zoom_level();
 void write_tile_zoom_level(short tile_zoom_level);
-bool find_app();
+bool select_script_editor();
+bool open_script_with_editor(const char* script_name);
+bool get_editor_application();
+char* get_scenario_filename();
 
 // dlogtool
 void cd_init_dialogs();

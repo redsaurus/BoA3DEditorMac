@@ -1050,10 +1050,27 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 					break;
 				case 2:
 					{
-						char str_response[256] = "";
-						get_str_dlog(town.creatures[selected_object_number].char_script,"What script?",str_response,TRUE);
-						str_response[SCRIPT_NAME_LEN - 1] = 0;
-						strcpy(town.creatures[selected_object_number].char_script,str_response);
+						Rect edit_button_rect=tool_details_text_lines[lineHit];
+						edit_button_rect.left+=210;
+						if(PtInRect(the_point, &edit_button_rect)){
+							const char* script_name=NULL;
+							if (strlen(town.creatures[selected_object_number].char_script) <= 0){
+								if(strlen(scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script) <=0)
+									script_name="basicnpc";
+								else
+									script_name=scen_data.scen_creatures[town.creatures[selected_object_number].number].default_script;
+							}
+							else
+								script_name=town.creatures[selected_object_number].char_script;
+							if(script_name && strlen(script_name))
+								open_script_with_editor(script_name);
+						}
+						else{
+							char str_response[256] = "";
+							get_str_dlog(town.creatures[selected_object_number].char_script,"What script?",str_response,TRUE);
+							str_response[SCRIPT_NAME_LEN - 1] = 0;
+							strcpy(town.creatures[selected_object_number].char_script,str_response);
+						}
 					}
 					break;
 				case 3:
@@ -1151,10 +1168,19 @@ bool handleClickSelectionToolDetails(Point the_point, EventRecord event){
 			switch (lineHit) {
 				case 1:
 					{
-						char str_response[256] = "";
-						get_str_dlog(town.ter_scripts[selected_object_number].script_name,"What script?",str_response,TRUE);
-						str_response[SCRIPT_NAME_LEN - 1] = 0;
-						strcpy(town.ter_scripts[selected_object_number].script_name,str_response);
+						Rect edit_button_rect=tool_details_text_lines[lineHit];
+						edit_button_rect.left+=210;
+						if(PtInRect(the_point, &edit_button_rect)){
+							const char* script_name=town.ter_scripts[selected_object_number].script_name;
+							if(script_name && strlen(script_name))
+								open_script_with_editor(script_name);
+						}
+						else{
+							char str_response[256] = "";
+							get_str_dlog(town.ter_scripts[selected_object_number].script_name,"What script?",str_response,TRUE);
+							str_response[SCRIPT_NAME_LEN - 1] = 0;
+							strcpy(town.ter_scripts[selected_object_number].script_name,str_response);
+						}
 					}
 					break;
 				case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
@@ -4304,6 +4330,7 @@ void shut_down_menus()
 		EnableMenuItem(cur_menu,11);   EnableMenuItem(cur_menu,15);
 		EnableMenuItem(cur_menu,16);
 		cur_menu = GetMenuHandle(600); EnableMenuItem(cur_menu,0 );
+		EnableMenuItem(cur_menu,10);   EnableMenuItem(cur_menu,11);
 		cur_menu = GetMenuHandle(650); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(651); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(700); EnableMenuItem(cur_menu,0 );
@@ -4333,7 +4360,7 @@ void shut_down_menus()
 		cur_menu = GetMenuHandle(752); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(753); DisableMenuItem(cur_menu,0 );
 		
-		cur_menu = GetMenuHandle(651); EnableMenuItem(cur_menu,0 );		
+		cur_menu = GetMenuHandle(651); for(int i=0; i<=11; i++) EnableMenuItem(cur_menu,i);
 	}
 	else {
 		cur_menu = GetMenuHandle(570); EnableMenuItem(cur_menu,1 );
@@ -4341,7 +4368,7 @@ void shut_down_menus()
 		EnableMenuItem(cur_menu,5 );   EnableMenuItem(cur_menu,6 );
 		EnableMenuItem(cur_menu,7 );   EnableMenuItem(cur_menu,12);
 		EnableMenuItem(cur_menu,13);
-		cur_menu = GetMenuHandle(650); EnableMenuItem(cur_menu,0 );
+		cur_menu = GetMenuHandle(650); for(int i=0; i<=21; i++) EnableMenuItem(cur_menu,i);
 		cur_menu = GetMenuHandle(700); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(701); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(702); EnableMenuItem(cur_menu,0 );
