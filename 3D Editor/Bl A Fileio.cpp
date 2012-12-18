@@ -1981,13 +1981,17 @@ void load_town(short which_town)
 	}	
 	
 	len_to_jump = sizeof(scenario_data_type);
+	
+	scenario_data_type temp_scen;
+	if ((error = FSRead(file_id, &len_to_jump, (char *) &temp_scen)) != 0){
+		FSClose(file_id); oops_error(75); return;
+	}
+	if (temp_scen.scenario_platform() != endianness.isLittle)
+		temp_scen.port();
 
-	store = (long) (scenario.out_width * scenario.out_height) * (long) (sizeof(outdoor_record_type));
-	len_to_jump += store;
-
-	store = 0;
+	store = (long) (temp_scen.out_width * temp_scen.out_height) * (long) (sizeof(outdoor_record_type));
 	for (i = 0; i < which_town; i++){
-		switch (scenario.town_size[i]) {
+		switch (temp_scen.town_size[i]) {
 			case 0: store += sizeof (big_tr_type) + sizeof(town_record_type); break;
 			case 1: store += sizeof (ave_tr_type) + sizeof(town_record_type); break;
 			case 2: store += sizeof (tiny_tr_type) + sizeof(town_record_type); break;
@@ -1995,7 +1999,7 @@ void load_town(short which_town)
 	}
 	len_to_jump += store;
 	
-	error = SetFPos (file_id, 1, len_to_jump);
+	error = SetFPos (file_id, fsFromStart, len_to_jump);
 	if (error != 0) {FSClose(file_id);oops_error(81);return;}
 	
 	len = sizeof(town_record_type);
@@ -2005,6 +2009,7 @@ void load_town(short which_town)
 
 	if (current_scenario_is_little_endian != endianness.isLittle)
 		town.port();
+	scenario.town_size[which_town]=temp_scen.town_size[which_town];
 	switch (scenario.town_size[which_town]) {
 		case 0:
 			len =  sizeof(big_tr_type);
