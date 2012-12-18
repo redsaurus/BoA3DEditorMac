@@ -1757,6 +1757,7 @@ void refresh_graphics_on_screen();
 void drawToolPalette();
 void drawToolCategories();
 void drawToolDetails();
+OSStatus mainWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent);
 OSStatus paletteWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent);
 OSStatus tileWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent);
 

@@ -6176,6 +6176,54 @@ bool ofsToolsTooltip(Point where, HMHelpContentPtr ioHelpContent){
 	return(true);
 }
 
+OSStatus mainWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent){
+	OSErr status = noErr;
+	if (inRequest == kHMSupplyContent) { //being asked to supply a tooltip
+		bool willShowTooltip = false;
+		GrafPtr savePort;
+		if (!QDSwapPort(GetWindowPort(mainPtr), &savePort))
+			savePort = NULL;
+		GlobalToLocal(&inGlobalMouse);
+		
+		if(PtInRect(inGlobalMouse, &view_buttons[0])){
+			ioHelpContent->absHotRect=view_buttons[0];
+			ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Toggle 2D/3D view");
+			ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Switch between 2D and 3D view (press Tab)");
+			ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+			willShowTooltip = true;
+		}
+		else if(PtInRect(inGlobalMouse, &view_buttons[1])){
+			ioHelpContent->absHotRect=view_buttons[1];
+			if(cur_viewing_mode>=10){
+				ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Toggle editor/in-game view");
+				ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Switch between editor view with grid lines and markers and in-game view with lighting (press Option-Tab)");
+			}
+			else{
+				ioHelpContent->content[kHMMinimumContentIndex].u.tagCFString = CFSTR("Toggle zoom");
+				ioHelpContent->content[kHMMaximumContentIndex].u.tagCFString = CFSTR("Switch between zoomed-in view and zoomed-out, whole zone view (press Option-Tab)");
+			}
+			ioHelpContent->tagSide = kHMOutsideTopCenterAligned;
+			willShowTooltip = true;
+		}
+		ioHelpContent->version = kMacHelpVersion;
+		if(willShowTooltip){
+			*outContentProvided = kHMContentProvided;
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.top);
+			LocalToGlobal((Point*)&ioHelpContent->absHotRect.bottom);
+			ioHelpContent->content[kHMMinimumContentIndex].contentType = kHMCFStringContent;
+			ioHelpContent->content[kHMMaximumContentIndex].contentType = kHMCFStringContent;
+		}
+		else
+			*outContentProvided = kHMContentNotProvidedDontPropagate;
+		if (savePort != NULL)
+			SetPort(savePort);
+	}
+	else if (inRequest == kHMDisposeContent) {// being asked to clean up a tootip
+		//nothing to do
+    }
+	return status;
+}
+
 OSStatus paletteWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMouse,HMContentRequest inRequest,HMContentProvidedType *outContentProvided,HMHelpContentPtr ioHelpContent){
 	using namespace tools;
     OSErr status = noErr;
@@ -6193,8 +6241,8 @@ OSStatus paletteWindowTooltipContentCallback(WindowRef inWindow,Point inGlobalMo
 		if(editing_town)
 			ofInterest=toolCategoryTownRect;
 		else
-			ofInterest=toolCategoryTownRect;
-			InsetRect(&ofInterest, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH);
+			ofInterest=toolCategoryOutdoorRect;
+		InsetRect(&ofInterest, TOOL_PALETTE_GUTTER_WIDTH, TOOL_PALETTE_GUTTER_WIDTH);
 		if(PtInRect(inGlobalMouse, &ofInterest)){
 			int idx=(inGlobalMouse.v-ofInterest.top)/PALETTE_BUT_HEIGHT;
 			switch(idx){

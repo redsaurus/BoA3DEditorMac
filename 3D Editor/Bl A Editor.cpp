@@ -434,6 +434,7 @@ void Initialize(void)
 	
 	SetWindowTitleWithCFString(tilesPtr, CFSTR("Tiles"));
 	
+	HMInstallWindowContentCallback(mainPtr,NewHMWindowContentUPP(mainWindowTooltipContentCallback));
 	HMInstallWindowContentCallback(palettePtr,NewHMWindowContentUPP(paletteWindowTooltipContentCallback));
 	HMInstallWindowContentCallback(tilesPtr,NewHMWindowContentUPP(tileWindowTooltipContentCallback));
 	
