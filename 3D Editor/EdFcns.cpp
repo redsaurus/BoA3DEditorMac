@@ -4360,7 +4360,7 @@ void shut_down_menus()
 		cur_menu = GetMenuHandle(752); DisableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(753); DisableMenuItem(cur_menu,0 );
 		
-		cur_menu = GetMenuHandle(651); for(int i=0; i<=11; i++) EnableMenuItem(cur_menu,i);
+		cur_menu = GetMenuHandle(651); EnableMenuItem(cur_menu,0 );
 	}
 	else {
 		cur_menu = GetMenuHandle(570); EnableMenuItem(cur_menu,1 );
@@ -4368,7 +4368,7 @@ void shut_down_menus()
 		EnableMenuItem(cur_menu,5 );   EnableMenuItem(cur_menu,6 );
 		EnableMenuItem(cur_menu,7 );   EnableMenuItem(cur_menu,12);
 		EnableMenuItem(cur_menu,13);
-		cur_menu = GetMenuHandle(650); for(int i=0; i<=21; i++) EnableMenuItem(cur_menu,i);
+		cur_menu = GetMenuHandle(650); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(700); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(701); EnableMenuItem(cur_menu,0 );
 		cur_menu = GetMenuHandle(702); EnableMenuItem(cur_menu,0 );

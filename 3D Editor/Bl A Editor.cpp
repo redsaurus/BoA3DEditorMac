@@ -533,9 +533,9 @@ Boolean Handle_One_Event()
 					if(event.what != autoKey){
 						BringToFront(mainPtr);
 						SetPort(GetWindowPort(mainPtr));
-						if(chr=='=')
-							chr='+';
-						menu_choice = MenuKey(chr);
+						if(chr=='=') //turn Command-= into Command-+
+							event.modifiers|=shiftKey;
+						menu_choice = MenuEvent(&event);//MenuKey(chr);
 						handle_menu_choice(menu_choice);
 					}
 				}
