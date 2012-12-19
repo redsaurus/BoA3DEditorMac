@@ -1606,8 +1606,9 @@ Boolean Mouse_Pressed( EventRecord * event )
 			}
             else if (the_window == tilesPtr){
                 SizeWindow(the_window, TILES_WINDOW_WIDTH, tilesRect.bottom - tilesRect.top, FALSE);
-				GetWindowBounds(the_window, kWindowContentRgn, &windRect);
-				write_window_bounds(2, windRect);
+				Rect boundsRect;
+				GetWindowBounds(the_window, kWindowContentRgn, &boundsRect);
+				write_window_bounds(2, boundsRect);
                 tilesRect.right = tilesRect.left + TILES_WINDOW_WIDTH;
                 terrain_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
                 mode_buttons_rect.right=tilesRect.right-tilesRect.left-RIGHT_SCROLLBAR_WIDTH;
@@ -1627,14 +1628,14 @@ Boolean Mouse_Pressed( EventRecord * event )
 		case inDrag:
 			GetQDGlobalsScreenBits(&screenbits);
 			DragWindow(the_window, event->where, &screenbits.bounds);
-			GetWindowBounds(the_window, kWindowContentRgn, &windRect);
+			Rect boundsRect;
+			GetWindowBounds(the_window, kWindowContentRgn, &boundsRect);
 			if(the_window==mainPtr)
-				write_window_bounds(0, windRect);
+				write_window_bounds(0, boundsRect);
 			else if(the_window==palettePtr)
-				write_window_bounds(1, windRect);
+				write_window_bounds(1, boundsRect);
 			else if(the_window==tilesPtr)
-				write_window_bounds(2, windRect);
-			ZeroRectCorner(&windRect);
+				write_window_bounds(2, boundsRect);
 			break;
 		case inGoAway:
 			All_Done = TRUE;
