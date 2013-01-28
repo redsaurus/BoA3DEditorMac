@@ -2159,10 +2159,20 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 						if (town.room_rect[x].right <= 0) {
 							town.room_rect[x] = working_rect;
 							*(town.info_rect_text[x]) = '\0';
-							if(edit_area_rect_str(x,1) == FALSE)
-								town.room_rect[x].right = 0;
-							else
+							//pre-emptively create a group because edit_area_rect_str may or may not push an undo step
+							pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+							pushUndoStep(new Undo::CreateDescriptionArea(x,town.room_rect[x],town.info_rect_text[x],true));
+							if(edit_area_rect_str(x,1) == FALSE){
+								 //need to finalize the group opened above, even though it will only have one change in it
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+								undo.applyLast(redo,false); //roll back the creation of the rectangle
+								updateUndoMenu();
+							}
+							else{
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::DESCRIPTION_ONLY, Undo::CreateDescriptionArea::createDescription));
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 								setSelection(SelectionType::AreaDescription, x, false);
+							}
 							x = 500;
 						}
 					}
@@ -2172,10 +2182,20 @@ void handle_ter_spot_press(location spot_hit,Boolean option_hit,Boolean alt_hit,
 						if (current_terrain.info_rect[x].right <= 0) {
 							current_terrain.info_rect[x] = working_rect;
 							*(current_terrain.info_rect_text[x]) = '\0';
-							if (edit_area_rect_str(x,0) == FALSE)
-								current_terrain.info_rect[x].right = 0;
-							else
+							//pre-emptively create a group because edit_area_rect_str may or may not push an undo step
+							pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::BEGIN_GROUP));
+							pushUndoStep(new Undo::CreateDescriptionArea(x,current_terrain.info_rect[x],current_terrain.info_rect_text[x],true));
+							if (edit_area_rect_str(x,0) == FALSE){
+								//need to finalize the group opened above, even though it will only have one change in it
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
+								undo.applyLast(redo,false); //roll back the creation of the rectangle
+								updateUndoMenu();
+							}
+							else{
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::DESCRIPTION_ONLY, Undo::CreateDescriptionArea::createDescription));
+								pushUndoStep(new Undo::UndoGroupDelimiter(Undo::UndoStep::END_GROUP));
 								setSelection(SelectionType::AreaDescription, x, false);
+							}
 							x = 500;
 						}
 					}
@@ -4513,8 +4533,12 @@ void delete_selected_instance(){
 				}
 				break;
 			case SelectionType::AreaDescription:
-				if(selected_object_number<NUM_TOWN_DESCRIPTION_AREAS)
+				if(selected_object_number<NUM_TOWN_DESCRIPTION_AREAS){
+					pushUndoStep(new Undo::CreateDescriptionArea(selected_object_number,
+																 town.room_rect[selected_object_number],
+																 town.info_rect_text[selected_object_number],false));
 					town.room_rect[selected_object_number].right = 0;
+				}
 				break;
 			case SelectionType::Sign:
 				if(selected_object_number<15){
@@ -4545,8 +4569,12 @@ void delete_selected_instance(){
 				}
 				break;
 			case SelectionType::AreaDescription:
-				if(selected_object_number<NUM_OUT_DESCRIPTION_AREAS)
+				if(selected_object_number<NUM_OUT_DESCRIPTION_AREAS){
+					pushUndoStep(new Undo::CreateDescriptionArea(selected_object_number,
+																 current_terrain.info_rect[selected_object_number],
+																 current_terrain.info_rect_text[selected_object_number],false));
 					current_terrain.info_rect[selected_object_number].right = 0;
+				}
 				break;
 			case SelectionType::TownEntrance:
 				if(selected_object_number<NUM_OUT_TOWN_ENTRANCES){

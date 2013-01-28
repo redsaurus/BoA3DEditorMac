@@ -1568,6 +1568,7 @@ int flood_fill_terrain(short new_terrain, short old_terrain, int x, int y);
 namespace Undo{ //forward decl
 	class UndoStep;
 }
+void updateUndoMenu();
 void pushUndoStep(Undo::UndoStep* s);
 void purgeUndo();
 void performUndo();

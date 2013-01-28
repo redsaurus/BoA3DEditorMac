@@ -23,7 +23,7 @@ namespace Undo{
 	
 	class UndoStep{
 	public:
-		enum GroupType{NORMAL,BEGIN_GROUP,END_GROUP,SAVE_DELIMITER};
+		enum GroupType{NORMAL,BEGIN_GROUP,END_GROUP,SAVE_DELIMITER,DESCRIPTION_ONLY};
 		
 		virtual ~UndoStep(){}
 		virtual void apply() const=0;
@@ -86,7 +86,7 @@ namespace Undo{
 		unsigned short index;
 		objectType obj;
 		bool create;
-		
+	public:
 		static const std::string createDescription;
 		static const std::string removeDescription;
 	};
@@ -94,11 +94,11 @@ namespace Undo{
 	template<int size>
 	class StringChangeStep : public UndoStep{
 	public:
-		StringChangeStep<size>(const std::string& n, const std::string& o):oldStr(&oldBuf[0]),newStr(&newStr[0]){
+		StringChangeStep<size>(const std::string& n, const std::string& o):oldStr(&oldBuf[0]),newStr(&newBuf[0]){
 			strncpy(newStr,n.c_str(),size);
 			strncpy(oldStr,o.c_str(),size);
 		}
-		StringChangeStep<size>(const char* n, const char* o):oldStr(&oldBuf[0]),newStr(&newStr[0]){
+		StringChangeStep<size>(const char* n, const char* o):oldStr(&oldBuf[0]),newStr(&newBuf[0]){
 			strncpy(newStr,n,size);
 			strncpy(oldStr,o,size);
 		}
@@ -566,7 +566,12 @@ namespace Undo{
 		bool empty() const;
 		void clear();
 		void appendChange(UndoStep* step);
-		bool applyLast(UndoStack& counterpart);
+		//Apply the last change (or group of changes) on the stack, 
+		//invert it, and move it to the counterpart stack.
+		//If, however, transfer is false, simply discard the change after applying it. 
+		//This makes it easy to rollback changes which the user aborted 
+		//partway through, and which therefore 'never actually happened'. 
+		bool applyLast(UndoStack& counterpart, bool transfer=true);
 		const std::string& currentDescription() const;
 		
 	private:

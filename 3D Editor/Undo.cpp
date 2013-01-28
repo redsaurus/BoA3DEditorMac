@@ -50,6 +50,9 @@ namespace Undo{
 			case SAVE_DELIMITER:
 				//do nothing
 				break;
+			case DESCRIPTION_ONLY:
+				//do nothing
+				break;
 		}
 	}
 	
@@ -987,10 +990,16 @@ namespace Undo{
 				steps.push_back(step);
 				levelLengths.back()++;
 				break;
+			case UndoStep::DESCRIPTION_ONLY:
+				if(nestLevel<1)
+					throw std::logic_error("Undo system misuse: trying to add a description-only step when not inside an und group");
+				//std::cout << "Added description-only step (" << step->description() << ')' << std::endl;
+				steps.push_back(step);
+				levelLengths.back()++;
 		}
 	}
 	
-	bool UndoStack::applyLast(UndoStack& counterpart){
+	bool UndoStack::applyLast(UndoStack& counterpart, bool transfer){
 		if(steps.empty()){
 			//std::cout << "Nothing to Un/Redo" << std::endl;
 			return(false);
@@ -1030,8 +1039,12 @@ namespace Undo{
 					//???: What should be done about older save markers, farther down the stack?
 					break;
 			}
-			step->invert();
-			counterpart.appendChange(step);
+			if(transfer){
+				step->invert();
+				counterpart.appendChange(step);
+			}
+			else
+				delete step;
 		}while(nestLevel);
 		//std::cout << "This stack stack now has " << steps.size() << (steps.size()==1?" item":" items") << std::endl;
 		//std::cout << "Counterpart stack now has " << counterpart.steps.size() << (counterpart.steps.size()==1?" item":" items") << std::endl;
