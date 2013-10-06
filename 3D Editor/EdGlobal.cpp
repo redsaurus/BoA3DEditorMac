@@ -5,12 +5,12 @@
 
 short get_ran (short times,short  min,short  max)
 {
-	long int store;
+	unsigned int store;
 	short i, to_ret = 0;
 	
 	for (i = 1; i < times + 1; i++) {
-		store = Random();
-		to_ret = to_ret + min + (((store + 32767) * (max - min + 1)) / 65536);
+		store = random() & 0x7fff;
+		to_ret = to_ret + min + ((store * (max - min + 1)) / 0x7fff);
 		}
 	return to_ret;
 }

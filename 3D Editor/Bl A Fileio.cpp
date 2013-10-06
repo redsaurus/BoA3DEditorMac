@@ -707,7 +707,7 @@ bool init_directories_with_user_input( void )
 	Point defaultPos = { -1, -1 };
 
 	option.version = kNavDialogCreationOptionsVersion;
-	option.optionFlags = kNavDefaultNavDlogOptions;
+	option.optionFlags = kNavDefaultNavDlogOptions|kNavAllowOpenPackages;
 	option.location = defaultPos;
 	option.clientName = CFSTR( "3D BoA Editor" );
 	option.windowTitle = CFSTR( "Choose \"Blades of Avernum Files\" folder" );

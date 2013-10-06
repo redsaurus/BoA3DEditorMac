@@ -363,7 +363,7 @@ void Initialize(void)
 	//	will no longer be random.  Only needed once, here in the init.
 	//
 	unsigned long randseed=(unsigned long)CFAbsoluteTimeGetCurrent();
-	SetQDGlobalsRandomSeed(randseed);
+	srandom(randseed);
 
 	//	Make a new window for drawing in, and it must be a color window.  
 	//	The window is full screen size, made smaller to make it more visible.

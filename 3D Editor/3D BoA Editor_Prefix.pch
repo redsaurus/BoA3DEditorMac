@@ -3,3 +3,160 @@
 //
 
 #include <Carbon/Carbon.h>
+
+#ifndef __QUICKDRAWAPI__
+extern "C" {
+//Cursor Stuff
+typedef short                           Bits16[16];
+
+struct Cursor {
+	Bits16              data;
+	Bits16              mask;
+	Point               hotSpot;
+};
+typedef struct Cursor                   Cursor;
+typedef Cursor *                        CursPtr;
+typedef CursPtr *                       CursHandle;
+
+extern CursHandle GetCursor(short cursorID);
+extern void InitCursor(void);
+extern void SetCursor(const Cursor * crsr);
+
+extern void SetPort(GrafPtr port);
+extern void GetPort(GrafPtr * port);
+
+extern void QDFlushPortBuffer(CGrafPtr    port, RgnHandle   region);
+
+extern Rect * GetPortBounds(CGrafPtr   port, Rect *     rect);
+
+extern const BitMap * GetPortBitMapForCopyBits(CGrafPtr port);
+
+enum {
+	/* transfer modes */
+	addOver                       = 34,
+	transparent                   = 36
+};
+
+//Fore/Back Colours
+enum {
+	blackColor                    = 33,   /* colors expressed in these mappings */
+	whiteColor                    = 30,
+	redColor                      = 205,
+	greenColor                    = 341,
+	blueColor                     = 409,
+	cyanColor                     = 273,
+	magentaColor                  = 137,
+	yellowColor                   = 69
+};
+extern void ForeColor(long color);
+extern void BackColor(long color);
+
+extern void GetBackColor(RGBColor * color);
+extern void RGBForeColor(const RGBColor * color);
+extern void RGBBackColor(const RGBColor * color);
+
+//Rect Stuff
+extern void SetRect(Rect * r, short left, short top, short right, short bottom);
+extern Boolean SectRect (const Rect *src1, const Rect *src2, Rect *dstRect);
+extern void UnionRect (const Rect *src1, const Rect *src2, Rect *dstRect);
+extern Boolean PtInRect(Point pt, const Rect *  r);
+extern void InsetRect(Rect *  r, short   dh, short   dv);
+extern void OffsetRect(Rect *  r, short   dh, short   dv);
+extern Boolean EqualRect(const Rect *  rect1, const Rect *  rect2);
+extern void FrameRect(const Rect * r);
+extern void EraseRect(const Rect * r);
+extern Boolean EmptyRect(const Rect * r);
+extern void PaintRect(const Rect * r);
+
+//Regions
+extern RgnHandle NewRgn(void);
+extern void GetClip(RgnHandle rgn);
+extern Boolean PtInRgn(Point	pt,RgnHandle   rgn);
+extern void DisposeRgn(RgnHandle rgn);
+
+extern RgnHandle GetPortVisibleRegion(CGrafPtr    port, RgnHandle   visRgn);
+
+extern void GlobalToLocal(Point * pt);
+extern void LocalToGlobal(Point * pt);
+
+//Text
+extern void TextFont(short font);
+extern void TextFace(StyleParameter face);
+extern void TextMode(short mode);
+extern void TextSize(short size);
+
+extern void
+MeasureText(
+			short         count,
+			const void *  textAddr,
+			void *        charLocs);
+extern short
+TextWidth(
+		  const void *  textBuf,
+		  short         firstByte,
+		  short         byteCount);
+
+extern void GetFNum(ConstStr255Param name, short * familyID);
+
+extern void DrawString(ConstStr255Param s);
+
+extern void LineTo(short   h, short   v);
+extern void MoveTo(short   h, short   v);
+
+extern void FillCRect(const Rect *   r, PixPatHandle   pp);
+
+enum {
+	nativeEndianPixMapBit         = 8,
+};
+
+enum {
+	kNativeEndianPixMap           = 1L << nativeEndianPixMapBit,
+};
+
+extern void BackPixPat(PixPatHandle pp);
+extern PixPatHandle GetPixPat(short patID);
+
+
+extern BitMap * GetQDGlobalsScreenBits(BitMap * screenBits);
+extern Rect * QDGetPictureBounds(PicHandle   picH, Rect *      outRect);
+
+extern Boolean
+QDSwapPort(
+		   CGrafPtr    inNewPort,
+		   CGrafPtr *  outOldPort);
+
+extern void DisposeGWorld(GWorldPtr offscreenGWorld);
+extern QDErr NewGWorld(GWorldPtr *   offscreenGWorld, short         PixelDepth, const Rect *  boundsRect, CTabHandle    cTable, GDHandle      aGDevice, GWorldFlags   flag);
+extern void GetGWorld(CGrafPtr *  port, GDHandle *  gdh);
+extern void SetGWorld(CGrafPtr   port, GDHandle   gdh);
+extern PixMapHandle GetGWorldPixMap(GWorldPtr offscreenGWorld);
+
+extern GDHandle GetGDevice(void);
+extern OSErr SetDepth(GDHandle   gd, short      depth, short      whichFlags, short      flags);
+extern short HasDepth(GDHandle   gd,short      depth,short      whichFlags,short      flags);
+
+extern Boolean LockPixels(PixMapHandle pm);
+extern void UnlockPixels(PixMapHandle pm);
+
+extern void CopyBits(const BitMap *  srcBits,
+		 const BitMap *  dstBits,
+		 const Rect *    srcRect,
+		 const Rect *    dstRect,
+		 short           mode,
+		 RgnHandle       maskRgn);
+
+extern PixMapHandle
+GetPortPixMap(CGrafPtr port);
+extern SInt32
+GetPixRowBytes(PixMapHandle pm);
+extern Ptr
+GetPixBaseAddr(PixMapHandle pm);
+
+extern PicHandle
+GetPicture(short pictureID);
+extern void
+DrawPicture(
+			PicHandle     myPicture,
+			const Rect *  dstRect);
+}
+#endif
